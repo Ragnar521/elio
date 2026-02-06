@@ -10,9 +10,14 @@ class StorageService {
   static final StorageService instance = StorageService._();
 
   static const _entriesBoxName = 'entries';
+  static const _settingsBoxName = 'settings';
   static const _uuid = Uuid();
+  static const _userNameKey = 'user_name';
+  static const _onboardingCompletedKey = 'onboarding_completed';
+  static const _notificationsEnabledKey = 'notifications_enabled';
 
   Box<Entry>? _entriesBox;
+  Box<dynamic>? _settingsBox;
 
   Future<void> init() async {
     await Hive.initFlutter();
@@ -20,6 +25,7 @@ class StorageService {
       Hive.registerAdapter(EntryAdapter());
     }
     _entriesBox = await Hive.openBox<Entry>(_entriesBoxName);
+    _settingsBox = await Hive.openBox<dynamic>(_settingsBoxName);
   }
 
   Future<Entry> saveEntry({
@@ -87,5 +93,44 @@ class StorageService {
       throw StateError('StorageService not initialized. Call init() first.');
     }
     return box;
+  }
+
+  Box<dynamic> get _settings {
+    final box = _settingsBox;
+    if (box == null) {
+      throw StateError('StorageService not initialized. Call init() first.');
+    }
+    return box;
+  }
+
+  String get userName {
+    final value = _settings.get(_userNameKey, defaultValue: 'there');
+    if (value is String && value.trim().isNotEmpty) {
+      return value.trim();
+    }
+    return 'there';
+  }
+
+  Future<void> setUserName(String name) async {
+    final trimmed = name.trim();
+    await _settings.put(_userNameKey, trimmed.isEmpty ? 'there' : trimmed);
+  }
+
+  bool get onboardingCompleted {
+    final value = _settings.get(_onboardingCompletedKey, defaultValue: false);
+    return value is bool ? value : false;
+  }
+
+  Future<void> setOnboardingCompleted(bool completed) async {
+    await _settings.put(_onboardingCompletedKey, completed);
+  }
+
+  bool get notificationsEnabled {
+    final value = _settings.get(_notificationsEnabledKey, defaultValue: false);
+    return value is bool ? value : false;
+  }
+
+  Future<void> setNotificationsEnabled(bool enabled) async {
+    await _settings.put(_notificationsEnabledKey, enabled);
   }
 }
