@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/elio_colors.dart';
+import '../services/storage_service.dart';
 import 'intention_screen.dart';
 
 class MoodEntryScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
   double _moodValue = 0.5;
   bool _hasInteracted = false;
   int _lastThresholdIndex = 0;
+  late String _userName;
 
   static const _moodWords = [
     'Heavy',
@@ -43,13 +45,14 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
   void initState() {
     super.initState();
     _lastThresholdIndex = _thresholdIndexFor(_moodValue);
+    _userName = StorageService.instance.userName;
   }
 
   String _greeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'Good morning, $_userName';
+    if (hour < 18) return 'Good afternoon, $_userName';
+    return 'Good evening, $_userName';
   }
 
   int _thresholdIndexFor(double value) {
