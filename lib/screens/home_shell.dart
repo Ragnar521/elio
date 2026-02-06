@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import 'history_screen.dart';
+import 'insights_screen.dart';
 import 'mood_entry_screen.dart';
 import 'onboarding/onboarding_flow.dart';
 import '../services/storage_service.dart';
@@ -23,7 +24,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
-    _index = widget.initialIndex.clamp(0, 1) as int;
+    _index = widget.initialIndex.clamp(0, 2) as int;
   }
 
   Future<void> _resetOnboarding(BuildContext context) async {
@@ -75,6 +76,7 @@ class _HomeShellState extends State<HomeShell> {
         children: const [
           MoodEntryScreen(),
           HistoryScreen(),
+          InsightsScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -90,6 +92,11 @@ class _HomeShellState extends State<HomeShell> {
             icon: Icon(Icons.history_outlined),
             activeIcon: Icon(Icons.history),
             label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.auto_graph_outlined),
+            activeIcon: Icon(Icons.auto_graph),
+            label: 'Insights',
           ),
         ],
       ),
