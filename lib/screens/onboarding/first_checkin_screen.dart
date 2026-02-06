@@ -20,6 +20,7 @@ class _FirstCheckinScreenState extends State<FirstCheckinScreen> {
   bool _hasInteracted = false;
   int _lastThresholdIndex = 0;
   bool _hasText = false;
+  String? _pressedSuggestion;
 
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
@@ -143,9 +144,15 @@ class _FirstCheckinScreenState extends State<FirstCheckinScreen> {
   }
 
   void _applySuggestion(String suggestion) {
+    setState(() => _pressedSuggestion = suggestion);
     HapticFeedback.selectionClick();
     _controller.text = suggestion;
     _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (mounted) {
+        setState(() => _pressedSuggestion = null);
+      }
+    });
   }
 
   Future<void> _handleDone() async {
@@ -228,7 +235,28 @@ class _FirstCheckinScreenState extends State<FirstCheckinScreen> {
                       onChanged: _onMoodChanged,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Heavy',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: ElioColors.darkPrimaryText.withOpacity(0.5),
+                              ),
+                        ),
+                        Text(
+                          'Great',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: ElioColors.darkPrimaryText.withOpacity(0.5),
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   AnimatedOpacity(
                     duration: const Duration(milliseconds: 250),
                     opacity: _hasInteracted ? 1.0 : 0.0,
@@ -318,21 +346,26 @@ class _FirstCheckinScreenState extends State<FirstCheckinScreen> {
                                 .map(
                                   (suggestion) => GestureDetector(
                                     onTap: () => _applySuggestion(suggestion),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 10,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: ElioColors.darkSurface,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Text(
-                                        suggestion,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(color: ElioColors.darkPrimaryText),
+                                    child: AnimatedScale(
+                                      scale: _pressedSuggestion == suggestion ? 0.95 : 1.0,
+                                      duration: const Duration(milliseconds: 150),
+                                      curve: Curves.easeOutCubic,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: ElioColors.darkSurface,
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: Text(
+                                          suggestion,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(color: ElioColors.darkPrimaryText),
+                                        ),
                                       ),
                                     ),
                                   ),
