@@ -61,11 +61,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 120,
-                    height: 120,
+                    width: 200,
+                    height: 200,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: ElioColors.darkAccent.withOpacity(0.12),
                       boxShadow: [
                         BoxShadow(
                           color: ElioColors.darkAccent.withOpacity(0.35),
@@ -75,13 +74,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                       ],
                     ),
                   ),
-                  Text(
-                    'Elio',
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: ElioColors.darkPrimaryText,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2,
-                        ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(32),
+                    child: Image.asset(
+                      'images/appicon.png',
+                      width: 140,
+                      height: 140,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ],
               ),
