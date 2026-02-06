@@ -198,22 +198,22 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                         }
                       : null,
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    backgroundColor: WidgetStateProperty.resolveWith<Color>(
                       (states) {
-                        if (states.contains(MaterialState.disabled)) {
+                        if (states.contains(WidgetState.disabled)) {
                           return ElioColors.darkAccent.withOpacity(0.4);
                         }
-                        if (states.contains(MaterialState.pressed)) {
+                        if (states.contains(WidgetState.pressed)) {
                           return const Color(0xFFE5562E);
                         }
                         return ElioColors.darkAccent;
                       },
                     ),
-                    foregroundColor: MaterialStateProperty.all(ElioColors.darkPrimaryText),
-                    shape: MaterialStateProperty.all(
+                    foregroundColor: WidgetStateProperty.all(ElioColors.darkPrimaryText),
+                    shape: WidgetStateProperty.all(
                       RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                     ),
-                    elevation: MaterialStateProperty.all(0),
+                    elevation: WidgetStateProperty.all(0),
                   ),
                   child: const Text('Continue'),
                 ),
