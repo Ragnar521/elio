@@ -4,8 +4,15 @@ import '../models/entry.dart';
 
 enum InsightsPeriod { week, month }
 
-class InsightsSnapshot {
-  InsightsSnapshot({
+class InsightItem {
+  const InsightItem(this.icon, this.text);
+
+  final String icon;
+  final String text;
+}
+
+class InsightsData {
+  InsightsData({
     required this.period,
     required this.periodStart,
     required this.periodEnd,
@@ -26,6 +33,21 @@ class InsightsSnapshot {
     required this.betterThanLastMonth,
     required this.worseThanLastMonth,
     required this.insightText,
+    // New fields
+    required this.reflectionDays,
+    required this.reflectionRate,
+    required this.longestStreakAllTime,
+    required this.longestStreakInPeriod,
+    this.previousPeriodAvg,
+    this.previousPeriodCheckIns,
+    this.moodChangeVsPrevious,
+    this.checkInChangeVsPrevious,
+    required this.dayOfWeekAverages,
+    this.bestDay,
+    this.worstDay,
+    required this.insights,
+    required this.patternInsight,
+    required this.mostFeltCount,
   });
 
   final InsightsPeriod period;
@@ -37,6 +59,7 @@ class InsightsSnapshot {
   final int daysWithEntries;
   final int streak;
   final String mostFelt;
+  final int mostFeltCount;
   final double avgMood;
   final double stdDev;
   final bool trendUp;
@@ -48,22 +71,38 @@ class InsightsSnapshot {
   final bool betterThanLastMonth;
   final bool worseThanLastMonth;
   final String insightText;
+
+  // New fields
+  final int reflectionDays;
+  final double reflectionRate;
+  final int longestStreakAllTime;
+  final int longestStreakInPeriod;
+  final double? previousPeriodAvg;
+  final int? previousPeriodCheckIns;
+  final double? moodChangeVsPrevious;
+  final int? checkInChangeVsPrevious;
+  final Map<int, double> dayOfWeekAverages;
+  final int? bestDay;
+  final int? worstDay;
+  final List<InsightItem> insights;
+  final String patternInsight;
 }
 
 class InsightsService {
-  static InsightsSnapshot buildSnapshot({
+  static Future<InsightsData> getInsightsForPeriod({
     required DateTime now,
     required List<Entry> allEntries,
     required InsightsPeriod period,
     required int offset,
     required int streak,
-  }) {
+    required int longestStreakAllTime,
+  }) async {
     final periodRange = _periodRange(now, period, offset);
     final periodEntries = _entriesInRange(allEntries, periodRange.start, periodRange.end);
     final daysInPeriod = periodRange.end.difference(periodRange.start).inDays;
     final daysWithEntries = _daysWithEntries(periodEntries);
     final checkInCount = periodEntries.length;
-    final mostFelt = _mostFelt(periodEntries);
+    final mostFeltResult = _mostFelt(periodEntries);
     final avgMood = _average(periodEntries.map((entry) => entry.moodValue).toList());
     final stdDev = _standardDeviation(periodEntries.map((entry) => entry.moodValue).toList());
     final trend = _trend(periodEntries, periodRange.start, daysInPeriod, period);
@@ -77,6 +116,30 @@ class InsightsService {
       periodRange.start,
       avgMood,
     );
+
+    // New calculations
+    final reflectionStats = _calculateReflectionStats(periodEntries);
+    final dayPattern = _calculateDayOfWeekPattern(periodEntries);
+    final bestWorstDays = _findBestWorstDays(dayPattern);
+    final longestInPeriod = _calculateLongestStreakInPeriod(periodEntries, periodRange.start, periodRange.end);
+
+    // Comparison to previous period
+    double? prevAvg;
+    int? prevCheckIns;
+    double? moodChange;
+    int? checkInChange;
+
+    final duration = periodRange.end.difference(periodRange.start);
+    final prevStart = periodRange.start.subtract(duration).subtract(const Duration(days: 1));
+    final prevEnd = periodRange.start.subtract(const Duration(days: 1));
+    final prevEntries = _entriesInRange(allEntries, prevStart, prevEnd);
+
+    if (prevEntries.isNotEmpty) {
+      prevAvg = _average(prevEntries.map((entry) => entry.moodValue).toList());
+      prevCheckIns = prevEntries.length;
+      moodChange = prevAvg > 0 ? (avgMood - prevAvg) / prevAvg : null;
+      checkInChange = checkInCount - prevEntries.length;
+    }
 
     final insightText = _insightText(
       period: period,
@@ -93,7 +156,24 @@ class InsightsService {
       worseThanLastMonth: monthlyComparison.worseThanLast,
     );
 
-    return InsightsSnapshot(
+    // Generate 2-3 insights
+    final insights = _generateInsights(
+      period: period,
+      streak: streak,
+      checkInCount: checkInCount,
+      trendUp: trend.trendUp,
+      trendDown: trend.trendDown,
+      stable: stable,
+      volatile: volatile,
+      avgMood: avgMood,
+      moodChangeVsPrevious: moodChange,
+      reflectionDays: reflectionStats.$1,
+      reflectionRate: reflectionStats.$2,
+    );
+
+    final patternInsight = _generatePatternInsight(bestWorstDays.$1, bestWorstDays.$2);
+
+    return InsightsData(
       period: period,
       periodStart: periodRange.start,
       periodEnd: periodRange.end,
@@ -102,7 +182,8 @@ class InsightsService {
       checkInCount: checkInCount,
       daysWithEntries: daysWithEntries,
       streak: streak,
-      mostFelt: mostFelt,
+      mostFelt: mostFeltResult.$1,
+      mostFeltCount: mostFeltResult.$2,
       avgMood: avgMood,
       stdDev: stdDev,
       trendUp: trend.trendUp,
@@ -114,6 +195,134 @@ class InsightsService {
       betterThanLastMonth: monthlyComparison.betterThanLast,
       worseThanLastMonth: monthlyComparison.worseThanLast,
       insightText: insightText,
+      reflectionDays: reflectionStats.$1,
+      reflectionRate: reflectionStats.$2,
+      longestStreakAllTime: longestStreakAllTime,
+      longestStreakInPeriod: longestInPeriod,
+      previousPeriodAvg: prevAvg,
+      previousPeriodCheckIns: prevCheckIns,
+      moodChangeVsPrevious: moodChange,
+      checkInChangeVsPrevious: checkInChange,
+      dayOfWeekAverages: dayPattern,
+      bestDay: bestWorstDays.$1,
+      worstDay: bestWorstDays.$2,
+      insights: insights,
+      patternInsight: patternInsight,
+    );
+  }
+
+  // Keep old method for backward compatibility temporarily
+  static InsightsData buildSnapshot({
+    required DateTime now,
+    required List<Entry> allEntries,
+    required InsightsPeriod period,
+    required int offset,
+    required int streak,
+  }) {
+    // Synchronous wrapper - will be replaced
+    final periodRange = _periodRange(now, period, offset);
+    final periodEntries = _entriesInRange(allEntries, periodRange.start, periodRange.end);
+    final daysInPeriod = periodRange.end.difference(periodRange.start).inDays;
+    final daysWithEntries = _daysWithEntries(periodEntries);
+    final checkInCount = periodEntries.length;
+    final mostFeltResult = _mostFelt(periodEntries);
+    final avgMood = _average(periodEntries.map((entry) => entry.moodValue).toList());
+    final stdDev = _standardDeviation(periodEntries.map((entry) => entry.moodValue).toList());
+    final trend = _trend(periodEntries, periodRange.start, daysInPeriod, period);
+    final stable = stdDev > 0 && stdDev < 0.15;
+    final volatile = stdDev > 0.3;
+    final weekendsBetter = _weekendsBetter(periodEntries, avgMood);
+    final mondaysWorse = _mondaysWorse(periodEntries, avgMood);
+    final monthlyComparison = _monthlyComparison(allEntries, period, periodRange.start, avgMood);
+
+    final reflectionStats = _calculateReflectionStats(periodEntries);
+    final dayPattern = _calculateDayOfWeekPattern(periodEntries);
+    final bestWorstDays = _findBestWorstDays(dayPattern);
+    final longestInPeriod = _calculateLongestStreakInPeriod(periodEntries, periodRange.start, periodRange.end);
+
+    double? prevAvg;
+    int? prevCheckIns;
+    double? moodChange;
+    int? checkInChange;
+
+    final duration = periodRange.end.difference(periodRange.start);
+    final prevStart = periodRange.start.subtract(duration).subtract(const Duration(days: 1));
+    final prevEnd = periodRange.start.subtract(const Duration(days: 1));
+    final prevEntries = _entriesInRange(allEntries, prevStart, prevEnd);
+
+    if (prevEntries.isNotEmpty) {
+      prevAvg = _average(prevEntries.map((entry) => entry.moodValue).toList());
+      prevCheckIns = prevEntries.length;
+      moodChange = prevAvg > 0 ? (avgMood - prevAvg) / prevAvg : null;
+      checkInChange = checkInCount - prevEntries.length;
+    }
+
+    final insightText = _insightText(
+      period: period,
+      streak: streak,
+      checkInCount: checkInCount,
+      trendUp: trend.trendUp,
+      trendDown: trend.trendDown,
+      stable: stable,
+      volatile: volatile,
+      avgMood: avgMood,
+      weekendsBetter: weekendsBetter,
+      mondaysWorse: mondaysWorse,
+      betterThanLastMonth: monthlyComparison.betterThanLast,
+      worseThanLastMonth: monthlyComparison.worseThanLast,
+    );
+
+    final insights = _generateInsights(
+      period: period,
+      streak: streak,
+      checkInCount: checkInCount,
+      trendUp: trend.trendUp,
+      trendDown: trend.trendDown,
+      stable: stable,
+      volatile: volatile,
+      avgMood: avgMood,
+      moodChangeVsPrevious: moodChange,
+      reflectionDays: reflectionStats.$1,
+      reflectionRate: reflectionStats.$2,
+    );
+
+    final patternInsight = _generatePatternInsight(bestWorstDays.$1, bestWorstDays.$2);
+
+    return InsightsData(
+      period: period,
+      periodStart: periodRange.start,
+      periodEnd: periodRange.end,
+      daysInPeriod: daysInPeriod,
+      entries: periodEntries,
+      checkInCount: checkInCount,
+      daysWithEntries: daysWithEntries,
+      streak: streak,
+      mostFelt: mostFeltResult.$1,
+      mostFeltCount: mostFeltResult.$2,
+      avgMood: avgMood,
+      stdDev: stdDev,
+      trendUp: trend.trendUp,
+      trendDown: trend.trendDown,
+      stable: stable,
+      volatile: volatile,
+      weekendsBetter: weekendsBetter,
+      mondaysWorse: mondaysWorse,
+      betterThanLastMonth: monthlyComparison.betterThanLast,
+      worseThanLastMonth: monthlyComparison.worseThanLast,
+      insightText: insightText,
+      reflectionDays: reflectionStats.$1,
+      reflectionRate: reflectionStats.$2,
+      longestStreakAllTime: 0, // Will be passed properly in screen
+      longestStreakInPeriod: longestInPeriod,
+      previousPeriodAvg: prevAvg,
+      previousPeriodCheckIns: prevCheckIns,
+      moodChangeVsPrevious: moodChange,
+      checkInChangeVsPrevious: checkInChange,
+      dayOfWeekAverages: dayPattern,
+      bestDay: bestWorstDays.$1,
+      worstDay: bestWorstDays.$2,
+      insights: insights,
+      patternInsight: patternInsight,
     );
   }
 
@@ -150,15 +359,15 @@ class InsightsService {
     return days.length;
   }
 
-  static String _mostFelt(List<Entry> entries) {
-    if (entries.isEmpty) return '—';
+  static (String, int) _mostFelt(List<Entry> entries) {
+    if (entries.isEmpty) return ('—', 0);
     final counts = <String, int>{};
     for (final entry in entries) {
       counts.update(entry.moodWord, (value) => value + 1, ifAbsent: () => 1);
     }
     final sorted = counts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    return sorted.first.key;
+    return (sorted.first.key, sorted.first.value);
   }
 
   static double _average(List<double> values) {
@@ -342,6 +551,195 @@ class InsightsService {
   }
 
   static DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  static (int, double) _calculateReflectionStats(List<Entry> entries) {
+    int daysWithReflection = 0;
+
+    for (final entry in entries) {
+      if (entry.reflectionAnswerIds != null && entry.reflectionAnswerIds!.isNotEmpty) {
+        daysWithReflection++;
+      }
+    }
+
+    final rate = entries.isNotEmpty ? daysWithReflection / entries.length : 0.0;
+    return (daysWithReflection, rate);
+  }
+
+  static Map<int, double> _calculateDayOfWeekPattern(List<Entry> entries) {
+    final Map<int, List<double>> grouped = {};
+
+    for (final entry in entries) {
+      final day = entry.createdAt.weekday;
+      grouped.putIfAbsent(day, () => []);
+      grouped[day]!.add(entry.moodValue);
+    }
+
+    final Map<int, double> averages = {};
+    for (final day in grouped.keys) {
+      final values = grouped[day]!;
+      averages[day] = values.reduce((a, b) => a + b) / values.length;
+    }
+
+    return averages;
+  }
+
+  static (int?, int?) _findBestWorstDays(Map<int, double> pattern) {
+    if (pattern.length < 2) return (null, null);
+
+    int? bestDay;
+    int? worstDay;
+    double bestAvg = 0;
+    double worstAvg = 1;
+
+    for (final entry in pattern.entries) {
+      if (entry.value > bestAvg) {
+        bestAvg = entry.value;
+        bestDay = entry.key;
+      }
+      if (entry.value < worstAvg) {
+        worstAvg = entry.value;
+        worstDay = entry.key;
+      }
+    }
+
+    // Only significant if difference > 0.15
+    if (bestAvg - worstAvg < 0.15) return (null, null);
+
+    return (bestDay, worstDay);
+  }
+
+  static int _calculateLongestStreakInPeriod(List<Entry> entries, DateTime start, DateTime end) {
+    if (entries.isEmpty) return 0;
+
+    final daysWithEntries = <DateTime>{};
+    for (final entry in entries) {
+      daysWithEntries.add(_dateOnly(entry.createdAt));
+    }
+
+    final sortedDays = daysWithEntries.toList()..sort();
+    var longestStreak = 0;
+    var currentStreak = 1;
+
+    for (var i = 1; i < sortedDays.length; i++) {
+      final diff = sortedDays[i].difference(sortedDays[i - 1]).inDays;
+      if (diff == 1) {
+        currentStreak++;
+      } else {
+        if (currentStreak > longestStreak) {
+          longestStreak = currentStreak;
+        }
+        currentStreak = 1;
+      }
+    }
+
+    // Check final streak
+    if (currentStreak > longestStreak) {
+      longestStreak = currentStreak;
+    }
+
+    return longestStreak;
+  }
+
+  static List<InsightItem> _generateInsights({
+    required InsightsPeriod period,
+    required int streak,
+    required int checkInCount,
+    required bool trendUp,
+    required bool trendDown,
+    required bool stable,
+    required bool volatile,
+    required double avgMood,
+    required double? moodChangeVsPrevious,
+    required int reflectionDays,
+    required double reflectionRate,
+  }) {
+    final insights = <InsightItem>[];
+    final periodName = period == InsightsPeriod.week ? "week" : "month";
+
+    // Priority 1: Perfect streak (7+ days)
+    if (streak >= 7) {
+      insights.add(InsightItem("🔥", "You've checked in every day this $periodName. That's real commitment."));
+    }
+    // Priority 2: Good streak (3+ days)
+    else if (streak >= 3) {
+      insights.add(InsightItem("🔥", "$streak days in a row. You're building a rhythm."));
+    }
+
+    // Priority 3: Trend up
+    if (trendUp && insights.length < 3) {
+      insights.add(InsightItem("📈", "Your mood lifted as the $periodName went on. Something's working."));
+    }
+    // Priority 4: Trend down
+    else if (trendDown && insights.length < 3) {
+      insights.add(InsightItem("📉", "This $periodName felt heavier toward the end. Be gentle with yourself."));
+    }
+
+    // Priority 5: Better than previous
+    if (moodChangeVsPrevious != null && moodChangeVsPrevious > 0.1 && insights.length < 3) {
+      insights.add(InsightItem("✨", "Your mood is up from last $periodName. Nice progress."));
+    }
+    // Priority 6: Worse than previous
+    else if (moodChangeVsPrevious != null && moodChangeVsPrevious < -0.1 && insights.length < 3) {
+      insights.add(InsightItem("💪", "Tougher than last $periodName. That's okay — you're still here."));
+    }
+
+    // Priority 7: High reflection rate
+    if (reflectionRate >= 0.8 && insights.length < 3) {
+      insights.add(InsightItem("📝", "Reflected $reflectionDays of $checkInCount days. That's deep work."));
+    }
+    // Priority 8: Medium reflection rate
+    else if (reflectionRate >= 0.5 && insights.length < 3) {
+      insights.add(InsightItem("📝", "Reflection is becoming part of your routine."));
+    }
+
+    // Priority 9: Stable
+    if (stable && insights.length < 3) {
+      insights.add(InsightItem("⚖️", "A steady $periodName. Consistency can be its own strength."));
+    }
+    // Priority 10: Volatile
+    else if (volatile && insights.length < 3) {
+      insights.add(InsightItem("🌊", "Some ups and downs this $periodName. That's completely human."));
+    }
+
+    // Priority 11: High mood
+    if (avgMood > 0.7 && insights.length < 3) {
+      insights.add(InsightItem("☀️", "A good $periodName overall. Notice what made it work."));
+    }
+    // Priority 12: Low mood
+    else if (avgMood < 0.3 && insights.length < 3) {
+      insights.add(InsightItem("🌱", "A tough $periodName. You still showed up — that matters."));
+    }
+
+    // Priority 13: Few check-ins
+    if (checkInCount <= 2 && insights.length < 3) {
+      insights.add(InsightItem("👣", "Just getting started. Every check-in counts."));
+    }
+
+    // Priority 14: Fallback
+    if (insights.isEmpty) {
+      insights.add(InsightItem("👣", "You're here. That's the first step."));
+    }
+
+    return insights.take(3).toList();
+  }
+
+  static String _generatePatternInsight(int? bestDay, int? worstDay) {
+    if (bestDay == null || worstDay == null) {
+      return "💡 Your mood is fairly consistent across the week.";
+    }
+
+    const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final bestName = dayNames[bestDay];
+    final worstName = dayNames[worstDay];
+
+    if (worstDay == 1) {
+      return "💡 Mondays are your toughest day. Consider a gentler start to the week.";
+    } else if (bestDay == 6 || bestDay == 7) {
+      return "💡 ${bestName}s are your best days. What makes them work?";
+    } else {
+      return "💡 ${bestName}s tend to be your best. ${worstName}s are tougher.";
+    }
+  }
 }
 
 class _PeriodRange {

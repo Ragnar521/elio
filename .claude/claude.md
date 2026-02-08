@@ -113,9 +113,11 @@ lib/
 ├── widgets/                     # Reusable components
 │   ├── entry_card.dart         # Entry in history list
 │   ├── answered_question_chip.dart # Collapsed answer
-│   ├── mood_wave.dart          # Wave animation
-│   ├── stat_card.dart          # Stat display
-│   └── insight_card.dart       # Insight display
+│   ├── mood_wave.dart          # Interactive wave with tap-to-view
+│   ├── stat_card.dart          # Stat display with comparison
+│   ├── insight_card.dart       # Multiple insights display
+│   ├── day_pattern_chart.dart  # Tappable day-of-week chart
+│   └── day_entries_sheet.dart  # Bottom sheet for day entries
 └── theme/                       # Design system
     ├── elio_theme.dart         # ThemeData for light/dark
     ├── elio_colors.dart        # Color palette
@@ -237,11 +239,15 @@ ReflectionAnswer {
 
 **Key Methods:**
 ```dart
-init()                          # Initialize Hive, register adapters
-saveEntry(...)                  # Save mood entry
+init()                          # Initialize Hive, register adapters, backfill streak
+saveEntry(...)                  # Save mood entry + auto-update longest streak
 getAllEntries()                 # Get all entries, sorted by date
 getEntriesForDate(date)        # Entries for specific day
+getEntriesForPeriod(start, end) # Entries within date range (NEW)
 getCurrentStreak()              # Calculate check-in streak
+getLongestStreak()              # Get all-time longest streak (NEW)
+updateLongestStreak(current)    # Update if current > longest (NEW)
+_backfillLongestStreak()        # Calculate from existing entries on first run (NEW)
 userName                        # Getter/setter for user name
 onboardingCompleted            # Getter/setter
 reflectionEnabled              # Getter/setter (default: true)
@@ -253,6 +259,7 @@ notificationsEnabled           # Getter/setter
 - `onboarding_completed`
 - `notifications_enabled`
 - `reflection_enabled`
+- `longest_streak` (NEW - tracks all-time best)
 
 ### ReflectionService
 **Location:** `lib/services/reflection_service.dart`
@@ -294,11 +301,26 @@ getAnswersByIds(ids)           # Fetch answers for entry detail
 
 **Key Methods:**
 ```dart
-getMoodTrend(entries)          # Week-over-week trend
-getCommonMoods(entries)        # Most frequent moods
-getStreakInfo(entries)         # Current streak data
-getBestDay(entries)            # Day with highest moods
+buildSnapshot(...)                      # Synchronous method (legacy compatibility)
+getInsightsForPeriod(...)              # Full insights with all new features
+_calculateReflectionStats(entries)     # Count reflection days & rate
+_calculateDayOfWeekPattern(entries)    # Average mood per weekday
+_findBestWorstDays(pattern)            # Identify best/worst days (15% threshold)
+_calculateLongestStreakInPeriod(...)   # Find longest consecutive streak
+_generateInsights(...)                 # Generate 2-3 priority-based insights
+_generatePatternInsight(...)           # Create actionable day pattern suggestion
 ```
+
+**Data Model: InsightsData**
+- **Period info:** start, end, days in period, entries
+- **Stats:** check-in count, days with entries, current streak, most felt mood
+- **Mood metrics:** average, std deviation, trend (up/down), stable/volatile
+- **New: Reflection tracking:** reflection days, reflection rate
+- **New: Streak tracking:** longest all-time, longest in period
+- **New: Comparison:** previous period avg, check-ins, mood change %, check-in change
+- **New: Day patterns:** day-of-week averages, best day, worst day
+- **New: Insights:** 2-3 generated InsightItems with emoji icons
+- **New: Pattern insight:** actionable suggestion based on day patterns
 
 ---
 
@@ -385,13 +407,70 @@ getBestDay(entries)            # Day with highest moods
   - Question text (muted)
   - Answer text (full)
 
-### 7. Insights
-- Streak counter
-- Total check-ins
-- Mood trend graph
-- Common moods
-- Best day of week
-- Helpful messages
+### 7. Insights (Redesigned - Feb 2026)
+**Complete redesign with advanced analytics and interactions**
+
+**Period Navigation:**
+- Week/Month toggle
+- Arrow navigation (‹ ›) with visual feedback
+- Swipe gestures (left/right)
+- Animated transitions (300ms fade + slide)
+- Period label showing date range
+
+**Interactive Mood Wave:**
+- Tap any dot to see tooltip
+- Tooltip shows: date, time, mood, intention preview
+- "View Entry →" button navigates to full entry detail
+
+**Comparison Line:**
+- Shows current period average mood
+- Displays percentage change vs previous period
+- Color-coded: green (positive), neutral (negative)
+
+**Multiple Insights (2-3):**
+- Priority-based generation (14 rules)
+- Each with emoji icon (🔥📈✨💪📝⚖️🌊☀️🌱👣)
+- Focus on streaks, trends, reflections, mood patterns
+- Non-judgmental, supportive language
+
+**4 Stat Cards (Equal Width):**
+- **Week View:**
+  1. Check-ins: "5 of 7 days ↑2"
+  2. Streak: "3 days, best: 8"
+  3. Reflections: "80%, 4 of 5"
+  4. Most felt: "Calm"
+
+- **Month View:**
+  1. Check-ins: "22 of 28 days ↑5"
+  2. Streak: "3 current, best: 12"
+  3. Reflections: "75%, 17 of 22"
+  4. Most felt: "Calm, 8 times"
+
+**Day Pattern Chart (Interactive):**
+- Horizontal bars for Mon-Sun
+- Shows average mood per weekday
+- Emojis on best (😊) and worst (😔) days
+- **Tappable:** Tap any day → bottom sheet with filtered entries
+- Visual indicator (chevron) shows tappability
+
+**Day Entries Bottom Sheet:**
+- Shows all entries for selected weekday
+- Header: "Mondays • 0.45 avg"
+- Entry count: "3 entries found"
+- Scrollable entry cards (date, time, mood, intention)
+- Tap entry → navigate to EntryDetailScreen
+- Draggable to dismiss
+
+**Pattern Insight:**
+- Actionable suggestion based on day patterns
+- Examples: "Mondays are your toughest day. Consider a gentler start to the week."
+- Only shows when meaningful pattern exists (15% difference)
+
+**Animations:**
+- Period transitions: 300ms fade + slide
+- Direction-aware (slides from correct side)
+- Bottom sheet: smooth drag + spring animation
+- Stat cards: consistent height for visual harmony
 
 ### 8. Settings (4th Tab)
 - User name display

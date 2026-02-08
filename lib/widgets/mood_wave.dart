@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../models/entry.dart';
+import '../screens/entry_detail_screen.dart';
 import '../theme/elio_colors.dart';
 
 class MoodWave extends StatefulWidget {
@@ -129,7 +130,7 @@ class _MoodWaveState extends State<MoodWave> {
     final left = (point.position.dx - tooltipWidth / 2)
         .clamp(8.0, max(8.0, _lastSize.width - tooltipWidth - 8))
         .toDouble();
-    final top = max(8.0, point.position.dy - 96).toDouble();
+    final top = max(8.0, point.position.dy - 130).toDouble();
 
     return Positioned(
       left: left,
@@ -179,6 +180,47 @@ class _MoodWaveState extends State<MoodWave> {
                     .bodySmall
                     ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.8)),
               ),
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () {
+                  // Close tooltip first
+                  setState(() => _selected = null);
+
+                  // Navigate to EntryDetailScreen
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => EntryDetailScreen(
+                        entry: point.entry,
+                        timeLabel: _timeLabel(point.entry.createdAt),
+                        dateLabel: _dateLabel(point.entry.createdAt),
+                        moodColor: _moodColor(point.entry.moodValue),
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'View Entry',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: ElioColors.darkAccent,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: ElioColors.darkAccent,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -207,6 +249,42 @@ class _MoodWaveState extends State<MoodWave> {
   }
 
   DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  String _timeLabel(DateTime date) {
+    final hour = date.hour;
+    final minute = date.minute;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final hour12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    final minuteStr = minute.toString().padLeft(2, '0');
+    return '$hour12:$minuteStr $period';
+  }
+
+  String _dateLabel(DateTime date) {
+    final today = _dateOnly(DateTime.now());
+    final target = _dateOnly(date);
+    final difference = today.difference(target).inDays;
+
+    if (difference == 0) return 'Today';
+    if (difference == 1) return 'Yesterday';
+    if (difference < 7) return _weekdayFullName(date.weekday);
+
+    final month = _monthName(date.month);
+    if (date.year == today.year) {
+      return '$month ${date.day}';
+    }
+    return '$month ${date.day}, ${date.year}';
+  }
+
+  String _weekdayFullName(int weekday) {
+    const names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    return names[weekday - 1];
+  }
+
+  Color _moodColor(double value) {
+    const low = Color(0xFF4B5A68);
+    const high = ElioColors.darkAccent;
+    return Color.lerp(low, high, value) ?? high;
+  }
 }
 
 class _WavePainter extends CustomPainter {
