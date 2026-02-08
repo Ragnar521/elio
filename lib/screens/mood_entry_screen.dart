@@ -13,14 +13,11 @@ class MoodEntryScreen extends StatefulWidget {
   State<MoodEntryScreen> createState() => _MoodEntryScreenState();
 }
 
-class _MoodEntryScreenState extends State<MoodEntryScreen> with SingleTickerProviderStateMixin {
+class _MoodEntryScreenState extends State<MoodEntryScreen> {
   double _moodValue = 0.5;
   bool _hasInteracted = false;
   int _lastThresholdIndex = 0;
   late String _userName;
-  AnimationController? _buttonAnimationController;
-  Animation<Offset>? _buttonSlideAnimation;
-  Animation<double>? _buttonFadeAnimation;
 
   static const _moodWords = [
     'Heavy',
@@ -49,33 +46,6 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> with SingleTickerProv
     super.initState();
     _lastThresholdIndex = _thresholdIndexFor(_moodValue);
     _userName = StorageService.instance.userName;
-
-    // Initialize button animation
-    final controller = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-    _buttonAnimationController = controller;
-    _buttonSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: controller,
-      curve: Curves.easeOutCubic,
-    ));
-    _buttonFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: controller,
-      curve: Curves.easeOut,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _buttonAnimationController?.dispose();
-    super.dispose();
   }
 
   String _greeting() {
@@ -93,16 +63,10 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> with SingleTickerProv
   }
 
   void _onMoodChanged(double value) {
-    final wasInteracted = _hasInteracted;
     setState(() {
       _moodValue = value;
       _hasInteracted = true;
     });
-
-    // Animate button in on first interaction
-    if (!wasInteracted) {
-      _buttonAnimationController?.forward();
-    }
 
     final nextIndex = _thresholdIndexFor(value);
     if (nextIndex != _lastThresholdIndex) {
@@ -253,18 +217,14 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> with SingleTickerProv
                 ),
               ),
             ),
-            if (_hasInteracted && _buttonSlideAnimation != null && _buttonFadeAnimation != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                child: SlideTransition(
-                  position: _buttonSlideAnimation!,
-                  child: FadeTransition(
-                    opacity: _buttonFadeAnimation!,
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () {
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _hasInteracted
+                      ? () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => IntentionScreen(
@@ -273,30 +233,30 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> with SingleTickerProv
                               ),
                             ),
                           );
-                        },
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                            (states) {
-                              if (states.contains(WidgetState.pressed)) {
-                                return const Color(0xFFE5562E);
-                              }
-                              return ElioColors.darkAccent;
-                            },
-                          ),
-                          foregroundColor: WidgetStateProperty.all(ElioColors.darkPrimaryText),
-                          shape: WidgetStateProperty.all(
-                            RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                          ),
-                          elevation: WidgetStateProperty.all(0),
-                        ),
-                        child: const Text('Continue'),
-                      ),
+                        }
+                      : null,
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                      (states) {
+                        if (states.contains(WidgetState.disabled)) {
+                          return ElioColors.darkAccent.withOpacity(0.4);
+                        }
+                        if (states.contains(WidgetState.pressed)) {
+                          return const Color(0xFFE5562E);
+                        }
+                        return ElioColors.darkAccent;
+                      },
                     ),
+                    foregroundColor: WidgetStateProperty.all(ElioColors.darkPrimaryText),
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                    ),
+                    elevation: WidgetStateProperty.all(0),
                   ),
+                  child: const Text('Continue'),
                 ),
-              )
-            else
-              const SizedBox(height: 80),
+              ),
+            ),
           ],
         ),
       ),
