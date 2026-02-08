@@ -4,6 +4,8 @@ import '../models/entry.dart';
 import '../services/insights_service.dart';
 import '../services/storage_service.dart';
 import '../theme/elio_colors.dart';
+import '../widgets/day_entries_sheet.dart';
+import '../widgets/day_pattern_chart.dart';
 import '../widgets/insight_card.dart';
 import '../widgets/mood_wave.dart';
 import '../widgets/stat_card.dart';
@@ -16,11 +18,14 @@ class InsightsScreen extends StatefulWidget {
   State<InsightsScreen> createState() => _InsightsScreenState();
 }
 
+enum _NavigationDirection { forward, backward }
+
 class _InsightsScreenState extends State<InsightsScreen> {
   late Future<_InsightsBaseData> _future;
   InsightsPeriod _period = InsightsPeriod.week;
   int _offset = 0;
   bool _useSampleData = false;
+  _NavigationDirection _lastDirection = _NavigationDirection.forward;
 
   @override
   void initState() {
@@ -47,11 +52,30 @@ class _InsightsScreenState extends State<InsightsScreen> {
     final velocity = details.primaryVelocity ?? 0;
     if (velocity.abs() < 200) return;
     if (velocity < 0) {
-      setState(() => _offset -= 1);
+      _navigatePeriod(-1);
     } else {
-      setState(() => _offset = (_offset + 1).clamp(-1000, 0));
+      _navigatePeriod(1);
     }
   }
+
+  void _navigatePeriod(int direction) {
+    if (direction > 0) {
+      // Going forward (to present)
+      if (_offset >= 0) return; // Already at current period
+      setState(() {
+        _lastDirection = _NavigationDirection.forward;
+        _offset = (_offset + 1).clamp(-1000, 0);
+      });
+    } else {
+      // Going backward (to past)
+      setState(() {
+        _lastDirection = _NavigationDirection.backward;
+        _offset -= 1;
+      });
+    }
+  }
+
+  bool get _isCurrentPeriod => _offset == 0;
 
   @override
   Widget build(BuildContext context) {
@@ -98,11 +122,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
               );
             }
 
-            return GestureDetector(
-              onHorizontalDragEnd: _onSwipe,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                children: [
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+              children: [
                   Row(
                     children: [
                       Expanded(
@@ -125,29 +147,21 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   const SizedBox(height: 16),
                   _buildToggle(context),
                   const SizedBox(height: 14),
-                  Center(
-                    child: Text(
-                      _periodLabel(data.periodStart, data.periodEnd, _period),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
+                  _buildPeriodNavigation(context, data),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onHorizontalDragEnd: _onSwipe,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeInOutCubic,
+                      switchOutCurve: Curves.easeInOutCubic,
+                      transitionBuilder: (child, animation) {
+                        return _buildAnimatedTransition(child, animation);
+                      },
+                      child: _buildPeriodContent(context, data),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  MoodWave(
-                    entries: data.entries,
-                    periodStart: data.periodStart,
-                    daysInPeriod: data.daysInPeriod,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildAxisLabels(context, data.daysInPeriod),
-                  const SizedBox(height: 24),
-                  InsightCard(text: data.insightText),
-                  const SizedBox(height: 18),
-                  _buildStatsRow(context, data),
                 ],
-              ),
             );
           },
         ),
@@ -183,6 +197,96 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  Widget _buildAnimatedTransition(Widget child, Animation<double> animation) {
+    final offsetAnimation = Tween<Offset>(
+      begin: _lastDirection == _NavigationDirection.backward
+          ? const Offset(-0.3, 0.0) // Slide in from left
+          : const Offset(0.3, 0.0), // Slide in from right
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeInOutCubic,
+    ));
+
+    return SlideTransition(
+      position: offsetAnimation,
+      child: FadeTransition(
+        opacity: animation,
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildPeriodContent(BuildContext context, InsightsData data) {
+    // Use a unique key based on period and offset to trigger animation
+    final key = ValueKey('${_period.name}_$_offset');
+
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        MoodWave(
+          entries: data.entries,
+          periodStart: data.periodStart,
+          daysInPeriod: data.daysInPeriod,
+        ),
+        const SizedBox(height: 10),
+        _buildAxisLabels(context, data.daysInPeriod),
+        const SizedBox(height: 12),
+        _buildComparisonLine(context, data),
+        const SizedBox(height: 24),
+        InsightCard(insights: data.insights),
+        const SizedBox(height: 18),
+        _buildStatsRow(context, data),
+        const SizedBox(height: 24),
+        DayPatternChart(
+          pattern: data.dayOfWeekAverages,
+          bestDay: data.bestDay,
+          worstDay: data.worstDay,
+          onDayTap: (dayOfWeek) => _showDayEntriesSheet(context, data, dayOfWeek),
+        ),
+        const SizedBox(height: 16),
+        _buildPatternInsight(context, data.patternInsight),
+      ],
+    );
+  }
+
+  Widget _buildPeriodNavigation(BuildContext context, InsightsData data) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Left arrow (always enabled - go to past)
+        IconButton(
+          icon: const Icon(Icons.chevron_left),
+          color: ElioColors.darkPrimaryText,
+          onPressed: () => _navigatePeriod(-1),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
+        const SizedBox(width: 12),
+        // Period label
+        Text(
+          _periodLabel(data.periodStart, data.periodEnd, _period),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: ElioColors.darkPrimaryText.withOpacity(0.7),
+                fontSize: 16,
+              ),
+        ),
+        const SizedBox(width: 12),
+        // Right arrow (disabled at current period)
+        IconButton(
+          icon: const Icon(Icons.chevron_right),
+          color: _isCurrentPeriod
+              ? ElioColors.darkPrimaryText.withOpacity(0.3)
+              : ElioColors.darkPrimaryText,
+          onPressed: _isCurrentPeriod ? null : () => _navigatePeriod(1),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
+      ],
+    );
+  }
+
   Widget _buildAxisLabels(BuildContext context, int daysInPeriod) {
     final labels = _period == InsightsPeriod.week
         ? const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -210,27 +314,170 @@ class _InsightsScreenState extends State<InsightsScreen> {
     return sorted.map((value) => value.toString()).toList();
   }
 
-  Widget _buildStatsRow(BuildContext context, InsightsSnapshot data) {
+  Widget _buildComparisonLine(BuildContext context, InsightsData data) {
+    final avgFormatted = data.avgMood.toStringAsFixed(2);
+    final periodName = _period == InsightsPeriod.week ? 'week' : 'month';
+
+    String comparisonText = 'This $periodName: $avgFormatted avg';
+
+    if (data.moodChangeVsPrevious != null) {
+      final percentChange = (data.moodChangeVsPrevious! * 100).round();
+      final arrow = percentChange > 0 ? '↑' : '↓';
+      final color = percentChange > 0
+          ? const Color(0xFF4CAF50)
+          : ElioColors.darkPrimaryText.withOpacity(0.5);
+
+      return Center(
+        child: RichText(
+          text: TextSpan(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: ElioColors.darkPrimaryText.withOpacity(0.7),
+                  fontSize: 13,
+                ),
+            children: [
+              TextSpan(text: comparisonText),
+              const TextSpan(text: '  '),
+              TextSpan(
+                text: '$arrow${percentChange.abs()}%',
+                style: TextStyle(color: color),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Center(
+      child: Text(
+        comparisonText,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: ElioColors.darkPrimaryText.withOpacity(0.7),
+              fontSize: 13,
+            ),
+      ),
+    );
+  }
+
+  Widget _buildStatsRow(BuildContext context, InsightsData data) {
     final cards = _period == InsightsPeriod.week
         ? [
-            StatCard(value: data.checkInCount.toString(), label: 'check-ins'),
-            StatCard(value: data.streak.toString(), label: 'day streak'),
-            StatCard(value: data.mostFelt, label: 'most felt'),
+            StatCard(
+              value: data.checkInCount.toString(),
+              label: 'of 7 days',
+              comparison: data.checkInChangeVsPrevious != null
+                  ? (data.checkInChangeVsPrevious! >= 0
+                      ? '↑${data.checkInChangeVsPrevious}'
+                      : '↓${data.checkInChangeVsPrevious!.abs()}')
+                  : null,
+              isPositive: data.checkInChangeVsPrevious != null && data.checkInChangeVsPrevious! > 0,
+            ),
+            StatCard(
+              value: data.streak.toString(),
+              label: 'days',
+              comparison: 'best: ${data.longestStreakAllTime}',
+            ),
+            StatCard(
+              value: '${(data.reflectionRate * 100).round()}%',
+              label: '${data.reflectionDays} of ${data.checkInCount}',
+            ),
+            StatCard(
+              value: data.mostFelt,
+              label: '',
+            ),
           ]
         : [
-            StatCard(value: data.checkInCount.toString(), label: 'check-ins'),
-            StatCard(value: _daysPercent(data.daysWithEntries, data.daysInPeriod), label: 'of days'),
-            StatCard(value: data.mostFelt, label: 'most felt'),
+            StatCard(
+              value: data.checkInCount.toString(),
+              label: 'of ${data.daysInPeriod} days',
+              comparison: data.checkInChangeVsPrevious != null
+                  ? (data.checkInChangeVsPrevious! >= 0
+                      ? '↑${data.checkInChangeVsPrevious}'
+                      : '↓${data.checkInChangeVsPrevious!.abs()}')
+                  : null,
+              isPositive: data.checkInChangeVsPrevious != null && data.checkInChangeVsPrevious! > 0,
+            ),
+            StatCard(
+              value: data.streak.toString(),
+              label: 'current',
+              comparison: 'best: ${data.longestStreakAllTime}',
+            ),
+            StatCard(
+              value: '${(data.reflectionRate * 100).round()}%',
+              label: '${data.reflectionDays} of ${data.checkInCount}',
+            ),
+            StatCard(
+              value: data.mostFelt,
+              label: '${data.mostFeltCount} times',
+            ),
           ];
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: cards[0]),
-        const SizedBox(width: 12),
-        Expanded(child: cards[1]),
-        const SizedBox(width: 12),
-        Expanded(child: cards[2]),
+        Expanded(flex: 1, child: cards[0]),
+        const SizedBox(width: 8),
+        Expanded(flex: 1, child: cards[1]),
+        const SizedBox(width: 8),
+        Expanded(flex: 1, child: cards[2]),
+        const SizedBox(width: 8),
+        Expanded(flex: 1, child: cards[3]),
       ],
+    );
+  }
+
+  Widget _buildPatternInsight(BuildContext context, String insight) {
+    if (insight.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ElioColors.darkSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: ElioColors.darkPrimaryText.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        insight,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: ElioColors.darkPrimaryText.withOpacity(0.8),
+              fontSize: 14,
+            ),
+      ),
+    );
+  }
+
+  void _showDayEntriesSheet(BuildContext context, InsightsData data, int dayOfWeek) {
+    // Filter entries for this specific day of the week
+    final dayEntries = data.entries.where((entry) {
+      return entry.createdAt.weekday == dayOfWeek;
+    }).toList();
+
+    // Sort by date, newest first
+    dayEntries.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    // Get day name
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final dayName = dayNames[dayOfWeek - 1];
+
+    // Get average mood for this day
+    final avgMood = data.dayOfWeekAverages[dayOfWeek] ?? 0.0;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => DayEntriesSheet(
+          dayName: dayName,
+          entries: dayEntries,
+          averageMood: avgMood,
+        ),
+      ),
     );
   }
 
@@ -327,12 +574,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
       'December',
     ];
     return full ? long[month - 1] : short[month - 1];
-  }
-
-  String _daysPercent(int daysWithEntries, int daysInPeriod) {
-    if (daysInPeriod == 0) return '0%';
-    final percent = (daysWithEntries / daysInPeriod * 100).round();
-    return '$percent%';
   }
 
   List<Entry> _buildSampleEntries(DateTime now) {

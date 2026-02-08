@@ -15,6 +15,7 @@ class StorageService {
   static const _onboardingCompletedKey = 'onboarding_completed';
   static const _notificationsEnabledKey = 'notifications_enabled';
   static const _reflectionEnabledKey = 'reflection_enabled';
+  static const _longestStreakKey = 'longest_streak';
 
   Box<Entry>? _entriesBox;
   Box<dynamic>? _settingsBox;
@@ -26,6 +27,9 @@ class StorageService {
     }
     _entriesBox = await Hive.openBox<Entry>(_entriesBoxName);
     _settingsBox = await Hive.openBox<dynamic>(_settingsBoxName);
+
+    // Backfill longest streak on first run
+    await _backfillLongestStreak();
   }
 
   Future<Entry> saveEntry({
@@ -43,6 +47,11 @@ class StorageService {
       reflectionAnswerIds: reflectionAnswerIds,
     );
     await _box.put(entry.id, entry);
+
+    // Update longest streak if current streak is higher
+    final currentStreak = await getCurrentStreak();
+    await updateLongestStreak(currentStreak);
+
     return entry;
   }
 
@@ -143,5 +152,64 @@ class StorageService {
 
   Future<void> setReflectionEnabled(bool enabled) async {
     await _settings.put(_reflectionEnabledKey, enabled);
+  }
+
+  Future<int> getLongestStreak() async {
+    final value = _settings.get(_longestStreakKey, defaultValue: 0);
+    return value is int ? value : 0;
+  }
+
+  Future<void> updateLongestStreak(int currentStreak) async {
+    final longest = await getLongestStreak();
+    if (currentStreak > longest) {
+      await _settings.put(_longestStreakKey, currentStreak);
+    }
+  }
+
+  Future<List<Entry>> getEntriesForPeriod(DateTime start, DateTime end) async {
+    final entries = _box.values.where((entry) {
+      return !entry.createdAt.isBefore(start) && entry.createdAt.isBefore(end);
+    }).toList();
+    entries.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return entries;
+  }
+
+  Future<void> _backfillLongestStreak() async {
+    // Only backfill if longest streak hasn't been set yet
+    final existing = _settings.get(_longestStreakKey);
+    if (existing != null) return;
+
+    // Calculate longest streak from all entries
+    final entries = await getAllEntries();
+    if (entries.isEmpty) return;
+
+    final daysWithEntries = <DateTime>{};
+    for (final entry in entries) {
+      daysWithEntries.add(_dateOnly(entry.createdAt));
+    }
+
+    // Find longest consecutive streak in history
+    final sortedDays = daysWithEntries.toList()..sort();
+    var longestStreak = 0;
+    var currentStreak = 1;
+
+    for (var i = 1; i < sortedDays.length; i++) {
+      final diff = sortedDays[i].difference(sortedDays[i - 1]).inDays;
+      if (diff == 1) {
+        currentStreak++;
+      } else {
+        if (currentStreak > longestStreak) {
+          longestStreak = currentStreak;
+        }
+        currentStreak = 1;
+      }
+    }
+
+    // Check final streak
+    if (currentStreak > longestStreak) {
+      longestStreak = currentStreak;
+    }
+
+    await _settings.put(_longestStreakKey, longestStreak);
   }
 }
