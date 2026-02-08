@@ -18,9 +18,9 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> with SingleTickerProv
   bool _hasInteracted = false;
   int _lastThresholdIndex = 0;
   late String _userName;
-  late AnimationController _buttonAnimationController;
-  late Animation<Offset> _buttonSlideAnimation;
-  late Animation<double> _buttonFadeAnimation;
+  AnimationController? _buttonAnimationController;
+  Animation<Offset>? _buttonSlideAnimation;
+  Animation<double>? _buttonFadeAnimation;
 
   static const _moodWords = [
     'Heavy',
@@ -51,29 +51,30 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> with SingleTickerProv
     _userName = StorageService.instance.userName;
 
     // Initialize button animation
-    _buttonAnimationController = AnimationController(
+    final controller = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
+    _buttonAnimationController = controller;
     _buttonSlideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _buttonAnimationController,
+      parent: controller,
       curve: Curves.easeOutCubic,
     ));
     _buttonFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _buttonAnimationController,
+      parent: controller,
       curve: Curves.easeOut,
     ));
   }
 
   @override
   void dispose() {
-    _buttonAnimationController.dispose();
+    _buttonAnimationController?.dispose();
     super.dispose();
   }
 
@@ -100,7 +101,7 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> with SingleTickerProv
 
     // Animate button in on first interaction
     if (!wasInteracted) {
-      _buttonAnimationController.forward();
+      _buttonAnimationController?.forward();
     }
 
     final nextIndex = _thresholdIndexFor(value);
@@ -252,13 +253,13 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> with SingleTickerProv
                 ),
               ),
             ),
-            if (_hasInteracted)
+            if (_hasInteracted && _buttonSlideAnimation != null && _buttonFadeAnimation != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 child: SlideTransition(
-                  position: _buttonSlideAnimation,
+                  position: _buttonSlideAnimation!,
                   child: FadeTransition(
-                    opacity: _buttonFadeAnimation,
+                    opacity: _buttonFadeAnimation!,
                     child: SizedBox(
                       width: double.infinity,
                       height: 56,
