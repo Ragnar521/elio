@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../services/storage_service.dart';
 import '../theme/elio_colors.dart';
 import 'confirmation_screen.dart';
+import 'reflection_screen.dart';
 
 class IntentionScreen extends StatefulWidget {
   const IntentionScreen({super.key, required this.moodValue, required this.moodWord});
@@ -85,6 +87,32 @@ class _IntentionScreenState extends State<IntentionScreen> {
     _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
   }
 
+  void _navigateNext() {
+    final reflectionEnabled = StorageService.instance.reflectionEnabled;
+
+    if (reflectionEnabled) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ReflectionScreen(
+            moodWord: widget.moodWord,
+            moodValue: widget.moodValue,
+            intention: _controller.text.trim(),
+          ),
+        ),
+      );
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ConfirmationScreen(
+            moodWord: widget.moodWord,
+            moodValue: widget.moodValue,
+            intentionText: _controller.text.trim(),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,17 +184,7 @@ class _IntentionScreenState extends State<IntentionScreen> {
                     ),
                   ),
                   textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _hasText
-                      ? Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ConfirmationScreen(
-                              moodWord: widget.moodWord,
-                              moodValue: widget.moodValue,
-                              intentionText: _controller.text.trim(),
-                            ),
-                          ),
-                        )
-                      : null,
+                  onSubmitted: (_) => _hasText ? _navigateNext() : null,
                 ),
               ),
             ),
@@ -206,19 +224,7 @@ class _IntentionScreenState extends State<IntentionScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _hasText
-                      ? () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ConfirmationScreen(
-                                moodWord: widget.moodWord,
-                                moodValue: widget.moodValue,
-                                intentionText: _controller.text.trim(),
-                              ),
-                            ),
-                          );
-                        }
-                      : null,
+                  onPressed: _hasText ? _navigateNext : null,
                   style: ButtonStyle(
                     backgroundColor: WidgetStateProperty.resolveWith<Color>(
                       (states) {

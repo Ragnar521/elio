@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/elio_colors.dart';
+import 'package:hive/hive.dart';
+
+import '../models/entry.dart';
+import '../services/reflection_service.dart';
 import '../services/storage_service.dart';
+import '../theme/elio_colors.dart';
+import '../widgets/answered_question_chip.dart';
 
 class ConfirmationScreen extends StatefulWidget {
   const ConfirmationScreen({
@@ -11,12 +16,14 @@ class ConfirmationScreen extends StatefulWidget {
     required this.moodWord,
     required this.intentionText,
     this.streakCount,
+    this.answeredQuestions,
   });
 
   final double moodValue;
   final String moodWord;
   final String intentionText;
   final int? streakCount;
+  final List<dynamic>? answeredQuestions;
 
   @override
   State<ConfirmationScreen> createState() => _ConfirmationScreenState();
@@ -96,13 +103,45 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
   }
 
   Future<void> _saveEntryAndStart() async {
+    List<String>? reflectionAnswerIds;
+
     try {
-      await StorageService.instance.saveEntry(
+      // Save the entry first to get its ID
+      final entry = await StorageService.instance.saveEntry(
         moodValue: widget.moodValue,
         moodWord: widget.moodWord,
         intention: widget.intentionText,
       );
-    } catch (_) {
+
+      // Save reflection answers if any, using the entry ID
+      if (widget.answeredQuestions != null && widget.answeredQuestions!.isNotEmpty) {
+        final answerIds = <String>[];
+        for (final aq in widget.answeredQuestions!) {
+          final answer = await ReflectionService.instance.saveAnswer(
+            entryId: entry.id,
+            questionId: aq.questionId as String,
+            questionText: aq.questionText as String,
+            answer: aq.answer as String,
+          );
+          answerIds.add(answer.id);
+        }
+        reflectionAnswerIds = answerIds;
+
+        // Update the entry with reflection answer IDs
+        final updatedEntry = Entry(
+          id: entry.id,
+          moodValue: entry.moodValue,
+          moodWord: entry.moodWord,
+          intention: entry.intention,
+          createdAt: entry.createdAt,
+          reflectionAnswerIds: reflectionAnswerIds,
+        );
+
+        // Save the updated entry
+        await Hive.box<Entry>('entries').put(entry.id, updatedEntry);
+      }
+    } catch (e) {
+      debugPrint('Error saving entry: $e');
     }
 
     try {
@@ -190,6 +229,24 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
                           ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
                       textAlign: TextAlign.center,
                     ),
+                    if (widget.answeredQuestions != null &&
+                        widget.answeredQuestions!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          children: widget.answeredQuestions!
+                              .map((aq) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: AnsweredQuestionChip(
+                                      questionText: aq.questionText as String,
+                                      answer: aq.answer as String,
+                                    ),
+                                  ))
+                              .toList(),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     Text(
                       _streakLabel,

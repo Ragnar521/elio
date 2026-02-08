@@ -31,6 +31,27 @@ class ElioTheme {
         elevation: 0,
       ),
       dividerColor: ElioColors.darkPrimaryText.withOpacity(0.08),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: ElioColors.darkSurface,
+        selectedItemColor: ElioColors.darkAccent,
+        unselectedItemColor: ElioColors.darkPrimaryText.withOpacity(0.5),
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+        selectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+        ),
+        selectedIconTheme: const IconThemeData(
+          size: 24,
+        ),
+        unselectedIconTheme: const IconThemeData(
+          size: 22,
+        ),
+      ),
     );
   }
 
@@ -61,6 +82,27 @@ class ElioTheme {
         elevation: 0,
       ),
       dividerColor: ElioColors.lightPrimaryText.withOpacity(0.08),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: ElioColors.lightSurface,
+        selectedItemColor: ElioColors.lightAccent,
+        unselectedItemColor: ElioColors.lightPrimaryText.withOpacity(0.5),
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+        selectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+        ),
+        selectedIconTheme: const IconThemeData(
+          size: 24,
+        ),
+        unselectedIconTheme: const IconThemeData(
+          size: 22,
+        ),
+      ),
     );
   }
 }
