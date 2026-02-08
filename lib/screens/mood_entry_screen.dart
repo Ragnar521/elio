@@ -107,7 +107,7 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                     style: Theme.of(context)
                         .textTheme
                         .headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                        ?.copyWith(fontWeight: FontWeight.w700),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
@@ -116,65 +116,103 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                     style: Theme.of(context)
                         .textTheme
                         .bodyLarge
-                        ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
+                        ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.6)),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 60),
             Expanded(
-              child: Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
-                  decoration: BoxDecoration(
-                    color: ElioColors.darkSurface,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: glow.withOpacity(0.35),
-                        blurRadius: 26,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          activeTrackColor: glow,
-                          inactiveTrackColor: ElioColors.darkPrimaryText.withOpacity(0.15),
-                          thumbColor: ElioColors.darkPrimaryText,
-                          overlayColor: glow.withOpacity(0.15),
-                          trackHeight: 6,
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Center(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+                    decoration: BoxDecoration(
+                      color: ElioColors.darkSurface,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: glow.withOpacity(0.35),
+                          blurRadius: 26,
+                          spreadRadius: 2,
                         ),
-                        child: Slider(
-                          value: _moodValue,
-                          onChanged: _onMoodChanged,
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        switchInCurve: Curves.easeOutCubic,
-                        switchOutCurve: Curves.easeOutCubic,
-                        transitionBuilder: (child, animation) {
-                          return FadeTransition(opacity: animation, child: child);
-                        },
-                        child: Text(
-                          moodWord,
-                          key: ValueKey(moodWord),
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(color: ElioColors.darkPrimaryText),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeOutCubic,
+                          transitionBuilder: (child, animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: ScaleTransition(
+                                scale: Tween<double>(begin: 0.8, end: 1.0).animate(animation),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Text(
+                            moodWord,
+                            key: ValueKey(moodWord),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  color: ElioColors.darkPrimaryText,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 24),
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: glow,
+                            inactiveTrackColor: ElioColors.darkPrimaryText.withOpacity(0.15),
+                            thumbColor: ElioColors.darkPrimaryText,
+                            overlayColor: glow.withOpacity(0.15),
+                            trackHeight: 6,
+                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+                          ),
+                          child: Slider(
+                            value: _moodValue,
+                            onChanged: _onMoodChanged,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Heavy',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: ElioColors.darkPrimaryText.withOpacity(0.5),
+                                    ),
+                              ),
+                              Text(
+                                'Great',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: ElioColors.darkPrimaryText.withOpacity(0.5),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
