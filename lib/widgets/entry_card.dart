@@ -8,30 +8,36 @@ class EntryCard extends StatelessWidget {
     super.key,
     required this.entry,
     required this.timeLabel,
+    required this.dateLabel,
     required this.moodColor,
+    this.onTap,
   });
 
   final Entry entry;
   final String timeLabel;
+  final String dateLabel;
   final Color moodColor;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: ElioColors.darkSurface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.18),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: ElioColors.darkSurface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.18),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -69,9 +75,12 @@ class EntryCard extends StatelessWidget {
                 .textTheme
                 .bodyMedium
                 ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.85)),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
+    ),
     );
   }
 }

@@ -14,6 +14,7 @@ class StorageService {
   static const _userNameKey = 'user_name';
   static const _onboardingCompletedKey = 'onboarding_completed';
   static const _notificationsEnabledKey = 'notifications_enabled';
+  static const _reflectionEnabledKey = 'reflection_enabled';
 
   Box<Entry>? _entriesBox;
   Box<dynamic>? _settingsBox;
@@ -31,6 +32,7 @@ class StorageService {
     required double moodValue,
     required String moodWord,
     required String intention,
+    List<String>? reflectionAnswerIds,
   }) async {
     final entry = Entry(
       id: _uuid.v4(),
@@ -38,6 +40,7 @@ class StorageService {
       moodWord: moodWord,
       intention: intention,
       createdAt: DateTime.now(),
+      reflectionAnswerIds: reflectionAnswerIds,
     );
     await _box.put(entry.id, entry);
     return entry;
@@ -131,5 +134,14 @@ class StorageService {
 
   Future<void> setNotificationsEnabled(bool enabled) async {
     await _settings.put(_notificationsEnabledKey, enabled);
+  }
+
+  bool get reflectionEnabled {
+    final value = _settings.get(_reflectionEnabledKey, defaultValue: true);
+    return value is bool ? value : true;
+  }
+
+  Future<void> setReflectionEnabled(bool enabled) async {
+    await _settings.put(_reflectionEnabledKey, enabled);
   }
 }

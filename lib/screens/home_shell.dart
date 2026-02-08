@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'history_screen.dart';
 import 'insights_screen.dart';
 import 'mood_entry_screen.dart';
+import 'settings_screen.dart';
 import 'onboarding/onboarding_flow.dart';
 import '../services/storage_service.dart';
 
@@ -24,7 +25,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
-    _index = widget.initialIndex.clamp(0, 2) as int;
+    _index = widget.initialIndex.clamp(0, 3) as int;
   }
 
   Future<void> _resetOnboarding(BuildContext context) async {
@@ -77,28 +78,48 @@ class _HomeShellState extends State<HomeShell> {
           MoodEntryScreen(),
           HistoryScreen(),
           InsightsScreen(),
+          SettingsScreen(),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        onTap: _handleTap,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
-            activeIcon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.auto_graph_outlined),
-            activeIcon: Icon(Icons.auto_graph),
-            label: 'Insights',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _index,
+          onTap: _handleTap,
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history_outlined),
+              activeIcon: Icon(Icons.history),
+              label: 'History',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.auto_graph_outlined),
+              activeIcon: Icon(Icons.auto_graph),
+              label: 'Insights',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              activeIcon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
+          ],
+        ),
       ),
     );
   }

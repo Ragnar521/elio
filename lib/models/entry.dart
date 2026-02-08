@@ -7,6 +7,7 @@ class Entry {
     required this.moodWord,
     required this.intention,
     required this.createdAt,
+    this.reflectionAnswerIds,
   });
 
   final String id;
@@ -14,6 +15,7 @@ class Entry {
   final String moodWord;
   final String intention;
   final DateTime createdAt;
+  final List<String>? reflectionAnswerIds;
 }
 
 class EntryAdapter extends TypeAdapter<Entry> {
@@ -34,13 +36,14 @@ class EntryAdapter extends TypeAdapter<Entry> {
       moodWord: fields[2] as String,
       intention: fields[3] as String,
       createdAt: fields[4] as DateTime,
+      reflectionAnswerIds: fields[5] as List<String>?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Entry obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,6 +53,8 @@ class EntryAdapter extends TypeAdapter<Entry> {
       ..writeByte(3)
       ..write(obj.intention)
       ..writeByte(4)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(5)
+      ..write(obj.reflectionAnswerIds);
   }
 }

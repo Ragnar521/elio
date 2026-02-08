@@ -4,6 +4,7 @@ import '../models/entry.dart';
 import '../services/storage_service.dart';
 import '../theme/elio_colors.dart';
 import '../widgets/entry_card.dart';
+import 'entry_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -137,7 +138,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
         EntryCard(
           entry: entry,
           timeLabel: _timeLabel(entry.createdAt),
+          dateLabel: _dateLabel(entry.createdAt),
           moodColor: _moodIndicator(entry.moodValue),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => EntryDetailScreen(
+                  entry: entry,
+                  timeLabel: _timeLabel(entry.createdAt),
+                  dateLabel: _dateLabel(entry.createdAt),
+                  moodColor: _moodIndicator(entry.moodValue),
+                ),
+              ),
+            );
+          },
         ),
       );
     }
