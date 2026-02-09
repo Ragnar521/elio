@@ -1,20 +1,21 @@
 # Elio - App Context & Architecture
 
-**Last Updated:** February 8, 2026
-**Version:** 1.0.0
+**Last Updated:** February 9, 2026
+**Version:** 1.1.0
 **Platform:** Flutter (iOS & Android)
 
 ---
 
 ## 📱 What is Elio?
 
-Elio is a **mood tracking and journaling app** that helps users check in with their emotions, set daily intentions, and reflect on their experiences. The app emphasizes simplicity, no-guilt design, and meaningful self-reflection.
+Elio is a **mood tracking and journaling app** that helps users check in with their emotions, set daily intentions, reflect on their experiences, and connect entries to life areas they care about (Directions). The app emphasizes simplicity, no-guilt design, and meaningful self-reflection.
 
 ### Core Philosophy
 - **Simple & Fast**: Quick daily check-ins (< 2 minutes)
 - **No Guilt**: Optional features, positive language, "skip" buttons
 - **Mindful Design**: Warm, calm color palette and smooth animations
 - **Privacy-First**: All data stored locally on device (Hive database)
+- **Compass, Not Checklist**: Directions help awareness without pressure
 
 ---
 
@@ -25,11 +26,11 @@ Elio is a **mood tracking and journaling app** that helps users check in with th
 │ Onboarding  │ (First launch only)
 └─────┬───────┘
       │
-┌─────▼────────────────────────────────────────────────┐
-│ Main App (Bottom Navigation - 4 Tabs)                │
-├──────────┬──────────┬──────────┬────────────────────┤
-│   Home   │ History  │ Insights │     Settings       │
-└─────┬────┴──────────┴──────────┴────────────────────┘
+┌─────▼────────────────────────────────────────────────────────────┐
+│ Main App (Bottom Navigation - 5 Tabs)                            │
+├──────────┬──────────┬────────────┬──────────┬────────────────────┤
+│   Home   │ Insights │ Directions │ History  │     Settings       │
+└─────┬────┴──────────┴────────────┴──────────┴────────────────────┘
       │
 ┌─────▼───────┐
 │ Mood Entry  │ Select mood on slider (0.0 to 1.0)
@@ -68,6 +69,8 @@ Elio is a **mood tracking and journaling app** that helps users check in with th
   - `entries` - Mood entries
   - `reflectionQuestions` - Question library
   - `reflectionAnswers` - User answers
+  - `directions` - Life directions (max 5 active)
+  - `direction_connections` - Entry-to-direction links
   - `settings` - App settings (key-value pairs)
 
 ### Navigation
@@ -85,18 +88,26 @@ lib/
 ├── models/                      # Data models with Hive adapters
 │   ├── entry.dart              # Mood entry (typeId: 0)
 │   ├── reflection_question.dart # Question (typeId: 1)
-│   └── reflection_answer.dart  # Answer (typeId: 2)
+│   ├── reflection_answer.dart  # Answer (typeId: 2)
+│   ├── direction.dart          # Direction + DirectionType enum (typeId: 4, 5)
+│   ├── direction_connection.dart # Entry-Direction link (typeId: 6)
+│   └── direction_stats.dart    # Direction analytics (no Hive)
 ├── services/                    # Business logic & data layer
 │   ├── storage_service.dart    # Entry storage, settings, streaks
 │   ├── reflection_service.dart # Question management, rotation
-│   ├── insights_service.dart   # Analytics calculations
+│   ├── insights_service.dart   # Analytics calculations + direction insights
+│   ├── direction_service.dart  # Direction CRUD, connections, stats
 │   └── notification_service.dart # Local notifications (future)
 ├── screens/                     # UI screens
-│   ├── home_shell.dart         # Bottom navigation wrapper
+│   ├── home_shell.dart         # Bottom navigation wrapper (5 tabs)
 │   ├── mood_entry_screen.dart  # Mood slider
 │   ├── intention_screen.dart   # Intention input
 │   ├── reflection_screen.dart  # Reflection questions (1-3)
 │   ├── confirmation_screen.dart # Save confirmation
+│   ├── directions_screen.dart  # Directions main tab
+│   ├── create_direction_screen.dart # Create new direction
+│   ├── direction_detail_screen.dart # Direction stats & settings
+│   ├── connect_entries_screen.dart  # Link entries to direction
 │   ├── history_screen.dart     # Entry timeline
 │   ├── entry_detail_screen.dart # Full entry view
 │   ├── insights_screen.dart    # Analytics & patterns
@@ -113,6 +124,7 @@ lib/
 ├── widgets/                     # Reusable components
 │   ├── entry_card.dart         # Entry in history list
 │   ├── answered_question_chip.dart # Collapsed answer
+│   ├── direction_card.dart     # Direction with stats (NEW)
 │   ├── mood_wave.dart          # Interactive wave with tap-to-view
 │   ├── stat_card.dart          # Stat display with comparison
 │   ├── insight_card.dart       # Multiple insights display
@@ -228,6 +240,62 @@ ReflectionAnswer {
 }
 ```
 
+### Direction (NEW - v1.1.0)
+```dart
+Direction {
+  id: String (UUID)
+  title: String (max 50 chars, user-defined)
+  type: DirectionType (enum: career, health, relationships, growth, peace, creativity)
+  reflectionEnabled: bool (show direction questions during check-in)
+  isArchived: bool (soft delete, default: false)
+  createdAt: DateTime
+}
+
+DirectionType {
+  career       // 💼
+  health       // 💪
+  relationships // 👥
+  growth       // 🌱
+  peace        // 🧘
+  creativity   // 🎨
+}
+```
+
+**Key Features:**
+- Max 5 active directions per user (enforced)
+- Each type has example prompts and reflection questions
+- Archive functionality preserves connections
+
+### DirectionConnection (NEW - v1.1.0)
+```dart
+DirectionConnection {
+  id: String (UUID)
+  directionId: String (links to Direction)
+  entryId: String (links to Entry)
+  createdAt: DateTime
+}
+```
+
+**Purpose:** Many-to-many relationship - one entry can connect to multiple directions
+
+### DirectionStats (NEW - v1.1.0)
+```dart
+DirectionStats {
+  totalConnections: int
+  monthlyConnections: int
+  monthlyTarget: int (always 10)
+  avgMoodWhenConnected: double
+  overallAvgMood: double
+  recentEntries: List<Entry> (last 5)
+
+  // Computed properties:
+  moodDifference: double (avgWhenConnected - overallAvg)
+  monthlyProgress: double (0.0 - 1.0, for progress bar)
+  hasPositiveCorrelation: bool (difference >= 0.1)
+  hasNegativeCorrelation: bool (difference <= -0.1)
+}
+```
+
 ---
 
 ## ⚙️ Key Services
@@ -294,10 +362,58 @@ getAnswersByIds(ids)           # Fetch answers for entry detail
 - 5 "Elio Essentials" pre-selected
 - All others available in library
 
+### DirectionService (NEW - v1.1.0)
+**Location:** `lib/services/direction_service.dart`
+
+**Purpose:** Manages life directions and entry connections
+
+**Key Methods:**
+```dart
+// Initialization
+init()                          # Initialize Hive, register adapters
+
+// CRUD
+getActiveDirections()           # Get all non-archived directions (max 5)
+getAllDirections()              # Including archived
+getDirection(id)                # Get by ID
+canAddDirection()               # Check if < 5 active
+createDirection(...)            # Create new direction
+updateDirection(direction)      # Update existing
+archiveDirection(id)            # Soft delete
+restoreDirection(id)            # Unarchive (if < 5 active)
+deleteDirection(id)             # Permanent delete + connections
+
+// Connections
+connectEntry(directionId, entryId)      # Link entry to direction
+disconnectEntry(directionId, entryId)   # Unlink
+isEntryConnected(directionId, entryId)  # Check connection
+getConnectedEntries(directionId)        # All entries for direction
+getDirectionsForEntry(entryId)          # All directions for entry
+getUnconnectedEntries(directionId)      # Recent entries not yet connected
+
+// Statistics
+getConnectionCount(directionId)         # Total connections
+getMonthlyConnectionCount(directionId)  # Connections this month
+getAverageMoodWhenConnected(directionId) # Avg mood for this direction
+getOverallAverageMood()                 # Avg mood for all entries
+getStats(directionId)                   # Complete DirectionStats object
+
+// Reflection Integration
+getDirectionsWithReflection()           # Directions with reflectionEnabled=true
+getDailyDirectionQuestion()             # Random question from enabled directions
+getDirectionForQuestion(question)       # Find direction by question text
+
+// Insights Integration
+getFrequentDirectionsThisWeek()         # Directions with 5+ connections in 7 days
+getWeeklyConnectionCount(directionId)   # Connections in past 7 days
+getDormantDirections()                  # No connections in 7+ days
+getDirectionsWithMoodCorrelation()      # Sorted by mood difference (±0.1 threshold)
+```
+
 ### InsightsService
 **Location:** `lib/services/insights_service.dart`
 
-**Purpose:** Calculate analytics and patterns
+**Purpose:** Calculate analytics and patterns + direction insights
 
 **Key Methods:**
 ```dart
@@ -315,12 +431,18 @@ _generatePatternInsight(...)           # Create actionable day pattern suggestio
 - **Period info:** start, end, days in period, entries
 - **Stats:** check-in count, days with entries, current streak, most felt mood
 - **Mood metrics:** average, std deviation, trend (up/down), stable/volatile
-- **New: Reflection tracking:** reflection days, reflection rate
-- **New: Streak tracking:** longest all-time, longest in period
-- **New: Comparison:** previous period avg, check-ins, mood change %, check-in change
-- **New: Day patterns:** day-of-week averages, best day, worst day
-- **New: Insights:** 2-3 generated InsightItems with emoji icons
-- **New: Pattern insight:** actionable suggestion based on day patterns
+- **Reflection tracking:** reflection days, reflection rate
+- **Streak tracking:** longest all-time, longest in period
+- **Comparison:** previous period avg, check-ins, mood change %, check-in change
+- **Day patterns:** day-of-week averages, best day, worst day
+- **Insights:** 2-3 generated InsightItems with emoji icons (priorities 1-18)
+- **Pattern insight:** actionable suggestion based on day patterns
+
+**Direction Insights (Priorities 15-18, Week View Only):**
+- Priority 15: Frequent directions (5+ connections this week)
+- Priority 16: Positive mood correlations (≥0.15 higher when connected)
+- Priority 17: Negative mood correlations (≤-0.1 lower when connected)
+- Priority 18: Dormant directions (no connections in 7+ days)
 
 ---
 
@@ -472,11 +594,67 @@ _generatePatternInsight(...)           # Create actionable day pattern suggestio
 - Bottom sheet: smooth drag + spring animation
 - Stat cards: consistent height for visual harmony
 
-### 8. Settings (4th Tab)
+### 8. Directions (NEW - v1.1.0, 3rd Tab)
+**Main tab showing life compass**
+
+**Empty State:**
+- Large compass emoji 🧭
+- "What matters to you?" heading
+- Explanation text
+- "Add Your First Direction" button
+
+**Directions List:**
+- Header: "Your life compass. Connect your daily check-ins to see patterns."
+- Direction cards showing:
+  - Type emoji + custom title
+  - Total connections count
+  - Monthly progress bar (target: 10)
+  - Average mood (if ≥3 connections)
+  - Reflection questions status (On/Off)
+- "Add direction (X of 5)" card at bottom (if < 5)
+- Tap card → Direction Detail Screen
+
+**Direction Detail Screen:**
+- Overview card: Total connections, monthly progress
+- Mood correlation card:
+  - "When connected" avg vs "Overall avg"
+  - Difference indicator (green ↑ higher / orange ↓ lower)
+  - Only shows if data available
+- "Connect an Entry" button
+- Recent connections list (last 5)
+  - Tap entry → Entry Detail Screen
+- Settings: Reflection questions toggle
+- Archive button (bottom)
+
+**Create Direction Screen:**
+- Type picker grid (3x2):
+  - 💼 Career, 💪 Health, 👥 Relationships
+  - 🌱 Growth, 🧘 Peace, 🎨 Creativity
+- Custom title input (max 50 chars)
+- Example prompts for selected type
+- Reflection toggle
+- Create button
+
+**Connect Entries Screen:**
+- Segmented control: Unconnected / Connected
+- Multi-select checkboxes
+- Shows: mood emoji, intention, date/time
+- "Connect (N)" button in app bar (when selections made)
+
+**Key Features:**
+- Max 5 active directions (enforced)
+- Archive instead of delete (preserves connections)
+- Mood correlation analysis (±0.1 threshold)
+- Monthly target: 10 connections
+- Direction-specific reflection questions (optional)
+
+### 9. Settings (5th Tab)
 - User name display
 - Daily Reflection toggle
   - When ON: "Manage reflection questions" button
 - Future: notifications, theme, export, etc.
+
+### 10. Onboarding
 
 ### 9. Onboarding
 **First launch only:**
@@ -523,6 +701,11 @@ await NotificationService.instance.init();
 - 0: Entry
 - 1: ReflectionQuestion
 - 2: ReflectionAnswer
+- 4: DirectionType (enum)
+- 5: Direction
+- 6: DirectionConnection
+
+**Note:** TypeId 3 is reserved for future use. Manual Hive adapters are used (no build_runner).
 
 **3. Navigation Examples**
 ```dart

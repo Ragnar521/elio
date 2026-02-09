@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../models/entry.dart';
+import 'direction_service.dart';
 
 enum InsightsPeriod { week, month }
 
@@ -157,7 +158,7 @@ class InsightsService {
     );
 
     // Generate 2-3 insights
-    final insights = _generateInsights(
+    final insights = await _generateInsights(
       period: period,
       streak: streak,
       checkInCount: checkInCount,
@@ -272,19 +273,9 @@ class InsightsService {
       worseThanLastMonth: monthlyComparison.worseThanLast,
     );
 
-    final insights = _generateInsights(
-      period: period,
-      streak: streak,
-      checkInCount: checkInCount,
-      trendUp: trend.trendUp,
-      trendDown: trend.trendDown,
-      stable: stable,
-      volatile: volatile,
-      avgMood: avgMood,
-      moodChangeVsPrevious: moodChange,
-      reflectionDays: reflectionStats.$1,
-      reflectionRate: reflectionStats.$2,
-    );
+    // For buildSnapshot (sync), use empty insights list as fallback
+    // This method should be deprecated in favor of getInsightsForPeriod
+    final insights = <InsightItem>[];
 
     final patternInsight = _generatePatternInsight(bestWorstDays.$1, bestWorstDays.$2);
 
@@ -640,7 +631,7 @@ class InsightsService {
     return longestStreak;
   }
 
-  static List<InsightItem> _generateInsights({
+  static Future<List<InsightItem>> _generateInsights({
     required InsightsPeriod period,
     required int streak,
     required int checkInCount,
@@ -652,7 +643,7 @@ class InsightsService {
     required double? moodChangeVsPrevious,
     required int reflectionDays,
     required double reflectionRate,
-  }) {
+  }) async {
     final insights = <InsightItem>[];
     final periodName = period == InsightsPeriod.week ? "week" : "month";
 
@@ -718,6 +709,44 @@ class InsightsService {
     // Priority 14: Fallback
     if (insights.isEmpty) {
       insights.add(InsightItem("👣", "You're here. That's the first step."));
+    }
+
+    // Direction insights (only for week view to keep it relevant)
+    if (period == InsightsPeriod.week && insights.length < 3) {
+      // Priority 15: Direction connected 5+ times this week
+      final frequentDirections = await DirectionService.instance.getFrequentDirectionsThisWeek();
+      for (final direction in frequentDirections) {
+        if (insights.length >= 3) break;
+        final count = DirectionService.instance.getWeeklyConnectionCount(direction.id);
+        insights.add(InsightItem("🧭", "'${direction.title}' showed up $count times this week. It's clearly important to you."));
+      }
+
+      // Priority 16: High mood correlation (≥0.15 difference)
+      if (insights.length < 3) {
+        final correlations = await DirectionService.instance.getDirectionsWithMoodCorrelation();
+        for (final entry in correlations.where((e) => e.value >= 0.15)) {
+          if (insights.length >= 3) break;
+          insights.add(InsightItem("✨", "Your mood is higher when '${entry.key.title}' is part of your day."));
+        }
+      }
+
+      // Priority 17: Low mood correlation (≤-0.1 difference)
+      if (insights.length < 3) {
+        final correlations = await DirectionService.instance.getDirectionsWithMoodCorrelation();
+        for (final entry in correlations.where((e) => e.value <= -0.1)) {
+          if (insights.length >= 3) break;
+          insights.add(InsightItem("💭", "'${entry.key.title}' often comes up on tougher days. Worth reflecting on."));
+        }
+      }
+
+      // Priority 18: Direction not connected in 7+ days
+      if (insights.length < 3) {
+        final dormantDirections = DirectionService.instance.getDormantDirections();
+        for (final direction in dormantDirections) {
+          if (insights.length >= 3) break;
+          insights.add(InsightItem("🌱", "Haven't connected to '${direction.title}' lately. Still matters?"));
+        }
+      }
     }
 
     return insights.take(3).toList();

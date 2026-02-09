@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import 'history_screen.dart';
 import 'insights_screen.dart';
+import 'directions_screen.dart';
 import 'mood_entry_screen.dart';
 import 'settings_screen.dart';
 import 'onboarding/onboarding_flow.dart';
@@ -25,7 +26,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
-    _index = widget.initialIndex.clamp(0, 3) as int;
+    _index = widget.initialIndex.clamp(0, 4);
   }
 
   Future<void> _resetOnboarding(BuildContext context) async {
@@ -76,8 +77,9 @@ class _HomeShellState extends State<HomeShell> {
         index: _index,
         children: const [
           MoodEntryScreen(),
-          HistoryScreen(),
           InsightsScreen(),
+          DirectionsScreen(),
+          HistoryScreen(),
           SettingsScreen(),
         ],
       ),
@@ -104,14 +106,19 @@ class _HomeShellState extends State<HomeShell> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.history_outlined),
-              activeIcon: Icon(Icons.history),
-              label: 'History',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.auto_graph_outlined),
               activeIcon: Icon(Icons.auto_graph),
               label: 'Insights',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.explore_outlined),
+              activeIcon: Icon(Icons.explore),
+              label: 'Directions',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history_outlined),
+              activeIcon: Icon(Icons.history),
+              label: 'History',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings_outlined),
