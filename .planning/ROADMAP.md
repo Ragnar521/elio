@@ -12,8 +12,8 @@ Elio v2.0 transforms a functional mood tracking prototype into a polished, App S
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Entry Management** - Complete CRUD operations with edit and safe delete
-- [ ] **Phase 2: Search & Filter** - Data access layer for finding entries by text, mood, date, direction
+- [x] **Phase 1: Entry Management** - Complete CRUD operations with edit and safe delete
+- [x] **Phase 2: Search & Filter** - Data access layer for finding entries by text, mood, date, direction
 - [ ] **Phase 3: Calendar Visualization** - Heatmap view with day-level mood patterns
 - [ ] **Phase 4: Weekly Summaries** - Automated recaps with trends and actionable takeaways
 - [ ] **Phase 5: Smart Nudges** - Intelligent in-app nudges based on patterns and dormant directions
@@ -34,8 +34,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Data layer: Entry model schema evolution + StorageService/ReflectionService CRUD methods
-- [ ] 01-02-PLAN.md — UI layer: EntryDetailScreen edit/delete modes + HistoryScreen refresh
+- [x] 01-01-PLAN.md — Data layer: Entry model schema evolution + StorageService/ReflectionService CRUD methods
+- [x] 01-02-PLAN.md — UI layer: EntryDetailScreen edit/delete modes + HistoryScreen refresh
 
 ### Phase 2: Search & Filter
 **Goal**: Users can find specific entries using text search and filter criteria
@@ -50,8 +50,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Data layer: EntryFilter model + FilterService with keyword, mood, date, direction filtering
-- [ ] 02-02-PLAN.md — UI layer: DebouncedSearchBar widget + HistoryScreen search/filter integration
+- [x] 02-01-PLAN.md — Data layer: EntryFilter model + FilterService with keyword, mood, date, direction filtering
+- [x] 02-02-PLAN.md — UI layer: DebouncedSearchBar widget + HistoryScreen search/filter integration
 
 ### Phase 3: Calendar Visualization
 **Goal**: Users can see mood patterns at a glance via calendar heatmap
@@ -118,8 +118,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Entry Management | 0/2 | Planned | - |
-| 2. Search & Filter | 0/TBD | Not started | - |
+| 1. Entry Management | 2/2 | Complete | 2026-02-26 |
+| 2. Search & Filter | 2/2 | Complete | 2026-02-26 |
 | 3. Calendar Visualization | 0/TBD | Not started | - |
 | 4. Weekly Summaries | 0/TBD | Not started | - |
 | 5. Smart Nudges | 0/TBD | Not started | - |
@@ -127,4 +127,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 ---
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-02-26 after Phase 1 planning*
+*Last updated: 2026-02-26 after Phase 2 completion*
