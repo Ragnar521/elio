@@ -96,40 +96,40 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENTRY-01 | — | Pending |
-| ENTRY-02 | — | Pending |
-| ENTRY-03 | — | Pending |
-| ENTRY-04 | — | Pending |
-| ENTRY-05 | — | Pending |
-| SRCH-01 | — | Pending |
-| SRCH-02 | — | Pending |
-| SRCH-03 | — | Pending |
-| SRCH-04 | — | Pending |
-| SRCH-05 | — | Pending |
-| VISP-01 | — | Pending |
-| VISP-02 | — | Pending |
-| VISP-03 | — | Pending |
-| VISP-04 | — | Pending |
-| SUMM-01 | — | Pending |
-| SUMM-02 | — | Pending |
-| SUMM-03 | — | Pending |
-| SUMM-04 | — | Pending |
-| NUDG-01 | — | Pending |
-| NUDG-02 | — | Pending |
-| NUDG-03 | — | Pending |
-| NUDG-04 | — | Pending |
-| UXPL-01 | — | Pending |
-| UXPL-02 | — | Pending |
-| UXPL-03 | — | Pending |
-| UXPL-04 | — | Pending |
-| UXPL-05 | — | Pending |
-| UXPL-06 | — | Pending |
+| ENTRY-01 | Phase 1 | Pending |
+| ENTRY-02 | Phase 1 | Pending |
+| ENTRY-03 | Phase 1 | Pending |
+| ENTRY-04 | Phase 1 | Pending |
+| ENTRY-05 | Phase 1 | Pending |
+| SRCH-01 | Phase 2 | Pending |
+| SRCH-02 | Phase 2 | Pending |
+| SRCH-03 | Phase 2 | Pending |
+| SRCH-04 | Phase 2 | Pending |
+| SRCH-05 | Phase 2 | Pending |
+| VISP-01 | Phase 3 | Pending |
+| VISP-02 | Phase 3 | Pending |
+| VISP-03 | Phase 3 | Pending |
+| VISP-04 | Phase 3 | Pending |
+| SUMM-01 | Phase 4 | Pending |
+| SUMM-02 | Phase 4 | Pending |
+| SUMM-03 | Phase 4 | Pending |
+| SUMM-04 | Phase 4 | Pending |
+| NUDG-01 | Phase 5 | Pending |
+| NUDG-02 | Phase 5 | Pending |
+| NUDG-03 | Phase 5 | Pending |
+| NUDG-04 | Phase 5 | Pending |
+| UXPL-01 | Phase 6 | Pending |
+| UXPL-02 | Phase 6 | Pending |
+| UXPL-03 | Phase 6 | Pending |
+| UXPL-04 | Phase 6 | Pending |
+| UXPL-05 | Phase 6 | Pending |
+| UXPL-06 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28 ⚠️
+- Mapped to phases: 28
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-26 after initial definition*
+*Last updated: 2026-02-26 after roadmap creation*
