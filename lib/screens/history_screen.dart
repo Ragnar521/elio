@@ -140,17 +140,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
           timeLabel: _timeLabel(entry.createdAt),
           dateLabel: _dateLabel(entry.createdAt),
           moodColor: _moodIndicator(entry.moodValue),
-          onTap: () {
-            Navigator.of(context).push(
+          onTap: () async {
+            await Navigator.of(context).push<bool>(
               MaterialPageRoute(
                 builder: (_) => EntryDetailScreen(
                   entry: entry,
                   timeLabel: _timeLabel(entry.createdAt),
                   dateLabel: _dateLabel(entry.createdAt),
                   moodColor: _moodIndicator(entry.moodValue),
+                  onUndoDelete: () {
+                    // Refresh history when undo is tapped
+                    setState(() {
+                      _historyFuture = _loadData();
+                    });
+                  },
                 ),
               ),
             );
+            // Always reload on return from detail (handles edits, deletes, and undos)
+            setState(() {
+              _historyFuture = _loadData();
+            });
           },
         ),
       );
