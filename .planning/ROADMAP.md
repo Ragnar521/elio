@@ -77,10 +77,11 @@ Plans:
   2. Weekly summary displays mood trend graph, average mood, and highlights from the week
   3. Weekly summary surfaces which directions received most attention and any correlation patterns
   4. Weekly summary includes at least one actionable takeaway or encouraging message
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 04-01-PLAN.md — Data layer: WeeklySummary model (typeId 7) + WeeklySummaryService with generation, detection, and persistence
+- [ ] 04-02-PLAN.md — UI layer: WeeklySummaryScreen, Home screen card, Insights tab history
 
 ### Phase 5: Smart Nudges
 **Goal**: Users receive helpful, non-intrusive nudges based on their patterns
