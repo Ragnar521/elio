@@ -47,10 +47,11 @@ Plans:
   3. User can filter entries to show only those within a custom date range
   4. User can filter entries to show only those connected to a specific direction
   5. User can combine multiple filters (e.g., high mood entries from last month with "work" keyword)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 02-01-PLAN.md — Data layer: EntryFilter model + FilterService with keyword, mood, date, direction filtering
+- [ ] 02-02-PLAN.md — UI layer: DebouncedSearchBar widget + HistoryScreen search/filter integration
 
 ### Phase 3: Calendar Visualization
 **Goal**: Users can see mood patterns at a glance via calendar heatmap
