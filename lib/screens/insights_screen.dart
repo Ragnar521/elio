@@ -259,7 +259,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                       transitionBuilder: (child, animation) {
                         return _buildAnimatedTransition(child, animation);
                       },
-                      child: _buildPeriodContent(context, data),
+                      child: _buildPeriodContent(context, data, entries),
                     ),
                   ),
                 ],
@@ -318,7 +318,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
-  Widget _buildPeriodContent(BuildContext context, InsightsData data) {
+  Widget _buildPeriodContent(BuildContext context, InsightsData data, List<Entry> allEntries) {
     // Use a unique key based on period and offset to trigger animation
     final key = ValueKey('${_period.name}_$_offset');
 
@@ -346,6 +346,20 @@ class _InsightsScreenState extends State<InsightsScreen> {
           worstDay: data.worstDay,
           onDayTap: (dayOfWeek) => _showDayEntriesSheet(context, data, dayOfWeek),
         ),
+        const SizedBox(height: 16),
+        // Only show calendar in Month view
+        if (_period == InsightsPeriod.month) ...[
+          const SizedBox(height: 28),
+          Text(
+            'Mood Calendar',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: ElioColors.darkPrimaryText,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 12),
+          _buildCalendarSection(context, allEntries, data),
+        ],
         const SizedBox(height: 16),
         _buildPatternInsight(context, data.patternInsight),
       ],
@@ -546,6 +560,22 @@ class _InsightsScreenState extends State<InsightsScreen> {
               fontSize: 14,
             ),
       ),
+    );
+  }
+
+  Widget _buildCalendarSection(BuildContext context, List<Entry> allEntries, InsightsData data) {
+    final displayedMonth = _getDisplayedMonth(data);
+    final entriesByDate = _groupEntriesByDate(allEntries, displayedMonth);
+    final firstEntryMonth = _calculateFirstEntryMonth(allEntries);
+
+    return CalendarHeatmap(
+      month: displayedMonth,
+      entriesByDate: entriesByDate,
+      onDayTap: _onCalendarDayTap,
+      onMonthChanged: _onCalendarMonthChanged,
+      selectedDate: _selectedCalendarDate,
+      canNavigateBack: _canNavigateCalendarBack(displayedMonth, firstEntryMonth),
+      canNavigateForward: _canNavigateCalendarForward(displayedMonth),
     );
   }
 
