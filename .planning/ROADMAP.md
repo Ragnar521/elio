@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Entry Management** - Complete CRUD operations with edit and safe delete
 - [x] **Phase 2: Search & Filter** - Data access layer for finding entries by text, mood, date, direction
-- [ ] **Phase 3: Calendar Visualization** - Heatmap view with day-level mood patterns
+- [x] **Phase 3: Calendar Visualization** - Heatmap view with day-level mood patterns (completed 2026-02-26)
 - [ ] **Phase 4: Weekly Summaries** - Automated recaps with trends and actionable takeaways
 - [ ] **Phase 5: Smart Nudges** - Intelligent in-app nudges based on patterns and dormant directions
 - [ ] **Phase 6: UX Polish** - Premium animations, loading states, error handling, App Store readiness
@@ -121,7 +121,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Entry Management | 2/2 | Complete | 2026-02-26 |
 | 2. Search & Filter | 2/2 | Complete | 2026-02-26 |
-| 3. Calendar Visualization | 0/TBD | Not started | - |
+| 3. Calendar Visualization | 2/2 | Complete   | 2026-02-26 |
 | 4. Weekly Summaries | 0/TBD | Not started | - |
 | 5. Smart Nudges | 0/TBD | Not started | - |
 | 6. UX Polish | 0/TBD | Not started | - |
