@@ -2,6 +2,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/entry.dart';
+import 'reflection_service.dart';
 
 class StorageService {
   StorageService._();
@@ -30,6 +31,9 @@ class StorageService {
 
     // Backfill longest streak on first run
     await _backfillLongestStreak();
+
+    // Cleanup old soft-deleted entries
+    await _permanentDeleteOldEntries();
   }
 
   Future<Entry> saveEntry({
@@ -56,7 +60,7 @@ class StorageService {
   }
 
   Future<List<Entry>> getAllEntries() async {
-    final entries = _box.values.toList();
+    final entries = _box.values.where((entry) => !entry.isDeleted).toList();
     entries.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return entries;
   }
@@ -64,7 +68,7 @@ class StorageService {
   Future<List<Entry>> getEntriesForDate(DateTime date) async {
     final target = _dateOnly(date);
     final entries = _box.values.where((entry) {
-      return _dateOnly(entry.createdAt) == target;
+      return _dateOnly(entry.createdAt) == target && !entry.isDeleted;
     }).toList();
     entries.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return entries;
@@ -168,10 +172,81 @@ class StorageService {
 
   Future<List<Entry>> getEntriesForPeriod(DateTime start, DateTime end) async {
     final entries = _box.values.where((entry) {
-      return !entry.createdAt.isBefore(start) && entry.createdAt.isBefore(end);
+      return !entry.createdAt.isBefore(start) && entry.createdAt.isBefore(end) && !entry.isDeleted;
     }).toList();
     entries.sort((a, b) => a.createdAt.compareTo(b.createdAt));
     return entries;
+  }
+
+  Entry? getEntry(String id) {
+    return _box.get(id);
+  }
+
+  Future<void> updateEntry(Entry entry) async {
+    final updated = Entry(
+      id: entry.id,
+      moodValue: entry.moodValue,
+      moodWord: entry.moodWord,
+      intention: entry.intention,
+      createdAt: entry.createdAt,
+      reflectionAnswerIds: entry.reflectionAnswerIds,
+      isDeleted: entry.isDeleted,
+      deletedAt: entry.deletedAt,
+      updatedAt: DateTime.now(),
+    );
+    await _box.put(entry.id, updated);
+  }
+
+  Future<void> softDeleteEntry(String entryId) async {
+    final entry = _box.get(entryId);
+    if (entry == null) return;
+
+    final deleted = Entry(
+      id: entry.id,
+      moodValue: entry.moodValue,
+      moodWord: entry.moodWord,
+      intention: entry.intention,
+      createdAt: entry.createdAt,
+      reflectionAnswerIds: entry.reflectionAnswerIds,
+      isDeleted: true,
+      deletedAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+    await _box.put(entryId, deleted);
+  }
+
+  Future<void> restoreEntry(String entryId) async {
+    final entry = _box.get(entryId);
+    if (entry == null || !entry.isDeleted) return;
+
+    final restored = Entry(
+      id: entry.id,
+      moodValue: entry.moodValue,
+      moodWord: entry.moodWord,
+      intention: entry.intention,
+      createdAt: entry.createdAt,
+      reflectionAnswerIds: entry.reflectionAnswerIds,
+      isDeleted: false,
+      deletedAt: null,
+      updatedAt: DateTime.now(),
+    );
+    await _box.put(entryId, restored);
+  }
+
+  Future<void> _permanentDeleteOldEntries() async {
+    final cutoffDate = DateTime.now().subtract(const Duration(days: 30));
+    final entriesToDelete = _box.values.where((entry) {
+      return entry.isDeleted &&
+             entry.deletedAt != null &&
+             entry.deletedAt!.isBefore(cutoffDate);
+    }).toList();
+
+    for (final entry in entriesToDelete) {
+      // Delete associated reflection answers
+      await ReflectionService.instance.deleteAnswersForEntry(entry.id);
+      // Delete the entry itself
+      await _box.delete(entry.id);
+    }
   }
 
   Future<void> _backfillLongestStreak() async {
