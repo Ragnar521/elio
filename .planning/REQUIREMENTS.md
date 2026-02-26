@@ -11,7 +11,7 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 - [x] **ENTRY-01**: User can edit mood value and mood word on an existing entry
 - [x] **ENTRY-02**: User can edit intention text on an existing entry
-- [ ] **ENTRY-03**: User can edit or add reflection answers on an existing entry
+- [x] **ENTRY-03**: User can edit or add reflection answers on an existing entry
 - [x] **ENTRY-04**: User can delete an entry with confirmation dialog
 - [x] **ENTRY-05**: User can undo a deletion within a short time window (soft delete)
 
@@ -98,7 +98,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | ENTRY-01 | Phase 1 | Complete |
 | ENTRY-02 | Phase 1 | Complete |
-| ENTRY-03 | Phase 1 | Pending |
+| ENTRY-03 | Phase 1 | Complete |
 | ENTRY-04 | Phase 1 | Complete |
 | ENTRY-05 | Phase 1 | Complete |
 | SRCH-01 | Phase 2 | Pending |
