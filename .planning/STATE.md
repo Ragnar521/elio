@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-26T14:06:59.814Z"
+last_updated: "2026-02-26T14:14:08.530Z"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 Phase: 4 of 4 (Weekly Summaries)
 Plan: 2 of 2
-Status: In Progress
-Last activity: 2026-02-26 — Completed 04-01-PLAN.md (Weekly Summary Data Layer)
+Status: Complete
+Last activity: 2026-02-26 — Completed 04-02-PLAN.md (Weekly Summary UI Integration)
 
 Progress: [███████████] 112%
 
@@ -52,6 +52,7 @@ Progress: [███████████] 112%
 | Phase 03 P02 | 1 | 2 tasks | 1 files |
 | Phase 04 P01 | 14 min | 3 tasks | 4 files |
 | Phase 04 P01 | 14 | 3 tasks | 4 files |
+| Phase 04 P02 | 3 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Denormalize direction/reflection data in summaries for snapshot integrity (titles, emojis, question text stored directly)
 - [Phase 04]: Reuse InsightsService.getInsightsForPeriod for mood analytics to avoid duplicate logic
 - [Phase 04]: 13-template takeaway system with priority-based selection and tone adaptation to mood patterns
+- [Phase 04 Plan 02]: Summary card on Home placed above greeting (visible immediately without blocking check-in)
+- [Phase 04 Plan 02]: Mark as viewed on screen open not dismiss (ensures viewed state even if user only sees preview)
+- [Phase 04 Plan 02]: Weekly Recaps always visible in Insights (not period-dependent, consistent historical access)
 
 ### Pending Todos
 
@@ -115,4 +119,4 @@ Stopped at: Completed 04-01-PLAN.md
 Resume file: None
 
 ---
-*Phase 04 (Weekly Summaries) in progress. Plan 01 complete.*
+*Phase 04 (Weekly Summaries) complete. All plans executed.*
