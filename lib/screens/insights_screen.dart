@@ -4,6 +4,7 @@ import '../models/entry.dart';
 import '../services/insights_service.dart';
 import '../services/storage_service.dart';
 import '../theme/elio_colors.dart';
+import '../widgets/calendar_heatmap.dart';
 import '../widgets/day_entries_sheet.dart';
 import '../widgets/day_pattern_chart.dart';
 import '../widgets/insight_card.dart';
@@ -26,6 +27,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   int _offset = 0;
   bool _useSampleData = false;
   _NavigationDirection _lastDirection = _NavigationDirection.forward;
+  DateTime? _selectedCalendarDate;
 
   @override
   void initState() {
@@ -45,6 +47,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     setState(() {
       _period = period;
       _offset = 0;
+      _selectedCalendarDate = null;
     });
   }
 
@@ -76,6 +79,104 @@ class _InsightsScreenState extends State<InsightsScreen> {
   }
 
   bool get _isCurrentPeriod => _offset == 0;
+
+  Map<DateTime, List<Entry>> _groupEntriesByDate(List<Entry> entries, DateTime month) {
+    final Map<DateTime, List<Entry>> grouped = {};
+    for (final entry in entries) {
+      final date = DateTime(entry.createdAt.year, entry.createdAt.month, entry.createdAt.day);
+      // Only include entries from the displayed month
+      if (date.year == month.year && date.month == month.month) {
+        grouped.putIfAbsent(date, () => []).add(entry);
+      }
+    }
+    return grouped;
+  }
+
+  DateTime _getDisplayedMonth(InsightsData data) {
+    return DateTime(data.periodStart.year, data.periodStart.month);
+  }
+
+  DateTime _calculateFirstEntryMonth(List<Entry> allEntries) {
+    if (allEntries.isEmpty) return DateTime(DateTime.now().year, DateTime.now().month);
+    DateTime earliest = allEntries.first.createdAt;
+    for (final entry in allEntries) {
+      if (entry.createdAt.isBefore(earliest)) {
+        earliest = entry.createdAt;
+      }
+    }
+    return DateTime(earliest.year, earliest.month);
+  }
+
+  bool _canNavigateCalendarBack(DateTime displayedMonth, DateTime firstEntryMonth) {
+    return displayedMonth.year > firstEntryMonth.year ||
+        (displayedMonth.year == firstEntryMonth.year && displayedMonth.month > firstEntryMonth.month);
+  }
+
+  bool _canNavigateCalendarForward(DateTime displayedMonth) {
+    final now = DateTime.now();
+    return displayedMonth.year < now.year ||
+        (displayedMonth.year == now.year && displayedMonth.month < now.month);
+  }
+
+  void _onCalendarMonthChanged(int direction) {
+    _navigatePeriod(direction);
+  }
+
+  void _onCalendarDayTap(DateTime date, List<Entry> entries) {
+    setState(() {
+      _selectedCalendarDate = date;
+    });
+
+    // Sort entries newest first
+    final sortedEntries = List<Entry>.from(entries)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    // Calculate average mood
+    final avgMood = entries.fold(0.0, (sum, e) => sum + e.moodValue) / entries.length;
+
+    // Build day label
+    final dayLabel = _calendarDayLabel(date);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => DayEntriesSheet(
+          dayName: dayLabel,
+          entries: sortedEntries,
+          averageMood: avgMood,
+        ),
+      ),
+    ).then((_) {
+      // Clear highlight when sheet is dismissed
+      if (mounted) {
+        setState(() {
+          _selectedCalendarDate = null;
+        });
+      }
+    });
+  }
+
+  String _calendarDayLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(target).inDays;
+
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+
+    final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final monthName = monthNames[date.month - 1];
+    if (date.year == now.year) {
+      return '$monthName ${date.day}';
+    }
+    return '$monthName ${date.day}, ${date.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
