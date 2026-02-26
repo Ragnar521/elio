@@ -6,6 +6,7 @@ import 'services/notification_service.dart';
 import 'services/reflection_service.dart';
 import 'services/storage_service.dart';
 import 'services/direction_service.dart';
+import 'services/weekly_summary_service.dart';
 import 'theme/elio_theme.dart';
 
 Future<void> main() async {
@@ -13,6 +14,7 @@ Future<void> main() async {
   await StorageService.instance.init();
   await ReflectionService.instance.init();
   await DirectionService.instance.init();
+  await WeeklySummaryService.instance.init();
   await NotificationService.instance.init();
   runApp(const ElioApp());
 }
