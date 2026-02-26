@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../models/entry.dart';
+import '../models/weekly_summary.dart';
 import '../services/insights_service.dart';
 import '../services/storage_service.dart';
+import '../services/weekly_summary_service.dart';
 import '../theme/elio_colors.dart';
 import '../widgets/calendar_heatmap.dart';
 import '../widgets/day_entries_sheet.dart';
@@ -11,6 +13,7 @@ import '../widgets/insight_card.dart';
 import '../widgets/mood_wave.dart';
 import '../widgets/stat_card.dart';
 import 'mood_entry_screen.dart';
+import 'weekly_summary_screen.dart';
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -362,6 +365,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
         ],
         const SizedBox(height: 16),
         _buildPatternInsight(context, data.patternInsight),
+        const SizedBox(height: 32),
+        _buildWeeklyRecapsSection(context),
       ],
     );
   }
@@ -559,6 +564,219 @@ class _InsightsScreenState extends State<InsightsScreen> {
               color: ElioColors.darkPrimaryText.withOpacity(0.8),
               fontSize: 14,
             ),
+      ),
+    );
+  }
+
+  Widget _buildWeeklyRecapsSection(BuildContext context) {
+    final summaries = WeeklySummaryService.instance.getAllSummaries();
+
+    if (summaries.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Weekly Recaps',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: ElioColors.darkPrimaryText,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Complete a full week to see your first recap',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                ),
+          ),
+        ],
+      );
+    }
+
+    final displaySummaries = summaries.take(3).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Weekly Recaps',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: ElioColors.darkPrimaryText,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const Spacer(),
+            if (summaries.length > 3)
+              GestureDetector(
+                onTap: () => _showAllSummaries(context, summaries),
+                child: Text(
+                  'View all',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: ElioColors.darkAccent,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...displaySummaries.map((summary) => _buildSummaryListItem(context, summary)).toList(),
+      ],
+    );
+  }
+
+  Widget _buildSummaryListItem(BuildContext context, WeeklySummary summary) {
+    final moodWord = _getMoodWord(summary.avgMood);
+    final trendIcon = _getTrendIcon(summary.moodTrend);
+
+    return InkWell(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => WeeklySummaryScreen(summary: summary),
+        ),
+      ),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: ElioColors.darkSurface,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  summary.weekLabel,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: ElioColors.darkPrimaryText,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const Spacer(),
+                Text(
+                  '${summary.checkInCount} check-ins',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _getMoodColor(summary.avgMood),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  moodWord,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ElioColors.darkPrimaryText.withOpacity(0.7),
+                      ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  trendIcon,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ElioColors.darkPrimaryText.withOpacity(0.5),
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getMoodWord(double avgMood) {
+    if (avgMood < 0.14) return 'Heavy';
+    if (avgMood < 0.28) return 'Tired';
+    if (avgMood < 0.42) return 'Flat';
+    if (avgMood < 0.56) return 'Okay';
+    if (avgMood < 0.70) return 'Calm';
+    if (avgMood < 0.84) return 'Good';
+    if (avgMood < 0.90) return 'Energized';
+    return 'Great';
+  }
+
+  Color _getMoodColor(double avgMood) {
+    const low = Color(0xFF4B5A68);
+    const high = ElioColors.darkAccent;
+    return Color.lerp(low, high, avgMood) ?? high;
+  }
+
+  String _getTrendIcon(String trend) {
+    switch (trend) {
+      case 'up':
+        return '↑';
+      case 'down':
+        return '↓';
+      default:
+        return '—';
+    }
+  }
+
+  void _showAllSummaries(BuildContext context, List<WeeklySummary> summaries) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: ElioColors.darkBackground,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: ElioColors.darkPrimaryText.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'All Weekly Recaps',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: ElioColors.darkPrimaryText,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: summaries.length,
+                  itemBuilder: (context, index) {
+                    return _buildSummaryListItem(context, summaries[index]);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

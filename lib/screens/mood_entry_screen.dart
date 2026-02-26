@@ -4,7 +4,11 @@ import 'package:flutter/services.dart';
 
 import '../theme/elio_colors.dart';
 import '../services/storage_service.dart';
+import '../services/weekly_summary_service.dart';
+import '../models/weekly_summary.dart';
+import '../widgets/weekly_summary_card.dart';
 import 'intention_screen.dart';
+import 'weekly_summary_screen.dart';
 
 class MoodEntryScreen extends StatefulWidget {
   const MoodEntryScreen({super.key});
@@ -18,6 +22,8 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
   bool _hasInteracted = false;
   int _lastThresholdIndex = 0;
   late String _userName;
+  WeeklySummary? _pendingSummary;
+  bool _summaryDismissed = false;
 
   static const _moodWords = [
     'Heavy',
@@ -46,6 +52,38 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
     super.initState();
     _lastThresholdIndex = _thresholdIndexFor(_moodValue);
     _userName = StorageService.instance.userName;
+    _checkForWeeklySummary();
+  }
+
+  Future<void> _checkForWeeklySummary() async {
+    final summary = await WeeklySummaryService.instance.getOrGenerateCurrentSummary();
+    if (summary != null && !summary.hasBeenViewed && mounted) {
+      setState(() => _pendingSummary = summary);
+    }
+  }
+
+  Future<void> _dismissSummary() async {
+    if (_pendingSummary != null) {
+      await WeeklySummaryService.instance.markAsViewed(_pendingSummary!.id);
+      setState(() {
+        _summaryDismissed = true;
+        _pendingSummary = null;
+      });
+    }
+  }
+
+  void _openSummary() {
+    if (_pendingSummary == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WeeklySummaryScreen(summary: _pendingSummary!),
+      ),
+    ).then((_) {
+      setState(() {
+        _summaryDismissed = true;
+        _pendingSummary = null;
+      });
+    });
   }
 
   String _greeting() {
@@ -97,6 +135,15 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            if (_pendingSummary != null && !_summaryDismissed)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: WeeklySummaryCard(
+                  summary: _pendingSummary!,
+                  onTap: _openSummary,
+                  onDismiss: _dismissSummary,
+                ),
+              ),
             const SizedBox(height: 32),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
