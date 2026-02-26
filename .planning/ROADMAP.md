@@ -92,10 +92,11 @@ Plans:
   2. User sees an in-app nudge highlighting actionable mood patterns (e.g., "Mornings trending lower this week")
   3. User sees an in-app nudge celebrating streak milestones and check-in consistency
   4. All nudges are dismissible with one tap and never guilt-inducing (supportive tone only)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 05-01-PLAN.md — Data layer: Nudge model + NudgeService (trigger detection, cooldown, dismissal) + NudgeCard widget
+- [ ] 05-02-PLAN.md — UI integration: MoodEntryScreen nudge display + ConfirmationScreen post-check-in evaluation
 
 ### Phase 6: UX Polish
 **Goal**: Every screen feels premium with smooth animations, helpful states, and App Store compliance
