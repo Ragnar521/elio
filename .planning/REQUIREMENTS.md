@@ -25,10 +25,10 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Visual Patterns
 
-- [ ] **VISP-01**: User can view a calendar heatmap of mood entries color-coded by mood value
+- [x] **VISP-01**: User can view a calendar heatmap of mood entries color-coded by mood value
 - [ ] **VISP-02**: User can tap a day on the calendar to see that day's entries
 - [ ] **VISP-03**: User can navigate between months on the calendar view
-- [ ] **VISP-04**: User can see at a glance which days have entries and which don't
+- [x] **VISP-04**: User can see at a glance which days have entries and which don't
 
 ### Weekly Summaries
 
@@ -106,10 +106,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SRCH-03 | Phase 2 | Complete |
 | SRCH-04 | Phase 2 | Complete |
 | SRCH-05 | Phase 2 | Complete |
-| VISP-01 | Phase 3 | Pending |
+| VISP-01 | Phase 3 | Complete |
 | VISP-02 | Phase 3 | Pending |
 | VISP-03 | Phase 3 | Pending |
-| VISP-04 | Phase 3 | Pending |
+| VISP-04 | Phase 3 | Complete |
 | SUMM-01 | Phase 4 | Pending |
 | SUMM-02 | Phase 4 | Pending |
 | SUMM-03 | Phase 4 | Pending |

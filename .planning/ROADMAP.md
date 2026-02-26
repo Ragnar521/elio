@@ -62,10 +62,11 @@ Plans:
   2. User can tap any day on the calendar to see all entries from that day
   3. User can navigate between months to view historical mood patterns
   4. User can instantly identify which days have entries (colored) versus no entries (empty)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 03-01-PLAN.md — Widget layer: CalendarHeatmap custom widget with mood-colored grid, navigation, and color legend
+- [ ] 03-02-PLAN.md — Integration layer: InsightsScreen calendar state, DayEntriesSheet wiring, period sync
 
 ### Phase 4: Weekly Summaries
 **Goal**: Users receive automated weekly recaps that make their data actionable
