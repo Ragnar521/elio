@@ -31,10 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can edit or add reflection answers on any existing entry
   4. User can delete an entry with confirmation dialog and sees undo option
   5. Deleted entries can be recovered within 30-day soft delete window
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 01-01-PLAN.md — Data layer: Entry model schema evolution + StorageService/ReflectionService CRUD methods
+- [ ] 01-02-PLAN.md — UI layer: EntryDetailScreen edit/delete modes + HistoryScreen refresh
 
 ### Phase 2: Search & Filter
 **Goal**: Users can find specific entries using text search and filter criteria
@@ -116,7 +117,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Entry Management | 0/TBD | Not started | - |
+| 1. Entry Management | 0/2 | Planned | - |
 | 2. Search & Filter | 0/TBD | Not started | - |
 | 3. Calendar Visualization | 0/TBD | Not started | - |
 | 4. Weekly Summaries | 0/TBD | Not started | - |
@@ -125,4 +126,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 ---
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-02-26 after initial creation*
+*Last updated: 2026-02-26 after Phase 1 planning*
