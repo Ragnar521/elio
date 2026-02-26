@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Entry Management** - Complete CRUD operations with edit and safe delete
 - [x] **Phase 2: Search & Filter** - Data access layer for finding entries by text, mood, date, direction
 - [x] **Phase 3: Calendar Visualization** - Heatmap view with day-level mood patterns (completed 2026-02-26)
-- [ ] **Phase 4: Weekly Summaries** - Automated recaps with trends and actionable takeaways
+- [x] **Phase 4: Weekly Summaries** - Automated recaps with trends and actionable takeaways (completed 2026-02-26)
 - [ ] **Phase 5: Smart Nudges** - Intelligent in-app nudges based on patterns and dormant directions
 - [ ] **Phase 6: UX Polish** - Premium animations, loading states, error handling, App Store readiness
 
@@ -80,8 +80,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Data layer: WeeklySummary model (typeId 7) + WeeklySummaryService with generation, detection, and persistence
-- [ ] 04-02-PLAN.md — UI layer: WeeklySummaryScreen, Home screen card, Insights tab history
+- [x] 04-01-PLAN.md — Data layer: WeeklySummary model (typeId 7) + WeeklySummaryService with generation, detection, and persistence
+- [x] 04-02-PLAN.md — UI layer: WeeklySummaryScreen, Home screen card, Insights tab history
 
 ### Phase 5: Smart Nudges
 **Goal**: Users receive helpful, non-intrusive nudges based on their patterns
