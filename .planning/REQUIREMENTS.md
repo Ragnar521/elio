@@ -17,11 +17,11 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Search & Filter
 
-- [ ] **SRCH-01**: User can search entries by keyword matching intention or reflection text
-- [ ] **SRCH-02**: User can filter entries by mood range (e.g., low/mid/high)
-- [ ] **SRCH-03**: User can filter entries by date range
-- [ ] **SRCH-04**: User can filter entries by connected direction
-- [ ] **SRCH-05**: User can combine search and filter criteria
+- [x] **SRCH-01**: User can search entries by keyword matching intention or reflection text
+- [x] **SRCH-02**: User can filter entries by mood range (e.g., low/mid/high)
+- [x] **SRCH-03**: User can filter entries by date range
+- [x] **SRCH-04**: User can filter entries by connected direction
+- [x] **SRCH-05**: User can combine search and filter criteria
 
 ### Visual Patterns
 
@@ -101,11 +101,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENTRY-03 | Phase 1 | Complete |
 | ENTRY-04 | Phase 1 | Complete |
 | ENTRY-05 | Phase 1 | Complete |
-| SRCH-01 | Phase 2 | Pending |
-| SRCH-02 | Phase 2 | Pending |
-| SRCH-03 | Phase 2 | Pending |
-| SRCH-04 | Phase 2 | Pending |
-| SRCH-05 | Phase 2 | Pending |
+| SRCH-01 | Phase 2 | Complete |
+| SRCH-02 | Phase 2 | Complete |
+| SRCH-03 | Phase 2 | Complete |
+| SRCH-04 | Phase 2 | Complete |
+| SRCH-05 | Phase 2 | Complete |
 | VISP-01 | Phase 3 | Pending |
 | VISP-02 | Phase 3 | Pending |
 | VISP-03 | Phase 3 | Pending |
