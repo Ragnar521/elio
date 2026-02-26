@@ -32,10 +32,10 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Weekly Summaries
 
-- [ ] **SUMM-01**: User sees a weekly summary recap after completing a full week of entries
-- [ ] **SUMM-02**: Weekly summary shows mood trend, average, and highlights
-- [ ] **SUMM-03**: Weekly summary surfaces top direction connections and patterns
-- [ ] **SUMM-04**: Weekly summary includes actionable takeaway or encouragement
+- [x] **SUMM-01**: User sees a weekly summary recap after completing a full week of entries
+- [x] **SUMM-02**: Weekly summary shows mood trend, average, and highlights
+- [x] **SUMM-03**: Weekly summary surfaces top direction connections and patterns
+- [x] **SUMM-04**: Weekly summary includes actionable takeaway or encouragement
 
 ### Smart Nudges
 
@@ -110,10 +110,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VISP-02 | Phase 3 | Complete |
 | VISP-03 | Phase 3 | Complete |
 | VISP-04 | Phase 3 | Complete |
-| SUMM-01 | Phase 4 | Pending |
-| SUMM-02 | Phase 4 | Pending |
-| SUMM-03 | Phase 4 | Pending |
-| SUMM-04 | Phase 4 | Pending |
+| SUMM-01 | Phase 4 | Complete |
+| SUMM-02 | Phase 4 | Complete |
+| SUMM-03 | Phase 4 | Complete |
+| SUMM-04 | Phase 4 | Complete |
 | NUDG-01 | Phase 5 | Pending |
 | NUDG-02 | Phase 5 | Pending |
 | NUDG-03 | Phase 5 | Pending |
