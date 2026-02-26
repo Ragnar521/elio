@@ -13,10 +13,10 @@ class DebouncedSearchBar extends StatefulWidget {
   final Duration debounceDuration;
 
   @override
-  State<DebouncedSearchBar> createState() => _DebouncedSearchBarState();
+  State<DebouncedSearchBar> createState() => DebouncedSearchBarState();
 }
 
-class _DebouncedSearchBarState extends State<DebouncedSearchBar> {
+class DebouncedSearchBarState extends State<DebouncedSearchBar> {
   final TextEditingController _controller = TextEditingController();
   Timer? _debounceTimer;
 

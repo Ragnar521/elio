@@ -1,9 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/entry.dart';
+import '../models/entry_filter.dart';
+import '../models/direction.dart';
 import '../services/storage_service.dart';
+import '../services/filter_service.dart';
+import '../services/direction_service.dart';
 import '../theme/elio_colors.dart';
 import '../widgets/entry_card.dart';
+import '../widgets/search_bar_widget.dart';
 import 'entry_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -15,6 +21,13 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   late Future<_HistoryData> _historyFuture;
+  EntryFilter _filter = const EntryFilter();
+  List<Entry> _allEntries = [];
+  List<Entry> _filteredEntries = [];
+  List<Direction> _activeDirections = [];
+  Set<String>? _connectedEntryIds;
+  String? _lastDirectionId;
+  final _searchBarKey = GlobalKey<DebouncedSearchBarState>();
 
   @override
   void initState() {
@@ -25,6 +38,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Future<_HistoryData> _loadData() async {
     final entries = await StorageService.instance.getAllEntries();
     final streak = await StorageService.instance.getCurrentStreak();
+    final directions = DirectionService.instance.getActiveDirections();
+
+    _allEntries = entries;
+    _activeDirections = directions;
+    await _applyFilters();
+
     return _HistoryData(entries: entries, streak: streak);
   }
 
@@ -33,6 +52,79 @@ class _HistoryScreenState extends State<HistoryScreen> {
       _historyFuture = _loadData();
     });
     await _historyFuture;
+  }
+
+  Future<void> _applyFilters() async {
+    // Pre-fetch connected entry IDs if direction filter active
+    if (_filter.directionId != null && _filter.directionId != _lastDirectionId) {
+      _connectedEntryIds = await FilterService.instance.getConnectedEntryIds(_filter.directionId!);
+      _lastDirectionId = _filter.directionId;
+    } else if (_filter.directionId == null) {
+      _connectedEntryIds = null;
+      _lastDirectionId = null;
+    }
+
+    setState(() {
+      _filteredEntries = FilterService.instance.filterEntries(
+        entries: _allEntries,
+        filter: _filter,
+        connectedEntryIds: _connectedEntryIds,
+      );
+    });
+  }
+
+  void _onSearchChanged(String query) {
+    _filter = _filter.copyWith(searchQuery: query.isEmpty ? null : query);
+    _applyFilters();
+  }
+
+  void _onMoodRangeToggled(MoodRange range) {
+    final newRanges = Set<MoodRange>.from(_filter.moodRanges);
+    if (newRanges.contains(range)) {
+      newRanges.remove(range);
+    } else {
+      newRanges.add(range);
+    }
+    _filter = _filter.copyWith(moodRanges: newRanges);
+    _applyFilters();
+  }
+
+  Future<void> _selectDateRange() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialDateRange: _filter.dateRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: ElioColors.darkAccent,
+              surface: ElioColors.darkSurface,
+              onSurface: ElioColors.darkPrimaryText,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      _filter = _filter.copyWith(dateRange: picked);
+      _applyFilters();
+    }
+  }
+
+  void _onDirectionSelected(String? directionId) {
+    _filter = _filter.copyWith(directionId: directionId);
+    _applyFilters();
+  }
+
+  void _clearFilters() {
+    _filter = _filter.cleared();
+    _connectedEntryIds = null;
+    _lastDirectionId = null;
+    _searchBarKey.currentState?.clear();
+    _applyFilters();
   }
 
   @override
@@ -47,14 +139,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
             }
 
             final data = snapshot.data;
-            final entries = data?.entries ?? [];
             final streak = data?.streak ?? 0;
 
             return RefreshIndicator(
               color: ElioColors.darkAccent,
               backgroundColor: ElioColors.darkSurface,
               onRefresh: _refresh,
-              child: entries.isEmpty
+              child: _allEntries.isEmpty
                   ? ListView(
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
                       children: [
@@ -95,20 +186,163 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          streak > 0 ? '$streak day streak' : '${entries.length} check-ins',
+                          _filter.hasActiveFilters
+                              ? '${_filteredEntries.length} of ${_allEntries.length} entries'
+                              : (streak > 0 ? '$streak day streak' : '${_allEntries.length} check-ins'),
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium
                               ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
                         ),
                         const SizedBox(height: 24),
-                        ..._buildEntrySections(entries),
+                        _buildFilterSection(),
+                        const SizedBox(height: 16),
+                        if (_allEntries.isNotEmpty && _filteredEntries.isEmpty && _filter.hasActiveFilters)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 40),
+                              child: Text(
+                                'No entries match your filters',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.6)),
+                              ),
+                            ),
+                          )
+                        else
+                          ..._buildEntrySections(_filteredEntries),
                       ],
                     ),
             );
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildFilterSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Search bar
+        DebouncedSearchBar(
+          key: _searchBarKey,
+          onSearch: _onSearchChanged,
+        ),
+        const SizedBox(height: 12),
+
+        // Filter chips
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              // Mood range chips
+              ...MoodRange.values.map((range) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(range.label),
+                    selected: _filter.moodRanges.contains(range),
+                    onSelected: (_) => _onMoodRangeToggled(range),
+                    selectedColor: ElioColors.darkAccent.withOpacity(0.3),
+                    checkmarkColor: ElioColors.darkAccent,
+                    backgroundColor: ElioColors.darkSurface,
+                    labelStyle: const TextStyle(
+                      color: ElioColors.darkPrimaryText,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                );
+              }),
+
+              // Date range chip
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(_filter.dateRange != null
+                      ? '${_monthName(_filter.dateRange!.start.month)} ${_filter.dateRange!.start.day} - ${_monthName(_filter.dateRange!.end.month)} ${_filter.dateRange!.end.day}'
+                      : 'Dates'),
+                  selected: _filter.dateRange != null,
+                  onSelected: (_) => _selectDateRange(),
+                  onDeleted: _filter.dateRange != null
+                      ? () {
+                          _filter = _filter.copyWith(dateRange: null);
+                          _applyFilters();
+                        }
+                      : null,
+                  selectedColor: ElioColors.darkAccent.withOpacity(0.3),
+                  checkmarkColor: ElioColors.darkAccent,
+                  backgroundColor: ElioColors.darkSurface,
+                  labelStyle: const TextStyle(
+                    color: ElioColors.darkPrimaryText,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+
+              // Direction chips
+              ..._activeDirections.map((direction) {
+                final isSelected = _filter.directionId == direction.id;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(
+                      '${direction.type.emoji} ${direction.title.length > 12 ? '${direction.title.substring(0, 12)}...' : direction.title}',
+                    ),
+                    selected: isSelected,
+                    onSelected: (_) => _onDirectionSelected(isSelected ? null : direction.id),
+                    selectedColor: ElioColors.darkAccent.withOpacity(0.3),
+                    checkmarkColor: ElioColors.darkAccent,
+                    backgroundColor: ElioColors.darkSurface,
+                    labelStyle: const TextStyle(
+                      color: ElioColors.darkPrimaryText,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                );
+              }),
+
+              // Clear all chip
+              if (_filter.hasActiveFilters)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ActionChip(
+                    label: Text(
+                      'Clear all',
+                      style: TextStyle(
+                        color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                      ),
+                    ),
+                    onPressed: _clearFilters,
+                    backgroundColor: ElioColors.darkSurface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        // Results count
+        if (_filter.hasActiveFilters) ...[
+          const SizedBox(height: 12),
+          Text(
+            '${_filteredEntries.length} entries found',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ],
     );
   }
 
