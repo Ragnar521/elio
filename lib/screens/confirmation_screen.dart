@@ -36,11 +36,19 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
   late final Animation<double> _glowScale;
   late final Animation<double> _glowOpacity;
   late final Animation<double> _affirmOpacity;
-  late final Animation<double> _summaryOpacity;
+  late final Animation<double> _affirmScale;
+  late final Animation<Offset> _moodSlide;
+  late final Animation<double> _moodOpacity;
+  late final Animation<Offset> _intentionSlide;
+  late final Animation<double> _intentionOpacity;
+  late final Animation<Offset> _reflectionSlide;
+  late final Animation<double> _reflectionOpacity;
+  late final Animation<int> _streakCount;
+  late final Animation<double> _streakScale;
   late final Animation<double> _buttonOpacity;
 
   bool _canDismiss = false;
-  int? _streakCount;
+  int? _loadedStreakCount;
 
   static const _affirmations = [
     'You checked in.',
@@ -54,21 +62,64 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      duration: const Duration(milliseconds: 2500),
     );
 
+    // Glow animations (keep as-is)
     _glowScale = Tween<double>(begin: 0.6, end: 1.1).animate(
       CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic)),
     );
     _glowOpacity = Tween<double>(begin: 0.6, end: 0.0).animate(
       CurvedAnimation(parent: _controller, curve: const Interval(0.2, 0.9, curve: Curves.easeOutCubic)),
     );
+
+    // Affirmation: 0.3-0.5 fade + scale
     _affirmOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.45, 0.8, curve: Curves.easeOutCubic)),
+      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 0.5, curve: Curves.easeOutCubic)),
     );
-    _summaryOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.65, 0.95, curve: Curves.easeOutCubic)),
+    _affirmScale = Tween<double>(begin: 0.9, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 0.5, curve: Curves.easeOutCubic)),
     );
+
+    // Mood chip: 0.4-0.6 slide + fade
+    _moodSlide = Tween<Offset>(begin: const Offset(-0.3, 0.0), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.4, 0.6, curve: Curves.easeOutCubic)),
+    );
+    _moodOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.4, 0.6, curve: Curves.easeOutCubic)),
+    );
+
+    // Intention chip: 0.5-0.7 slide + fade
+    _intentionSlide = Tween<Offset>(begin: const Offset(-0.3, 0.0), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.5, 0.7, curve: Curves.easeOutCubic)),
+    );
+    _intentionOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.5, 0.7, curve: Curves.easeOutCubic)),
+    );
+
+    // Reflection chips: 0.55-0.75 slide + fade
+    _reflectionSlide = Tween<Offset>(begin: const Offset(-0.3, 0.0), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.55, 0.75, curve: Curves.easeOutCubic)),
+    );
+    _reflectionOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.55, 0.75, curve: Curves.easeOutCubic)),
+    );
+
+    // Streak counter: 0.6-0.85 count-up + scale pulse (will be set after loading streak)
+    _streakCount = IntTween(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.6, 0.85, curve: Curves.easeOutCubic)),
+    );
+
+    // Streak scale pulse: 1.0 -> 1.15 -> 1.0
+    final streakScaleTween = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.15), weight: 50),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.15, end: 1.0), weight: 50),
+    ]);
+    _streakScale = streakScaleTween.animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.6, 0.85, curve: Curves.easeInOut)),
+    );
+
+    // Done button: 0.8-1.0 fade
     _buttonOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: const Interval(0.8, 1.0, curve: Curves.easeOutCubic)),
     );
@@ -92,8 +143,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
     return _affirmations[index];
   }
 
-  String get _streakLabel {
-    final count = _streakCount ?? widget.streakCount ?? 1;
+  String _streakLabelFor(int count) {
     if (count <= 1) return 'Day 1 — here we go';
     if (count == 2) return '2 day streak';
     return '$count day streak';
@@ -146,8 +196,16 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
     }
 
     try {
-      _streakCount = await StorageService.instance.getCurrentStreak();
-    } catch (_) {}
+      _loadedStreakCount = await StorageService.instance.getCurrentStreak();
+    } catch (_) {
+      _loadedStreakCount = 1;
+    }
+
+    // Update the streak count IntTween with the actual loaded value
+    final actualStreak = _loadedStreakCount ?? widget.streakCount ?? 1;
+    _streakCount = IntTween(begin: 0, end: actualStreak).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.6, 0.85, curve: Curves.easeOutCubic)),
+    );
 
     // Evaluate post-check-in nudges (non-blocking)
     _evaluatePostCheckInNudges();
@@ -156,9 +214,16 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
     setState(() {});
 
     _controller.forward();
-    Future.delayed(const Duration(milliseconds: 1100), () {
-      if (mounted) HapticFeedback.selectionClick();
+
+    // Medium haptic at streak animation start (0.6 * 2500ms = 1500ms)
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        try {
+          HapticFeedback.mediumImpact();
+        } catch (_) {}
+      }
     });
+
     Future.delayed(const Duration(milliseconds: 2000), () {
       if (mounted) setState(() => _canDismiss = true);
     });
@@ -166,7 +231,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
 
   Future<void> _evaluatePostCheckInNudges() async {
     try {
-      final currentStreak = _streakCount ?? await StorageService.instance.getCurrentStreak();
+      final currentStreak = _loadedStreakCount ?? await StorageService.instance.getCurrentStreak();
       final nudge = await NudgeService.instance.checkPostCheckIn(currentStreak);
       if (nudge != null) {
         NudgeService.instance.setPendingNudge(nudge);
@@ -214,66 +279,93 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
                 },
               ),
               const SizedBox(height: 24),
+              // Affirmation with scale + fade
               FadeTransition(
                 opacity: _affirmOpacity,
-                child: Text(
-                  _affirmation,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: ElioColors.darkPrimaryText,
-                      ),
-                  textAlign: TextAlign.center,
+                child: ScaleTransition(
+                  scale: _affirmScale,
+                  child: Text(
+                    _affirmation,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: ElioColors.darkPrimaryText,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              FadeTransition(
-                opacity: _summaryOpacity,
-                child: Column(
-                  children: [
-                    Text(
-                      'Feeling ${widget.moodWord}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _truncate(widget.intentionText, 50),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
-                      textAlign: TextAlign.center,
-                    ),
-                    if (widget.answeredQuestions != null &&
-                        widget.answeredQuestions!.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          children: widget.answeredQuestions!
-                              .map((aq) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 8),
-                                    child: AnsweredQuestionChip(
-                                      questionText: aq.questionText as String,
-                                      answer: aq.answer as String,
-                                    ),
-                                  ))
-                              .toList(),
-                        ),
+              // Mood chip with slide + fade
+              SlideTransition(
+                position: _moodSlide,
+                child: FadeTransition(
+                  opacity: _moodOpacity,
+                  child: Text(
+                    'Feeling ${widget.moodWord}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Intention chip with slide + fade
+              SlideTransition(
+                position: _intentionSlide,
+                child: FadeTransition(
+                  opacity: _intentionOpacity,
+                  child: Text(
+                    _truncate(widget.intentionText, 50),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              // Reflection chips with slide + fade
+              if (widget.answeredQuestions != null &&
+                  widget.answeredQuestions!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                SlideTransition(
+                  position: _reflectionSlide,
+                  child: FadeTransition(
+                    opacity: _reflectionOpacity,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        children: widget.answeredQuestions!
+                            .map((aq) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: AnsweredQuestionChip(
+                                    questionText: aq.questionText as String,
+                                    answer: aq.answer as String,
+                                  ),
+                                ))
+                            .toList(),
                       ),
-                    ],
-                    const SizedBox(height: 10),
-                    Text(
-                      _streakLabel,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              // Streak counter with count-up animation + scale pulse
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return ScaleTransition(
+                    scale: _streakScale,
+                    child: Text(
+                      _streakLabelFor(_streakCount.value),
                       style: Theme.of(context)
                           .textTheme
                           .bodySmall
                           ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.6)),
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
               const Spacer(),
               FadeTransition(
