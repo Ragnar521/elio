@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../models/entry.dart';
 import '../models/entry_filter.dart';
@@ -10,6 +11,7 @@ import '../services/direction_service.dart';
 import '../theme/elio_colors.dart';
 import '../widgets/entry_card.dart';
 import '../widgets/search_bar_widget.dart';
+import '../widgets/empty_state_view.dart';
 import 'entry_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -28,11 +30,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Set<String>? _connectedEntryIds;
   String? _lastDirectionId;
   final _searchBarKey = GlobalKey<DebouncedSearchBarState>();
+  bool _showShimmer = false;
+  Timer? _shimmerTimer;
 
   @override
   void initState() {
     super.initState();
     _historyFuture = _loadData();
+    _shimmerTimer = Timer(const Duration(milliseconds: 200), () {
+      if (mounted) setState(() => _showShimmer = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _shimmerTimer?.cancel();
+    super.dispose();
   }
 
   Future<_HistoryData> _loadData() async {
@@ -49,6 +62,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<void> _refresh() async {
     setState(() {
+      _showShimmer = false;
+      _shimmerTimer?.cancel();
+      _shimmerTimer = Timer(const Duration(milliseconds: 200), () {
+        if (mounted) setState(() => _showShimmer = true);
+      });
       _historyFuture = _loadData();
     });
     await _historyFuture;
@@ -135,7 +153,45 @@ class _HistoryScreenState extends State<HistoryScreen> {
           future: _historyFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              if (!_showShimmer) {
+                return const SizedBox.shrink();
+              }
+              return Skeletonizer(
+                enabled: true,
+                effect: ShimmerEffect(
+                  baseColor: ElioColors.darkSurface,
+                  highlightColor: ElioColors.darkSurface.withOpacity(0.6),
+                  duration: const Duration(milliseconds: 1500),
+                ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
+                  itemCount: 5,
+                  itemBuilder: (context, index) => Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: ElioColors.darkSurface,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Container(width: 8, height: 8, decoration: const BoxDecoration(color: ElioColors.darkSurface, shape: BoxShape.circle)),
+                          const SizedBox(width: 8),
+                          Container(width: 80, height: 16, color: ElioColors.darkSurface),
+                          const Spacer(),
+                          Container(width: 60, height: 12, color: ElioColors.darkSurface),
+                        ]),
+                        const SizedBox(height: 10),
+                        Container(width: double.infinity, height: 14, color: ElioColors.darkSurface),
+                        const SizedBox(height: 4),
+                        Container(width: 200, height: 14, color: ElioColors.darkSurface),
+                      ],
+                    ),
+                  ),
+                ),
+              );
             }
 
             final data = snapshot.data;
@@ -147,30 +203,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
               onRefresh: _refresh,
               child: _allEntries.isEmpty
                   ? ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                      padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
                       children: [
-                        Text(
-                          'History',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'No check-ins yet',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyLarge
-                              ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Your journey starts with one moment.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.6)),
+                        EmptyStateView(
+                          svgAsset: 'assets/empty_states/history_empty.svg',
+                          title: 'Your story starts here',
+                          description: 'Check in with your mood to start building your personal timeline.',
+                          ctaLabel: 'Start your first check-in',
+                          onCtaPressed: () {
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                          },
                         ),
                       ],
                     )
