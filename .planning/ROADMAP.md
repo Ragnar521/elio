@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Search & Filter** - Data access layer for finding entries by text, mood, date, direction
 - [x] **Phase 3: Calendar Visualization** - Heatmap view with day-level mood patterns (completed 2026-02-26)
 - [x] **Phase 4: Weekly Summaries** - Automated recaps with trends and actionable takeaways (completed 2026-02-26)
-- [ ] **Phase 5: Smart Nudges** - Intelligent in-app nudges based on patterns and dormant directions
+- [x] **Phase 5: Smart Nudges** - Intelligent in-app nudges based on patterns and dormant directions (completed 2026-02-27)
 - [ ] **Phase 6: UX Polish** - Premium animations, loading states, error handling, App Store readiness
 
 ## Phase Details
@@ -95,8 +95,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Data layer: Nudge model + NudgeService (trigger detection, cooldown, dismissal) + NudgeCard widget
-- [ ] 05-02-PLAN.md — UI integration: MoodEntryScreen nudge display + ConfirmationScreen post-check-in evaluation
+- [x] 05-01-PLAN.md — Data layer: Nudge model + NudgeService (trigger detection, cooldown, dismissal) + NudgeCard widget
+- [x] 05-02-PLAN.md — UI integration: MoodEntryScreen nudge display + ConfirmationScreen post-check-in evaluation
 
 ### Phase 6: UX Polish
 **Goal**: Every screen feels premium with smooth animations, helpful states, and App Store compliance

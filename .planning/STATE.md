@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-27T08:24:22.680Z"
+last_updated: "2026-02-27T08:27:44Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 5 of 5 (Smart Nudges)
-Plan: 1 of 2
-Status: In Progress
-Last activity: 2026-02-27 — Completed 05-01-PLAN.md (Nudge Infrastructure)
+Plan: 2 of 2
+Status: Complete
+Last activity: 2026-02-27 — Completed 05-02-PLAN.md (Nudge UI Integration)
 
-Progress: [███████████] 90%
+Progress: [████████████] 100%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [███████████] 90%
 | Phase 04 P01 | 14 | 3 tasks | 4 files |
 | Phase 04 P02 | 3 | 2 tasks | 4 files |
 | Phase 05-smart-nudges P01 | 2 | 2 tasks | 3 files |
+| Phase 05-smart-nudges P02 | 1 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,9 @@ Recent decisions affecting current work:
 - [Phase 05 Plan 01]: Streak milestones at 3, 7, 14, 30, 60, 100 days with warm, brief messages
 - [Phase 05 Plan 01]: Mood pattern threshold 15% above/below overall average (minimum 7 entries required)
 - [Phase 05 Plan 01]: NudgeCard uses softer accent border (0.6 opacity) to differentiate from WeeklySummaryCard
+- [Phase 05 Plan 02]: Weekly summary card takes priority over nudge card (no stacking, only one visible)
+- [Phase 05 Plan 02]: AppLifecycleListener detects app resume for dormant direction nudge checks
+- [Phase 05 Plan 02]: Nudge evaluation is fire-and-forget (non-blocking, preserves confirmation flow timing)
 
 ### Pending Todos
 
@@ -120,8 +124,8 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-27 (plan execution)
-Stopped at: Completed 05-01-PLAN.md
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
 
 ---
-*Phase 05 (Smart Nudges) in progress. Plan 01 complete.*
+*Phase 05 (Smart Nudges) complete. All phases complete. Milestone v2.0 achieved.*
