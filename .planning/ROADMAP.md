@@ -109,10 +109,12 @@ Plans:
   4. Error conditions show user-friendly messages with recovery actions (no stack traces or crashes)
   5. All screens adhere to design system (correct spacing, border radius, colors, typography)
   6. Interactive elements (buttons, cards, toggles) have micro-animations that provide tactile feedback
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] TBD
+- [ ] 06-01-PLAN.md — Foundation widgets: AnimatedTap, EmptyStateView, SVG assets, flutter_svg dep, global error handler
+- [ ] 06-02-PLAN.md — Check-in flow polish: custom transitions (vertical slide+fade), confirmation stagger, haptics
+- [ ] 06-03-PLAN.md — Screen integration: shimmer loading, empty states, micro-interactions, design consistency
 
 ## Progress
 
@@ -126,7 +128,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Calendar Visualization | 2/2 | Complete   | 2026-02-26 |
 | 4. Weekly Summaries | 0/TBD | Not started | - |
 | 5. Smart Nudges | 0/TBD | Not started | - |
-| 6. UX Polish | 0/TBD | Not started | - |
+| 6. UX Polish | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-26*
