@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import '../models/entry.dart';
 import '../services/reflection_service.dart';
 import '../services/storage_service.dart';
+import '../services/nudge_service.dart';
 import '../theme/elio_colors.dart';
 import '../widgets/answered_question_chip.dart';
 
@@ -148,6 +149,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
       _streakCount = await StorageService.instance.getCurrentStreak();
     } catch (_) {}
 
+    // Evaluate post-check-in nudges (non-blocking)
+    _evaluatePostCheckInNudges();
+
     if (!mounted) return;
     setState(() {});
 
@@ -158,6 +162,19 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
     Future.delayed(const Duration(milliseconds: 2000), () {
       if (mounted) setState(() => _canDismiss = true);
     });
+  }
+
+  Future<void> _evaluatePostCheckInNudges() async {
+    try {
+      final currentStreak = _streakCount ?? await StorageService.instance.getCurrentStreak();
+      final nudge = await NudgeService.instance.checkPostCheckIn(currentStreak);
+      if (nudge != null) {
+        NudgeService.instance.setPendingNudge(nudge);
+      }
+    } catch (e) {
+      debugPrint('Error evaluating post-check-in nudges: $e');
+      // Non-critical, don't block confirmation flow
+    }
   }
 
   @override
