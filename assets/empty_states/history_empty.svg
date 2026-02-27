@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Open journal with pen - represents the journey starting -->
+
+  <!-- Journal cover (left page) -->
+  <path d="M 25 30 L 25 90 L 60 90 L 60 30 Z"
+        stroke="#F9DFC1"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Journal pages (right page) -->
+  <path d="M 60 30 L 60 90 L 95 90 L 95 30 Z"
+        stroke="#F9DFC1"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Journal binding (center) -->
+  <line x1="60" y1="30" x2="60" y2="90"
+        stroke="#F9DFC1"
+        stroke-width="2.5"
+        stroke-linecap="round"/>
+
+  <!-- Horizontal lines on right page (writing lines) -->
+  <line x1="68" y1="42" x2="88" y2="42"
+        stroke="#F9DFC1"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        opacity="0.5"/>
+  <line x1="68" y1="52" x2="88" y2="52"
+        stroke="#F9DFC1"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        opacity="0.5"/>
+  <line x1="68" y1="62" x2="88" y2="62"
+        stroke="#F9DFC1"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        opacity="0.5"/>
+  <line x1="68" y1="72" x2="82" y2="72"
+        stroke="#F9DFC1"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        opacity="0.5"/>
+
+  <!-- Pen resting on journal -->
+  <path d="M 45 75 L 70 50"
+        stroke="#F9DFC1"
+        stroke-width="2"
+        stroke-linecap="round"/>
+
+  <!-- Pen tip -->
+  <path d="M 43 77 L 45 75 L 47 77"
+        stroke="#F9DFC1"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Pen clip -->
+  <line x1="63" y1="52" x2="66" y2="49"
+        stroke="#F9DFC1"
+        stroke-width="1.5"
+        stroke-linecap="round"/>
+</svg>
