@@ -47,10 +47,10 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 ### UX Polish
 
 - [x] **UXPL-01**: All screen transitions use smooth, consistent animations
-- [ ] **UXPL-02**: Loading states use shimmer placeholders instead of blank screens
+- [x] **UXPL-02**: Loading states use shimmer placeholders instead of blank screens
 - [x] **UXPL-03**: Every screen has a meaningful empty state with guidance
 - [x] **UXPL-04**: Error states show user-friendly messages with recovery actions
-- [ ] **UXPL-05**: Design consistency pass — all screens match design system (spacing, radius, colors, typography)
+- [x] **UXPL-05**: Design consistency pass — all screens match design system (spacing, radius, colors, typography)
 - [x] **UXPL-06**: Micro-animations for interactive elements (buttons, cards, toggles)
 
 ## v2 Requirements
@@ -119,10 +119,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NUDG-03 | Phase 5 | Complete |
 | NUDG-04 | Phase 5 | Complete |
 | UXPL-01 | Phase 6 | Complete |
-| UXPL-02 | Phase 6 | Pending |
+| UXPL-02 | Phase 6 | Complete |
 | UXPL-03 | Phase 6 | Complete |
 | UXPL-04 | Phase 6 | Complete |
-| UXPL-05 | Phase 6 | Pending |
+| UXPL-05 | Phase 6 | Complete |
 | UXPL-06 | Phase 6 | Complete |
 
 **Coverage:**
