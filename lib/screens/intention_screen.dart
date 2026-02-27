@@ -6,6 +6,35 @@ import '../theme/elio_colors.dart';
 import 'confirmation_screen.dart';
 import 'reflection_screen.dart';
 
+Route _checkInRoute(Widget page) {
+  return PageRouteBuilder(
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionDuration: const Duration(milliseconds: 300),
+    reverseTransitionDuration: const Duration(milliseconds: 300),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final slideTween = Tween<Offset>(
+        begin: const Offset(0.0, 0.15),
+        end: Offset.zero,
+      );
+      final slideAnimation = animation.drive(
+        slideTween.chain(CurveTween(curve: Curves.easeInOut)),
+      );
+      final fadeAnimation = animation.drive(
+        Tween<double>(begin: 0.0, end: 1.0).chain(
+          CurveTween(curve: Curves.easeInOut),
+        ),
+      );
+      return SlideTransition(
+        position: slideAnimation,
+        child: FadeTransition(
+          opacity: fadeAnimation,
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 class IntentionScreen extends StatefulWidget {
   const IntentionScreen({super.key, required this.moodValue, required this.moodWord});
 
@@ -92,8 +121,8 @@ class _IntentionScreenState extends State<IntentionScreen> {
 
     if (reflectionEnabled) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => ReflectionScreen(
+        _checkInRoute(
+          ReflectionScreen(
             moodWord: widget.moodWord,
             moodValue: widget.moodValue,
             intention: _controller.text.trim(),
@@ -102,8 +131,8 @@ class _IntentionScreenState extends State<IntentionScreen> {
       );
     } else {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => ConfirmationScreen(
+        _checkInRoute(
+          ConfirmationScreen(
             moodWord: widget.moodWord,
             moodValue: widget.moodValue,
             intentionText: _controller.text.trim(),

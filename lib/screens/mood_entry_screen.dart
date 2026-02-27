@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -14,6 +13,35 @@ import '../widgets/nudge_card.dart';
 import 'intention_screen.dart';
 import 'weekly_summary_screen.dart';
 import 'direction_detail_screen.dart';
+
+Route _checkInRoute(Widget page) {
+  return PageRouteBuilder(
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionDuration: const Duration(milliseconds: 300),
+    reverseTransitionDuration: const Duration(milliseconds: 300),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final slideTween = Tween<Offset>(
+        begin: const Offset(0.0, 0.15),
+        end: Offset.zero,
+      );
+      final slideAnimation = animation.drive(
+        slideTween.chain(CurveTween(curve: Curves.easeInOut)),
+      );
+      final fadeAnimation = animation.drive(
+        Tween<double>(begin: 0.0, end: 1.0).chain(
+          CurveTween(curve: Curves.easeInOut),
+        ),
+      );
+      return SlideTransition(
+        position: slideAnimation,
+        child: FadeTransition(
+          opacity: fadeAnimation,
+          child: child,
+        ),
+      );
+    },
+  );
+}
 
 class MoodEntryScreen extends StatefulWidget {
   const MoodEntryScreen({super.key});
@@ -176,9 +204,9 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
     final nextIndex = _thresholdIndexFor(value);
     if (nextIndex != _lastThresholdIndex) {
       _lastThresholdIndex = nextIndex;
-      if (Platform.isIOS) {
-        HapticFeedback.selectionClick();
-      }
+      try {
+        HapticFeedback.lightImpact();
+      } catch (_) {}
     }
   }
 
@@ -349,8 +377,8 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                   onPressed: _hasInteracted
                       ? () {
                           Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => IntentionScreen(
+                            _checkInRoute(
+                              IntentionScreen(
                                 moodValue: _moodValue,
                                 moodWord: _moodWordFor(_moodValue),
                               ),
