@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-26T14:41:32.886Z"
+last_updated: "2026-02-27T08:24:22.680Z"
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 4
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: 4 of 4 (Weekly Summaries)
-Plan: 2 of 2
-Status: Complete
-Last activity: 2026-02-26 — Completed 04-02-PLAN.md (Weekly Summary UI Integration)
+Phase: 5 of 5 (Smart Nudges)
+Plan: 1 of 2
+Status: In Progress
+Last activity: 2026-02-27 — Completed 05-01-PLAN.md (Nudge Infrastructure)
 
-Progress: [███████████] 112%
+Progress: [███████████] 90%
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [███████████] 112%
 | Phase 04 P01 | 14 min | 3 tasks | 4 files |
 | Phase 04 P01 | 14 | 3 tasks | 4 files |
 | Phase 04 P02 | 3 | 2 tasks | 4 files |
+| Phase 05-smart-nudges P01 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,10 @@ Recent decisions affecting current work:
 - [Phase 04 Plan 02]: Summary card on Home placed above greeting (visible immediately without blocking check-in)
 - [Phase 04 Plan 02]: Mark as viewed on screen open not dismiss (ensures viewed state even if user only sees preview)
 - [Phase 04 Plan 02]: Weekly Recaps always visible in Insights (not period-dependent, consistent historical access)
+- [Phase 05 Plan 01]: Cooldown periods: 7 days dormant, 30 days streak, 14 days pattern
+- [Phase 05 Plan 01]: Streak milestones at 3, 7, 14, 30, 60, 100 days with warm, brief messages
+- [Phase 05 Plan 01]: Mood pattern threshold 15% above/below overall average (minimum 7 entries required)
+- [Phase 05 Plan 01]: NudgeCard uses softer accent border (0.6 opacity) to differentiate from WeeklySummaryCard
 
 ### Pending Todos
 
@@ -114,9 +119,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-26 (plan execution)
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-02-27 (plan execution)
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
 
 ---
-*Phase 04 (Weekly Summaries) complete. All plans executed.*
+*Phase 05 (Smart Nudges) in progress. Plan 01 complete.*

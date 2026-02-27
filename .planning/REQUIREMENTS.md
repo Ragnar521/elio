@@ -39,10 +39,10 @@ Requirements for v2.0 release. Each maps to roadmap phases.
 
 ### Smart Nudges
 
-- [ ] **NUDG-01**: User sees in-app nudge when a direction has no connections for 7+ days
-- [ ] **NUDG-02**: User sees in-app nudge highlighting mood patterns (e.g., "Mornings are harder lately")
-- [ ] **NUDG-03**: User sees in-app nudge celebrating streaks and consistency
-- [ ] **NUDG-04**: Nudges are non-intrusive and dismissible (no-guilt design)
+- [x] **NUDG-01**: User sees in-app nudge when a direction has no connections for 7+ days
+- [x] **NUDG-02**: User sees in-app nudge highlighting mood patterns (e.g., "Mornings are harder lately")
+- [x] **NUDG-03**: User sees in-app nudge celebrating streaks and consistency
+- [x] **NUDG-04**: Nudges are non-intrusive and dismissible (no-guilt design)
 
 ### UX Polish
 
@@ -114,10 +114,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SUMM-02 | Phase 4 | Complete |
 | SUMM-03 | Phase 4 | Complete |
 | SUMM-04 | Phase 4 | Complete |
-| NUDG-01 | Phase 5 | Pending |
-| NUDG-02 | Phase 5 | Pending |
-| NUDG-03 | Phase 5 | Pending |
-| NUDG-04 | Phase 5 | Pending |
+| NUDG-01 | Phase 5 | Complete |
+| NUDG-02 | Phase 5 | Complete |
+| NUDG-03 | Phase 5 | Complete |
+| NUDG-04 | Phase 5 | Complete |
 | UXPL-01 | Phase 6 | Pending |
 | UXPL-02 | Phase 6 | Pending |
 | UXPL-03 | Phase 6 | Pending |
