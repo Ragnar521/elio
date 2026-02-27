@@ -5,10 +5,15 @@ import 'package:flutter/services.dart';
 import '../theme/elio_colors.dart';
 import '../services/storage_service.dart';
 import '../services/weekly_summary_service.dart';
+import '../services/nudge_service.dart';
+import '../services/direction_service.dart';
 import '../models/weekly_summary.dart';
+import '../models/nudge.dart';
 import '../widgets/weekly_summary_card.dart';
+import '../widgets/nudge_card.dart';
 import 'intention_screen.dart';
 import 'weekly_summary_screen.dart';
+import 'direction_detail_screen.dart';
 
 class MoodEntryScreen extends StatefulWidget {
   const MoodEntryScreen({super.key});
@@ -24,6 +29,9 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
   late String _userName;
   WeeklySummary? _pendingSummary;
   bool _summaryDismissed = false;
+  Nudge? _currentNudge;
+  bool _nudgeDismissed = false;
+  late final AppLifecycleListener _lifecycleListener;
 
   static const _moodWords = [
     'Heavy',
@@ -53,6 +61,16 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
     _lastThresholdIndex = _thresholdIndexFor(_moodValue);
     _userName = StorageService.instance.userName;
     _checkForWeeklySummary();
+    _checkForNudges();
+    _lifecycleListener = AppLifecycleListener(
+      onResume: () => _checkForNudges(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycleListener.dispose();
+    super.dispose();
   }
 
   Future<void> _checkForWeeklySummary() async {
@@ -84,6 +102,55 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
         _pendingSummary = null;
       });
     });
+  }
+
+  Future<void> _checkForNudges() async {
+    // First check for pending nudge from post-check-in
+    final pending = NudgeService.instance.consumePendingNudge();
+    if (pending != null && mounted) {
+      setState(() {
+        _currentNudge = pending;
+        _nudgeDismissed = false;
+      });
+      return;
+    }
+
+    // Then check for app-open nudges (dormant directions)
+    final nudge = await NudgeService.instance.checkOnAppOpen();
+    if (nudge != null && mounted) {
+      setState(() {
+        _currentNudge = nudge;
+        _nudgeDismissed = false;
+      });
+    }
+  }
+
+  Future<void> _dismissNudge() async {
+    if (_currentNudge == null) return;
+    final cooldownKey = _currentNudge!.id;
+    await NudgeService.instance.dismissNudge(cooldownKey);
+    setState(() {
+      _nudgeDismissed = true;
+      _currentNudge = null;
+    });
+  }
+
+  void _handleNudgeTap() {
+    if (_currentNudge == null) return;
+    final nudge = _currentNudge!;
+
+    if (nudge.type == NudgeType.dormantDirection && nudge.directionId != null) {
+      // Navigate to DirectionDetailScreen
+      final direction = DirectionService.instance.getDirection(nudge.directionId!);
+      if (direction != null) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DirectionDetailScreen(direction: direction),
+          ),
+        );
+      }
+    }
+    // Streak celebrations and mood patterns: dismiss only (no navigation)
   }
 
   String _greeting() {
@@ -142,6 +209,15 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                   summary: _pendingSummary!,
                   onTap: _openSummary,
                   onDismiss: _dismissSummary,
+                ),
+              ),
+            if (_currentNudge != null && !_nudgeDismissed && (_pendingSummary == null || _summaryDismissed))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                child: NudgeCard(
+                  nudge: _currentNudge!,
+                  onDismiss: _dismissNudge,
+                  onTap: _currentNudge!.actionText != null ? _handleNudgeTap : null,
                 ),
               ),
             const SizedBox(height: 32),
