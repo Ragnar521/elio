@@ -23,7 +23,7 @@
 
 **Milestone Goal:** Add demo/showcase mode with realistic sample data so the app can be demonstrated with a full, lived-in feel.
 
-- [ ] **Phase 7: Sample Data Engine** — Build realistic data generator covering all features
+- [x] **Phase 7: Sample Data Engine** — Build realistic data generator covering all features
 - [ ] **Phase 8: Launcher Screen** — Pre-onboarding choice between demo and fresh start
 - [ ] **Phase 9: Reset Mechanism** — Triple-tap Home icon to wipe and return to launcher
 
@@ -40,8 +40,8 @@
   4. Weekly summaries are pre-generated and display trends from sample entries
   5. Current streak and longest streak reflect realistic check-in patterns from sample data
 **Plans:** 2 plans
-- [ ] 07-01-PLAN.md — Core sample data service (entries, reflections, directions, connections, streaks)
-- [ ] 07-02-PLAN.md — Weekly summaries + visual verification
+- [x] 07-01-PLAN.md — Core sample data service (entries, reflections, directions, connections, streaks)
+- [x] 07-02-PLAN.md — Weekly summaries + visual verification
 
 ### Phase 8: Launcher Screen
 **Goal:** Users can choose between sample data demo and fresh start before onboarding
@@ -77,10 +77,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Weekly Summaries | v2.0 | 2/2 | Complete | 2026-02-26 |
 | 5. Smart Nudges | v2.0 | 2/2 | Complete | 2026-02-27 |
 | 6. UX Polish | v2.0 | 3/3 | Complete | 2026-02-27 |
-| 7. Sample Data Engine | v2.1 | 0/2 | Planning complete | — |
+| 7. Sample Data Engine | v2.1 | 2/2 | Complete | 2026-02-28 |
 | 8. Launcher Screen | v2.1 | 0/0 | Not started | — |
 | 9. Reset Mechanism | v2.1 | 0/0 | Not started | — |
 
 ---
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-02-28 after Phase 7 planning*
+*Last updated: 2026-02-28 after Phase 7 completion*

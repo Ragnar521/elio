@@ -18,7 +18,7 @@ Requirements for Demo Mode milestone. Each maps to roadmap phases.
 - [x] **DATA-01**: Sample data includes ~90 days of entries with realistic mood patterns (lower Mondays, higher weekends, occasional gaps)
 - [x] **DATA-02**: Sample data includes varied intentions and reflection answers across all categories
 - [x] **DATA-03**: Sample data includes 3-4 directions with connections to entries
-- [ ] **DATA-04**: Sample data includes weekly summaries with trends and takeaways
+- [x] **DATA-04**: Sample data includes weekly summaries with trends and takeaways
 - [x] **DATA-05**: Sample data includes realistic streaks (current and longest)
 
 ### Reset
@@ -44,7 +44,7 @@ None — focused milestone.
 | DATA-01 | Phase 7 | Complete |
 | DATA-02 | Phase 7 | Complete |
 | DATA-03 | Phase 7 | Complete |
-| DATA-04 | Phase 7 | Pending |
+| DATA-04 | Phase 7 | Complete |
 | DATA-05 | Phase 7 | Complete |
 | LAUNCH-01 | Phase 8 | Pending |
 | LAUNCH-02 | Phase 8 | Pending |
@@ -58,4 +58,4 @@ None — focused milestone.
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after roadmap creation*
+*Last updated: 2026-02-28 after Phase 7 completion*
