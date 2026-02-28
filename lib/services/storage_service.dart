@@ -2,6 +2,11 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/entry.dart';
+import '../models/direction.dart';
+import '../models/direction_connection.dart';
+import '../models/reflection_answer.dart';
+import '../models/reflection_question.dart';
+import '../models/weekly_summary.dart';
 import 'reflection_service.dart';
 
 class StorageService {
@@ -296,5 +301,31 @@ class StorageService {
     }
 
     await _settings.put(_longestStreakKey, longestStreak);
+  }
+
+  /// Wipe all app data — used by triple-tap reset to return to launcher
+  Future<void> wipeAllData() async {
+    // Clear data boxes via Hive.openBox (boxes may already be open — openBox returns existing instance)
+    final entriesBox = await Hive.openBox<Entry>('entries');
+    await entriesBox.clear();
+
+    final answersBox = await Hive.openBox<ReflectionAnswer>('reflectionAnswers');
+    await answersBox.clear();
+
+    final questionsBox = await Hive.openBox<ReflectionQuestion>('reflectionQuestions');
+    await questionsBox.clear();
+
+    final directionsBox = await Hive.openBox<Direction>('directions');
+    await directionsBox.clear();
+
+    final connectionsBox = await Hive.openBox<DirectionConnection>('direction_connections');
+    await connectionsBox.clear();
+
+    final summariesBox = await Hive.openBox<WeeklySummary>('weekly_summaries');
+    await summariesBox.clear();
+
+    // Clear settings LAST (this resets launcher_completed, onboarding_completed, etc.)
+    final settingsBox = await Hive.openBox('settings');
+    await settingsBox.clear();
   }
 }
