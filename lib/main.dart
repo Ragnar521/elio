@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import 'screens/home_shell.dart';
+import 'screens/launcher_screen.dart';
 import 'screens/onboarding/onboarding_flow.dart';
 import 'services/notification_service.dart';
 import 'services/reflection_service.dart';
@@ -101,12 +102,22 @@ class OnboardingGate extends StatefulWidget {
 }
 
 class _OnboardingGateState extends State<OnboardingGate> {
+  late bool _launcherComplete;
   late bool _isComplete;
 
   @override
   void initState() {
     super.initState();
+    _launcherComplete = StorageService.instance.launcherCompleted;
     _isComplete = StorageService.instance.onboardingCompleted;
+  }
+
+  void _handleLauncherFinished() {
+    setState(() {
+      _launcherComplete = true;
+      // Re-check onboarding status — demo mode sets it to true via loadDemoData
+      _isComplete = StorageService.instance.onboardingCompleted;
+    });
   }
 
   void _handleOnboardingFinished() {
@@ -115,6 +126,9 @@ class _OnboardingGateState extends State<OnboardingGate> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_launcherComplete) {
+      return LauncherScreen(onFinished: _handleLauncherFinished);
+    }
     if (_isComplete) {
       return const HomeShell(initialIndex: 1);
     }

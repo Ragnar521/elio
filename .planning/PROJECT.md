@@ -8,6 +8,15 @@ Elio is a mood tracking and journaling app for iOS and Android that helps users 
 
 Users can quickly check in with their mood and intentions, then understand what their data means — through weekly summaries, smart nudges, visual patterns, and actionable takeaways that make self-reflection genuinely useful.
 
+## Current Milestone: v2.1 Demo Mode
+
+**Goal:** Add a demo/showcase mode with realistic sample data so the app can be demonstrated with a full, lived-in feel.
+
+**Target features:**
+- Launcher screen before onboarding (sample data vs fresh start)
+- ~90 days of realistic sample data covering all features
+- Triple-tap Home icon to reset back to launcher screen
+
 ## Requirements
 
 ### Validated
@@ -40,7 +49,10 @@ Users can quickly check in with their mood and intentions, then understand what 
 
 ### Active
 
-(None — define with next milestone)
+<!-- v2.1 Demo Mode -->
+- [ ] Launcher screen with sample data / fresh start choice
+- [ ] ~90 days of realistic sample data (entries, reflections, directions, connections, summaries)
+- [ ] Triple-tap Home icon resets app to launcher screen
 
 ### Out of Scope
 
@@ -85,4 +97,4 @@ Minor tech debt: withOpacity() deprecation warnings (cosmetic), template widget_
 | Custom PageRouteBuilder for check-in flow | 300ms vertical slide + fade, flow continuity | ✓ Good — check-in feels like one journey |
 
 ---
-*Last updated: 2026-02-27 after v2.0 milestone*
+*Last updated: 2026-02-28 after v2.1 milestone started*
