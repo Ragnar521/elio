@@ -41,21 +41,21 @@ None — focused milestone.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LAUNCH-01 | — | Pending |
-| LAUNCH-02 | — | Pending |
-| LAUNCH-03 | — | Pending |
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| DATA-04 | — | Pending |
-| DATA-05 | — | Pending |
-| RESET-01 | — | Pending |
+| DATA-01 | Phase 7 | Pending |
+| DATA-02 | Phase 7 | Pending |
+| DATA-03 | Phase 7 | Pending |
+| DATA-04 | Phase 7 | Pending |
+| DATA-05 | Phase 7 | Pending |
+| LAUNCH-01 | Phase 8 | Pending |
+| LAUNCH-02 | Phase 8 | Pending |
+| LAUNCH-03 | Phase 8 | Pending |
+| RESET-01 | Phase 9 | Pending |
 
 **Coverage:**
 - v2.1 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9 ⚠️
+- Mapped to phases: 9
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after initial definition*
+*Last updated: 2026-02-28 after roadmap creation*
