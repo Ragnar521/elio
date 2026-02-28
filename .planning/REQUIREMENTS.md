@@ -23,7 +23,7 @@ Requirements for Demo Mode milestone. Each maps to roadmap phases.
 
 ### Reset
 
-- [ ] **RESET-01**: User can triple-tap the Home icon to wipe all data and return to the launcher screen
+- [x] **RESET-01**: User can triple-tap the Home icon to wipe all data and return to the launcher screen
 
 ## Future Requirements
 
@@ -49,7 +49,7 @@ None — focused milestone.
 | LAUNCH-01 | Phase 8 | Complete |
 | LAUNCH-02 | Phase 8 | Complete |
 | LAUNCH-03 | Phase 8 | Complete |
-| RESET-01 | Phase 9 | Pending |
+| RESET-01 | Phase 9 | Complete |
 
 **Coverage:**
 - v2.1 requirements: 9 total

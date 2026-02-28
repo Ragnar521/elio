@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
+milestone: v2.1
 milestone_name: Demo Mode
 status: unknown
-last_updated: "2026-02-28T10:47:38.530Z"
+last_updated: "2026-02-28T13:36:55.424Z"
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  total_phases: 3
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 8 of 9 (Launcher Screen)
+Phase: 9 of 9 (Reset Mechanism)
 Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-28 — Completed 08-01 Launcher Screen
+Last activity: 2026-02-28 — Completed 09-01 Reset Mechanism
 
-Progress: [████████░░] 78% (7 of 9 phases complete)
+Progress: [██████████] 100% (9 of 9 phases complete)
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [████████░░] 78% (7 of 9 phases complete)
 | Phase 07 P01 | 134s | 1 tasks | 1 files |
 | Phase 07 P02 | 4047 | 2 tasks | 1 files |
 | Phase 08 P01 | 85 | 2 tasks | 3 files |
+| Phase 09 P01 | 79 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 07-01]: Direct Hive box writes for backdated timestamps - SampleDataService bypasses service methods to write demo data with custom createdAt values
 - [Phase 08-01]: Launcher appears only on first app open before any other screen
 - [Phase 08-01]: Demo mode sets both launcher_completed and onboarding_completed to skip onboarding
+- [Phase 09-01]: Settings box cleared LAST to prevent partially-wiped state showing launcher before data is cleared
+- [Phase 09-01]: Navigation goes to OnboardingGate to leverage existing gate logic rather than directly to LauncherScreen
 
 ### Pending Todos
 
@@ -86,7 +89,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 08-01-PLAN.md — Phase 08 Launcher Screen complete
+Stopped at: Completed 09-01-PLAN.md — Phase 09 Reset Mechanism complete
 Resume file: None
 
 ---
