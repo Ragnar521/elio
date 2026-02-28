@@ -52,7 +52,8 @@
   2. Selecting "Start fresh" launches normal onboarding flow as before
   3. Selecting "Use sample data" skips onboarding, sets name to "Alex", loads demo data, and lands on main app (Home tab)
   4. App remembers user's choice and never shows launcher again unless reset
-**Plans:** TBD
+**Plans:** 1 plan
+- [ ] 08-01-PLAN.md — Launcher screen UI + app gate wiring
 
 ### Phase 9: Reset Mechanism
 **Goal:** Users can wipe all data and return to launcher for re-demonstration
@@ -78,7 +79,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Smart Nudges | v2.0 | 2/2 | Complete | 2026-02-27 |
 | 6. UX Polish | v2.0 | 3/3 | Complete | 2026-02-27 |
 | 7. Sample Data Engine | v2.1 | 2/2 | Complete | 2026-02-28 |
-| 8. Launcher Screen | v2.1 | 0/0 | Not started | — |
+| 8. Launcher Screen | v2.1 | 0/1 | Planned | — |
 | 9. Reset Mechanism | v2.1 | 0/0 | Not started | — |
 
 ---
