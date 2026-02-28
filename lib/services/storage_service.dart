@@ -17,6 +17,7 @@ class StorageService {
   static const _notificationsEnabledKey = 'notifications_enabled';
   static const _reflectionEnabledKey = 'reflection_enabled';
   static const _longestStreakKey = 'longest_streak';
+  static const _launcherCompletedKey = 'launcher_completed';
 
   Box<Entry>? _entriesBox;
   Box<dynamic>? _settingsBox;
@@ -156,6 +157,15 @@ class StorageService {
 
   Future<void> setReflectionEnabled(bool enabled) async {
     await _settings.put(_reflectionEnabledKey, enabled);
+  }
+
+  bool get launcherCompleted {
+    final value = _settings.get(_launcherCompletedKey, defaultValue: false);
+    return value is bool ? value : false;
+  }
+
+  Future<void> setLauncherCompleted(bool completed) async {
+    await _settings.put(_launcherCompletedKey, completed);
   }
 
   Future<int> getLongestStreak() async {
