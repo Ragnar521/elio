@@ -7,6 +7,7 @@ import '../models/direction.dart';
 import '../models/direction_connection.dart';
 import '../models/entry.dart';
 import '../models/reflection_answer.dart';
+import '../models/weekly_summary.dart';
 import 'reflection_service.dart';
 
 /// Service for loading demo data into Elio
@@ -119,6 +120,17 @@ class SampleDataService {
     // 7. Calculate and set longest streak
     final longestStreak = _calculateLongestStreak(entries);
     await settingsBox.put('longest_streak', longestStreak);
+
+    // 8. Generate weekly summaries for all completed weeks
+    await _generateWeeklySummaries(
+      now,
+      entries,
+      answersData,
+      careerDirection,
+      healthDirection,
+      relationshipsDirection,
+      peaceDirection,
+    );
   }
 
   /// Generate ~90 days of entries with day-of-week patterns and gaps
@@ -627,4 +639,402 @@ class SampleDataService {
       "Team celebrating the launch",
     ],
   };
+
+  /// Generate weekly summaries for all completed weeks in the date range
+  Future<void> _generateWeeklySummaries(
+    DateTime now,
+    List<Entry> entries,
+    List<ReflectionAnswer> answers,
+    Direction careerDirection,
+    Direction healthDirection,
+    Direction relationshipsDirection,
+    Direction peaceDirection,
+  ) async {
+    final summaryBox = await Hive.openBox<WeeklySummary>('weekly_summaries');
+    final connectionsBox = await Hive.openBox<DirectionConnection>('direction_connections');
+
+    // Build a map of entryId -> list of answer objects for quick lookup
+    final entryAnswersMap = <String, List<ReflectionAnswer>>{};
+    for (final answer in answers) {
+      entryAnswersMap.putIfAbsent(answer.entryId, () => []).add(answer);
+    }
+
+    // Build a map of entryId -> list of directionIds for quick lookup
+    final entryDirectionsMap = <String, Set<String>>{};
+    for (final connection in connectionsBox.values) {
+      entryDirectionsMap.putIfAbsent(connection.entryId, () => {}).add(connection.directionId);
+    }
+
+    // Calculate week boundaries
+    // Start from 90 days ago, generate summaries for each completed week up to last Monday
+    final oldestDate = now.subtract(const Duration(days: 90));
+    final firstMonday = _startOfWeek(oldestDate);
+    final currentWeekStart = _startOfWeek(now);
+
+    // Iterate through each week
+    DateTime weekStart = firstMonday;
+    final summaries = <WeeklySummary>[];
+    double? previousWeekAvgMood;
+
+    while (weekStart.isBefore(currentWeekStart)) {
+      final weekEnd = weekStart.add(const Duration(days: 7));
+
+      // Get entries for this week
+      final weekEntries = entries.where((entry) {
+        return !entry.createdAt.isBefore(weekStart) && entry.createdAt.isBefore(weekEnd);
+      }).toList();
+
+      // Only create summary if week has entries
+      if (weekEntries.isEmpty) {
+        weekStart = weekEnd;
+        continue;
+      }
+
+      // Sort entries by date
+      weekEntries.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+      // Calculate stats
+      final checkInCount = weekEntries.length;
+      final daysWithEntries = weekEntries.map((e) => DateTime(e.createdAt.year, e.createdAt.month, e.createdAt.day)).toSet().length;
+      final avgMood = weekEntries.map((e) => e.moodValue).reduce((a, b) => a + b) / weekEntries.length;
+
+      // Determine mood trend
+      String moodTrend = 'stable';
+      if (previousWeekAvgMood != null) {
+        final difference = avgMood - previousWeekAvgMood;
+        if (difference >= 0.05) {
+          moodTrend = 'up';
+        } else if (difference <= -0.05) {
+          moodTrend = 'down';
+        }
+      }
+
+      // Find most felt mood (most common moodWord)
+      final moodCounts = <String, int>{};
+      for (final entry in weekEntries) {
+        moodCounts[entry.moodWord] = (moodCounts[entry.moodWord] ?? 0) + 1;
+      }
+      final mostFeltMood = moodCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+
+      // Find best mood day
+      final bestEntry = weekEntries.reduce((a, b) => a.moodValue > b.moodValue ? a : b);
+      final weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      final bestMoodDay = weekdayNames[bestEntry.createdAt.weekday - 1];
+      final bestMoodValue = bestEntry.moodValue;
+      final bestMoodWord = bestEntry.moodWord;
+
+      // Build direction summaries
+      final directionSummaries = <Map<String, dynamic>>[];
+      String? topDirectionId;
+      double highestMoodDifference = -999.0;
+
+      final directions = [
+        (careerDirection, 'career'),
+        (healthDirection, 'health'),
+        (relationshipsDirection, 'relationships'),
+        (peaceDirection, 'peace'),
+      ];
+
+      for (final (direction, _) in directions) {
+        // Count connections for this week
+        final weeklyConnections = weekEntries.where((entry) {
+          return entryDirectionsMap[entry.id]?.contains(direction.id) ?? false;
+        }).length;
+
+        // Calculate avg mood when connected to this direction (across all entries, not just this week)
+        final allConnectedEntries = entries.where((entry) {
+          return entryDirectionsMap[entry.id]?.contains(direction.id) ?? false;
+        }).toList();
+
+        double avgMoodWhenConnected = 0.0;
+        if (allConnectedEntries.isNotEmpty) {
+          avgMoodWhenConnected = allConnectedEntries.map((e) => e.moodValue).reduce((a, b) => a + b) / allConnectedEntries.length;
+        }
+
+        // Calculate overall avg mood (all entries)
+        final overallAvgMood = entries.map((e) => e.moodValue).reduce((a, b) => a + b) / entries.length;
+        final moodDifference = avgMoodWhenConnected - overallAvgMood;
+
+        // Get emoji for direction type
+        final emoji = _getDirectionEmoji(direction.type);
+
+        directionSummaries.add({
+          'directionId': direction.id,
+          'title': direction.title,
+          'emoji': emoji,
+          'weeklyConnections': weeklyConnections,
+          'avgMoodWhenConnected': avgMoodWhenConnected,
+          'moodDifference': moodDifference,
+        });
+
+        // Track top direction (highest positive correlation >= 0.1)
+        if (moodDifference >= 0.1 && moodDifference > highestMoodDifference) {
+          highestMoodDifference = moodDifference;
+          topDirectionId = direction.id;
+        }
+      }
+
+      // Get standout reflections (1-2 longest answers)
+      final weekAnswers = <ReflectionAnswer>[];
+      for (final entry in weekEntries) {
+        if (entryAnswersMap.containsKey(entry.id)) {
+          weekAnswers.addAll(entryAnswersMap[entry.id]!);
+        }
+      }
+
+      List<Map<String, dynamic>>? standoutReflectionAnswers;
+      if (weekAnswers.isNotEmpty) {
+        weekAnswers.sort((a, b) => b.answer.length.compareTo(a.answer.length));
+        standoutReflectionAnswers = [];
+
+        // Add longest answer
+        standoutReflectionAnswers.add({
+          'questionText': weekAnswers.first.questionText,
+          'answer': weekAnswers.first.answer,
+        });
+
+        // Add second longest if different question
+        if (weekAnswers.length > 1) {
+          for (var i = 1; i < weekAnswers.length; i++) {
+            if (weekAnswers[i].questionText != weekAnswers.first.questionText) {
+              standoutReflectionAnswers.add({
+                'questionText': weekAnswers[i].questionText,
+                'answer': weekAnswers[i].answer,
+              });
+              break;
+            }
+          }
+        }
+      }
+
+      // Generate unique takeaway for this week
+      final takeaway = _generateWeeklyTakeaway(
+        weekStart,
+        checkInCount,
+        avgMood,
+        moodTrend,
+        bestMoodDay,
+        bestMoodWord,
+        directionSummaries,
+        weekAnswers.isNotEmpty,
+      );
+
+      // Create summary
+      final summary = WeeklySummary(
+        id: _uuid.v4(),
+        weekStart: weekStart,
+        weekEnd: weekEnd,
+        checkInCount: checkInCount,
+        daysWithEntries: daysWithEntries,
+        avgMood: avgMood,
+        moodTrend: moodTrend,
+        mostFeltMood: mostFeltMood,
+        bestMoodDay: bestMoodDay,
+        bestMoodValue: bestMoodValue,
+        bestMoodWord: bestMoodWord,
+        directionSummaries: directionSummaries,
+        topDirectionId: topDirectionId,
+        standoutReflectionAnswers: standoutReflectionAnswers,
+        takeaway: takeaway,
+        createdAt: weekEnd, // Summaries are created after the week ends
+        viewedAt: null, // Will be set below
+      );
+
+      summaries.add(summary);
+      previousWeekAvgMood = avgMood;
+      weekStart = weekEnd;
+    }
+
+    // Mark all summaries as viewed EXCEPT the most recent one
+    for (int i = 0; i < summaries.length; i++) {
+      final isLastSummary = i == summaries.length - 1;
+      final summary = summaries[i];
+
+      final finalSummary = WeeklySummary(
+        id: summary.id,
+        weekStart: summary.weekStart,
+        weekEnd: summary.weekEnd,
+        checkInCount: summary.checkInCount,
+        daysWithEntries: summary.daysWithEntries,
+        avgMood: summary.avgMood,
+        moodTrend: summary.moodTrend,
+        mostFeltMood: summary.mostFeltMood,
+        bestMoodDay: summary.bestMoodDay,
+        bestMoodValue: summary.bestMoodValue,
+        bestMoodWord: summary.bestMoodWord,
+        directionSummaries: summary.directionSummaries,
+        topDirectionId: summary.topDirectionId,
+        standoutReflectionAnswers: summary.standoutReflectionAnswers,
+        takeaway: summary.takeaway,
+        createdAt: summary.createdAt,
+        viewedAt: isLastSummary ? null : summary.createdAt.add(const Duration(hours: 2)), // Viewed ~2 hours after creation, except last
+      );
+
+      await summaryBox.put(finalSummary.id, finalSummary);
+    }
+  }
+
+  /// Calculate the start of the week (Monday) for a given date
+  DateTime _startOfWeek(DateTime date) {
+    final weekday = date.weekday;
+    final mondayDate = date.subtract(Duration(days: weekday - 1));
+    return DateTime(mondayDate.year, mondayDate.month, mondayDate.day);
+  }
+
+  /// Get emoji for direction type
+  String _getDirectionEmoji(DirectionType type) {
+    switch (type) {
+      case DirectionType.career:
+        return '💼';
+      case DirectionType.health:
+        return '💪';
+      case DirectionType.relationships:
+        return '👥';
+      case DirectionType.growth:
+        return '🌱';
+      case DirectionType.peace:
+        return '🧘';
+      case DirectionType.creativity:
+        return '🎨';
+    }
+  }
+
+  /// Generate unique takeaway message for each week
+  String _generateWeeklyTakeaway(
+    DateTime weekStart,
+    int checkInCount,
+    double avgMood,
+    String moodTrend,
+    String? bestMoodDay,
+    String? bestMoodWord,
+    List<Map<String, dynamic>> directionSummaries,
+    bool hasReflections,
+  ) {
+    // Use week number to select different messages (deterministic but varied)
+    final weekOfYear = _weekOfYear(weekStart);
+    final seed = weekOfYear % 20; // 20 different message templates
+
+    // Count direction connections
+    int totalConnections = 0;
+    String? topDirection;
+    int topConnections = 0;
+    for (final dir in directionSummaries) {
+      final count = dir['weeklyConnections'] as int;
+      totalConnections += count;
+      if (count > topConnections) {
+        topConnections = count;
+        topDirection = dir['title'] as String;
+      }
+    }
+
+    switch (seed) {
+      case 0:
+        return checkInCount == 7
+            ? 'Seven for seven. You didn\'t miss a day. That\'s dedication.'
+            : 'You showed up $checkInCount days this week. Your consistency is building something.';
+
+      case 1:
+        return hasReflections
+            ? 'A quieter week, but the reflections you wrote were some of your most honest.'
+            : 'Even when life gets busy, you made time for yourself. That matters.';
+
+      case 2:
+        return bestMoodDay != null
+            ? '$bestMoodDay\'s energy carried you. Notice what made that day different.'
+            : 'This week had its ups and downs, but you kept showing up.';
+
+      case 3:
+        return totalConnections > 0 && topDirection != null
+            ? '$topConnections check-ins connected to $topDirection. You\'re on track.'
+            : 'You checked in $checkInCount times. That\'s $checkInCount moments of self-awareness.';
+
+      case 4:
+        return moodTrend == 'up'
+            ? 'Even with a rough start, you bounced back. That\'s resilience.'
+            : 'Stability is its own kind of strength. You held steady this week.';
+
+      case 5:
+        return avgMood >= 0.6
+            ? 'Your mood was up this week. Something\'s working — trust it.'
+            : 'Tough weeks happen. What matters is you kept checking in anyway.';
+
+      case 6:
+        return hasReflections
+            ? 'Your reflections this week show real self-awareness. That\'s powerful.'
+            : 'You showed up even when it was hard. That\'s courage.';
+
+      case 7:
+        return checkInCount >= 6
+            ? 'Six check-ins and real progress. You\'re building momentum.'
+            : 'Every check-in is a choice to show up for yourself. You made that choice $checkInCount times.';
+
+      case 8:
+        return bestMoodWord != null
+            ? 'You felt $bestMoodWord on $bestMoodDay. What can you learn from that?'
+            : 'Another week, another set of data points about you. Keep going.';
+
+      case 9:
+        return totalConnections > 0
+            ? 'You connected $totalConnections entries to your directions this week. That\'s intentional living.'
+            : 'Progress isn\'t always visible, but it\'s happening. Trust the process.';
+
+      case 10:
+        return moodTrend == 'down'
+            ? 'Even when things felt harder, you kept showing up. That takes strength.'
+            : 'Consistent effort, consistent growth. You\'re doing the work.';
+
+      case 11:
+        return hasReflections && avgMood >= 0.5
+            ? 'Good week, thoughtful reflections. You\'re finding your rhythm.'
+            : 'One week at a time. You\'re exactly where you need to be.';
+
+      case 12:
+        return checkInCount >= 5
+            ? 'Five check-ins this week. You\'re making this a habit.'
+            : 'Even a few check-ins matter. You showed up when it counted.';
+
+      case 13:
+        return topDirection != null && topConnections >= 3
+            ? '$topDirection got your attention this week. That focus is valuable.'
+            : 'You\'re learning what matters to you. That clarity takes time.';
+
+      case 14:
+        return avgMood < 0.35 && checkInCount >= 3
+            ? 'Tough weeks are worth reflecting on. You did that — and that matters.'
+            : 'Self-awareness is a practice, and you\'re practicing. Keep at it.';
+
+      case 15:
+        return moodTrend == 'up' && hasReflections
+            ? 'Your mood improved AND you reflected deeply. That combination is powerful.'
+            : 'You\'re building a record of who you are. That\'s valuable work.';
+
+      case 16:
+        return bestMoodDay == 'Saturday' || bestMoodDay == 'Sunday'
+            ? 'Weekends recharge you. How can you bring that energy into the week?'
+            : 'Weekdays have their own challenges. You\'re learning to navigate them.';
+
+      case 17:
+        return checkInCount == 7
+            ? 'Perfect attendance this week. Your commitment is inspiring.'
+            : 'Not every week is perfect, but every check-in counts. You did $checkInCount.';
+
+      case 18:
+        return hasReflections
+            ? 'The questions you answered reveal growth. Keep looking inward.'
+            : 'Sometimes just tracking your mood is enough. You did that.';
+
+      case 19:
+      default:
+        return totalConnections > 0
+            ? 'Direction connections: $totalConnections. You\'re aligning actions with values.'
+            : 'Another week of showing up for yourself. That\'s the foundation.';
+    }
+  }
+
+  /// Calculate week number of the year (1-52)
+  int _weekOfYear(DateTime date) {
+    final firstDayOfYear = DateTime(date.year, 1, 1);
+    final daysSinceStart = date.difference(firstDayOfYear).inDays;
+    return (daysSinceStart / 7).floor() + 1;
+  }
 }
