@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v2.0 The Proper App** — Phases 1-6 (shipped 2026-02-27)
-- 🚧 **v2.1 Demo Mode** — Phases 7-9 (in progress)
+- ✅ **v2.1 Demo Mode** — Phases 7-9 (shipped 2026-02-28)
 
 ## Phases
 
@@ -19,13 +19,13 @@
 
 </details>
 
-### 🚧 v2.1 Demo Mode (In Progress)
+### ✅ v2.1 Demo Mode (Complete)
 
 **Milestone Goal:** Add demo/showcase mode with realistic sample data so the app can be demonstrated with a full, lived-in feel.
 
 - [x] **Phase 7: Sample Data Engine** — Build realistic data generator covering all features
-- [ ] **Phase 8: Launcher Screen** — Pre-onboarding choice between demo and fresh start
-- [ ] **Phase 9: Reset Mechanism** — Triple-tap Home icon to wipe and return to launcher
+- [x] **Phase 8: Launcher Screen** — Pre-onboarding choice between demo and fresh start
+- [x] **Phase 9: Reset Mechanism** — Triple-tap Home icon to wipe and return to launcher
 
 ## Phase Details
 
@@ -53,7 +53,7 @@
   3. Selecting "Use sample data" skips onboarding, sets name to "Alex", loads demo data, and lands on main app (Home tab)
   4. App remembers user's choice and never shows launcher again unless reset
 **Plans:** 1 plan
-- [ ] 08-01-PLAN.md — Launcher screen UI + app gate wiring
+- [x] 08-01-PLAN.md — Launcher screen UI + app gate wiring
 
 ### Phase 9: Reset Mechanism
 **Goal:** Users can wipe all data and return to launcher for re-demonstration
@@ -63,7 +63,8 @@
   1. Triple-tapping the Home icon immediately wipes all data (entries, directions, summaries, settings)
   2. After wipe, app returns to launcher screen with fresh state
   3. User can choose demo or fresh start again after reset
-**Plans:** TBD
+**Plans:** 1 plan
+- [x] 09-01-PLAN.md — Triple-tap reset to wipe all data and return to launcher
 
 ## Progress
 
@@ -79,9 +80,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Smart Nudges | v2.0 | 2/2 | Complete | 2026-02-27 |
 | 6. UX Polish | v2.0 | 3/3 | Complete | 2026-02-27 |
 | 7. Sample Data Engine | v2.1 | 2/2 | Complete | 2026-02-28 |
-| 8. Launcher Screen | v2.1 | 0/1 | Planned | — |
-| 9. Reset Mechanism | v2.1 | 0/0 | Not started | — |
+| 8. Launcher Screen | v2.1 | 1/1 | Complete | 2026-02-28 |
+| 9. Reset Mechanism | v2.1 | 1/1 | Complete | 2026-02-28 |
 
 ---
 *Roadmap created: 2026-02-26*
-*Last updated: 2026-02-28 after Phase 7 completion*
+*Last updated: 2026-02-28 — v2.1 Demo Mode shipped (Phases 7-9 complete)*
