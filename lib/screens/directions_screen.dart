@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/direction.dart';
 import '../services/direction_service.dart';
 import '../widgets/direction_card.dart';
+import '../widgets/empty_state_view.dart';
 import 'create_direction_screen.dart';
 import 'direction_detail_screen.dart';
 
@@ -50,39 +51,12 @@ class _DirectionsScreenState extends State<DirectionsScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              '🧭',
-              style: TextStyle(fontSize: 64),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'What matters to you?',
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Directions help you see how your mood connects to the things you care about.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: _navigateToCreate,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Your First Direction'),
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateView(
+      svgAsset: 'assets/empty_states/directions_empty.svg',
+      title: 'What matters to you?',
+      description: 'Add life directions to connect your daily check-ins and discover patterns that matter.',
+      ctaLabel: 'Add Your First Direction',
+      onCtaPressed: _navigateToCreate,
     );
   }
 

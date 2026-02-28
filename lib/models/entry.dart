@@ -8,6 +8,9 @@ class Entry {
     required this.intention,
     required this.createdAt,
     this.reflectionAnswerIds,
+    this.isDeleted = false,
+    this.deletedAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -16,6 +19,9 @@ class Entry {
   final String intention;
   final DateTime createdAt;
   final List<String>? reflectionAnswerIds;
+  final bool isDeleted;
+  final DateTime? deletedAt;
+  final DateTime? updatedAt;
 }
 
 /// Extension for Entry utilities
@@ -49,13 +55,16 @@ class EntryAdapter extends TypeAdapter<Entry> {
       intention: fields[3] as String,
       createdAt: fields[4] as DateTime,
       reflectionAnswerIds: fields[5] as List<String>?,
+      isDeleted: fields[6] as bool? ?? false,
+      deletedAt: fields[7] as DateTime?,
+      updatedAt: fields[8] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Entry obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -67,6 +76,12 @@ class EntryAdapter extends TypeAdapter<Entry> {
       ..writeByte(4)
       ..write(obj.createdAt)
       ..writeByte(5)
-      ..write(obj.reflectionAnswerIds);
+      ..write(obj.reflectionAnswerIds)
+      ..writeByte(6)
+      ..write(obj.isDeleted)
+      ..writeByte(7)
+      ..write(obj.deletedAt)
+      ..writeByte(8)
+      ..write(obj.updatedAt);
   }
 }

@@ -1,15 +1,21 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../models/entry.dart';
+import '../models/weekly_summary.dart';
 import '../services/insights_service.dart';
 import '../services/storage_service.dart';
+import '../services/weekly_summary_service.dart';
 import '../theme/elio_colors.dart';
+import '../widgets/calendar_heatmap.dart';
 import '../widgets/day_entries_sheet.dart';
 import '../widgets/day_pattern_chart.dart';
 import '../widgets/insight_card.dart';
 import '../widgets/mood_wave.dart';
 import '../widgets/stat_card.dart';
-import 'mood_entry_screen.dart';
+import '../widgets/empty_state_view.dart';
+import 'weekly_summary_screen.dart';
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -26,11 +32,23 @@ class _InsightsScreenState extends State<InsightsScreen> {
   int _offset = 0;
   bool _useSampleData = false;
   _NavigationDirection _lastDirection = _NavigationDirection.forward;
+  DateTime? _selectedCalendarDate;
+  bool _showShimmer = false;
+  Timer? _shimmerTimer;
 
   @override
   void initState() {
     super.initState();
     _future = _loadData();
+    _shimmerTimer = Timer(const Duration(milliseconds: 200), () {
+      if (mounted) setState(() => _showShimmer = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _shimmerTimer?.cancel();
+    super.dispose();
   }
 
   Future<_InsightsBaseData> _loadData() async {
@@ -45,6 +63,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     setState(() {
       _period = period;
       _offset = 0;
+      _selectedCalendarDate = null;
     });
   }
 
@@ -77,6 +96,104 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   bool get _isCurrentPeriod => _offset == 0;
 
+  Map<DateTime, List<Entry>> _groupEntriesByDate(List<Entry> entries, DateTime month) {
+    final Map<DateTime, List<Entry>> grouped = {};
+    for (final entry in entries) {
+      final date = DateTime(entry.createdAt.year, entry.createdAt.month, entry.createdAt.day);
+      // Only include entries from the displayed month
+      if (date.year == month.year && date.month == month.month) {
+        grouped.putIfAbsent(date, () => []).add(entry);
+      }
+    }
+    return grouped;
+  }
+
+  DateTime _getDisplayedMonth(InsightsData data) {
+    return DateTime(data.periodStart.year, data.periodStart.month);
+  }
+
+  DateTime _calculateFirstEntryMonth(List<Entry> allEntries) {
+    if (allEntries.isEmpty) return DateTime(DateTime.now().year, DateTime.now().month);
+    DateTime earliest = allEntries.first.createdAt;
+    for (final entry in allEntries) {
+      if (entry.createdAt.isBefore(earliest)) {
+        earliest = entry.createdAt;
+      }
+    }
+    return DateTime(earliest.year, earliest.month);
+  }
+
+  bool _canNavigateCalendarBack(DateTime displayedMonth, DateTime firstEntryMonth) {
+    return displayedMonth.year > firstEntryMonth.year ||
+        (displayedMonth.year == firstEntryMonth.year && displayedMonth.month > firstEntryMonth.month);
+  }
+
+  bool _canNavigateCalendarForward(DateTime displayedMonth) {
+    final now = DateTime.now();
+    return displayedMonth.year < now.year ||
+        (displayedMonth.year == now.year && displayedMonth.month < now.month);
+  }
+
+  void _onCalendarMonthChanged(int direction) {
+    _navigatePeriod(direction);
+  }
+
+  void _onCalendarDayTap(DateTime date, List<Entry> entries) {
+    setState(() {
+      _selectedCalendarDate = date;
+    });
+
+    // Sort entries newest first
+    final sortedEntries = List<Entry>.from(entries)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    // Calculate average mood
+    final avgMood = entries.fold(0.0, (sum, e) => sum + e.moodValue) / entries.length;
+
+    // Build day label
+    final dayLabel = _calendarDayLabel(date);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => DayEntriesSheet(
+          dayName: dayLabel,
+          entries: sortedEntries,
+          averageMood: avgMood,
+        ),
+      ),
+    ).then((_) {
+      // Clear highlight when sheet is dismissed
+      if (mounted) {
+        setState(() {
+          _selectedCalendarDate = null;
+        });
+      }
+    });
+  }
+
+  String _calendarDayLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(target).inDays;
+
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+
+    final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final monthName = monthNames[date.month - 1];
+    if (date.year == now.year) {
+      return '$monthName ${date.day}';
+    }
+    return '$monthName ${date.day}, ${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,7 +202,62 @@ class _InsightsScreenState extends State<InsightsScreen> {
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              if (!_showShimmer) {
+                return const SizedBox.shrink();
+              }
+              return Skeletonizer(
+                enabled: true,
+                effect: ShimmerEffect(
+                  baseColor: ElioColors.darkSurface,
+                  highlightColor: ElioColors.darkSurface.withOpacity(0.6),
+                  duration: const Duration(milliseconds: 1500),
+                ),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                  children: [
+                    // Toggle bar placeholder
+                    Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: ElioColors.darkSurface,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Wave chart placeholder
+                    Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: ElioColors.darkSurface,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Stat cards placeholder
+                    Row(
+                      children: List.generate(4, (index) => Expanded(
+                        child: Container(
+                          height: 80,
+                          margin: EdgeInsets.only(right: index < 3 ? 8 : 0),
+                          decoration: BoxDecoration(
+                            color: ElioColors.darkSurface,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                      )),
+                    ),
+                    const SizedBox(height: 24),
+                    // Day pattern chart placeholder
+                    Container(
+                      height: 180,
+                      decoration: BoxDecoration(
+                        color: ElioColors.darkSurface,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
             final base = snapshot.data;
@@ -106,19 +278,29 @@ class _InsightsScreenState extends State<InsightsScreen> {
             );
 
             if (totalCount < 3) {
-              return _buildEmptyState(
-                context,
-                title: 'Keep checking in.',
-                subtitle: 'After a few entries, you\'ll start seeing patterns here.',
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                children: [
+                  EmptyStateView(
+                    svgAsset: 'assets/empty_states/insights_empty.svg',
+                    title: 'Patterns will emerge',
+                    description: 'Check in a few times and your mood patterns will start to appear here.',
+                  ),
+                ],
               );
             }
 
             if (data.entries.isEmpty) {
               final label = _period == InsightsPeriod.week ? 'week' : 'month';
-              return _buildEmptyState(
-                context,
-                title: 'No check-ins this $label yet.',
-                subtitle: 'Your first one could be now.',
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                children: [
+                  EmptyStateView(
+                    svgAsset: 'assets/empty_states/insights_empty.svg',
+                    title: 'No check-ins this $label yet',
+                    description: 'Your first one could be now.',
+                  ),
+                ],
               );
             }
 
@@ -158,7 +340,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                       transitionBuilder: (child, animation) {
                         return _buildAnimatedTransition(child, animation);
                       },
-                      child: _buildPeriodContent(context, data),
+                      child: _buildPeriodContent(context, data, entries),
                     ),
                   ),
                 ],
@@ -217,7 +399,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
-  Widget _buildPeriodContent(BuildContext context, InsightsData data) {
+  Widget _buildPeriodContent(BuildContext context, InsightsData data, List<Entry> allEntries) {
     // Use a unique key based on period and offset to trigger animation
     final key = ValueKey('${_period.name}_$_offset');
 
@@ -246,7 +428,23 @@ class _InsightsScreenState extends State<InsightsScreen> {
           onDayTap: (dayOfWeek) => _showDayEntriesSheet(context, data, dayOfWeek),
         ),
         const SizedBox(height: 16),
+        // Only show calendar in Month view
+        if (_period == InsightsPeriod.month) ...[
+          const SizedBox(height: 28),
+          Text(
+            'Mood Calendar',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: ElioColors.darkPrimaryText,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 12),
+          _buildCalendarSection(context, allEntries, data),
+        ],
+        const SizedBox(height: 16),
         _buildPatternInsight(context, data.patternInsight),
+        const SizedBox(height: 32),
+        _buildWeeklyRecapsSection(context),
       ],
     );
   }
@@ -448,6 +646,235 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  Widget _buildWeeklyRecapsSection(BuildContext context) {
+    final summaries = WeeklySummaryService.instance.getAllSummaries();
+
+    if (summaries.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Weekly Recaps',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: ElioColors.darkPrimaryText,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Complete a full week to see your first recap',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                ),
+          ),
+        ],
+      );
+    }
+
+    final displaySummaries = summaries.take(3).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Weekly Recaps',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: ElioColors.darkPrimaryText,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const Spacer(),
+            if (summaries.length > 3)
+              GestureDetector(
+                onTap: () => _showAllSummaries(context, summaries),
+                child: Text(
+                  'View all',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: ElioColors.darkAccent,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...displaySummaries.map((summary) => _buildSummaryListItem(context, summary)).toList(),
+      ],
+    );
+  }
+
+  Widget _buildSummaryListItem(BuildContext context, WeeklySummary summary) {
+    final moodWord = _getMoodWord(summary.avgMood);
+    final trendIcon = _getTrendIcon(summary.moodTrend);
+
+    return InkWell(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => WeeklySummaryScreen(summary: summary),
+        ),
+      ),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: ElioColors.darkSurface,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  summary.weekLabel,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: ElioColors.darkPrimaryText,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const Spacer(),
+                Text(
+                  '${summary.checkInCount} check-ins',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _getMoodColor(summary.avgMood),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  moodWord,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ElioColors.darkPrimaryText.withOpacity(0.7),
+                      ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  trendIcon,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ElioColors.darkPrimaryText.withOpacity(0.5),
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getMoodWord(double avgMood) {
+    if (avgMood < 0.14) return 'Heavy';
+    if (avgMood < 0.28) return 'Tired';
+    if (avgMood < 0.42) return 'Flat';
+    if (avgMood < 0.56) return 'Okay';
+    if (avgMood < 0.70) return 'Calm';
+    if (avgMood < 0.84) return 'Good';
+    if (avgMood < 0.90) return 'Energized';
+    return 'Great';
+  }
+
+  Color _getMoodColor(double avgMood) {
+    const low = Color(0xFF4B5A68);
+    const high = ElioColors.darkAccent;
+    return Color.lerp(low, high, avgMood) ?? high;
+  }
+
+  String _getTrendIcon(String trend) {
+    switch (trend) {
+      case 'up':
+        return '↑';
+      case 'down':
+        return '↓';
+      default:
+        return '—';
+    }
+  }
+
+  void _showAllSummaries(BuildContext context, List<WeeklySummary> summaries) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: ElioColors.darkBackground,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: ElioColors.darkPrimaryText.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'All Weekly Recaps',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: ElioColors.darkPrimaryText,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: summaries.length,
+                  itemBuilder: (context, index) {
+                    return _buildSummaryListItem(context, summaries[index]);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalendarSection(BuildContext context, List<Entry> allEntries, InsightsData data) {
+    final displayedMonth = _getDisplayedMonth(data);
+    final entriesByDate = _groupEntriesByDate(allEntries, displayedMonth);
+    final firstEntryMonth = _calculateFirstEntryMonth(allEntries);
+
+    return CalendarHeatmap(
+      month: displayedMonth,
+      entriesByDate: entriesByDate,
+      onDayTap: _onCalendarDayTap,
+      onMonthChanged: _onCalendarMonthChanged,
+      selectedDate: _selectedCalendarDate,
+      canNavigateBack: _canNavigateCalendarBack(displayedMonth, firstEntryMonth),
+      canNavigateForward: _canNavigateCalendarForward(displayedMonth),
+    );
+  }
+
   void _showDayEntriesSheet(BuildContext context, InsightsData data, int dayOfWeek) {
     // Filter entries for this specific day of the week
     final dayEntries = data.entries.where((entry) {
@@ -481,67 +908,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
-  Widget _buildEmptyState(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-  }) {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Insights',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ),
-            _SampleToggle(
-              enabled: _useSampleData,
-              onTap: () {
-                setState(() => _useSampleData = !_useSampleData);
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          title,
-          style: Theme.of(context)
-              .textTheme
-              .bodyLarge
-              ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.85)),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          subtitle,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.6)),
-        ),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ElioColors.darkAccent,
-            foregroundColor: ElioColors.darkBackground,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const MoodEntryScreen()),
-            );
-          },
-          child: const Text('Check In'),
-        ),
-      ],
-    );
-  }
 
   String _periodLabel(DateTime start, DateTime end, InsightsPeriod period) {
     if (period == InsightsPeriod.month) {

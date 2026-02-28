@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/entry.dart';
 import '../theme/elio_colors.dart';
+import 'animated_tap.dart';
 
 class EntryCard extends StatelessWidget {
   const EntryCard({
@@ -21,14 +22,16 @@ class EntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return AnimatedTap(
       onTap: onTap,
+      pressScale: 0.98,
+      enableHaptic: true,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: ElioColors.darkSurface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.18),

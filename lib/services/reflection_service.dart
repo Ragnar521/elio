@@ -452,6 +452,38 @@ class ReflectionService {
     return answers;
   }
 
+  Future<void> updateAnswer({
+    required String answerId,
+    required String newAnswerText,
+  }) async {
+    final answer = _answers.get(answerId);
+    if (answer == null) return;
+
+    final updated = ReflectionAnswer(
+      id: answer.id,
+      entryId: answer.entryId,
+      questionId: answer.questionId,
+      questionText: answer.questionText,
+      answer: newAnswerText,
+      createdAt: answer.createdAt,
+    );
+    await _answers.put(answerId, updated);
+  }
+
+  Future<void> deleteAnswer(String answerId) async {
+    await _answers.delete(answerId);
+  }
+
+  Future<void> deleteAnswersForEntry(String entryId) async {
+    final answersToDelete = _answers.values
+        .where((answer) => answer.entryId == entryId)
+        .toList();
+
+    for (final answer in answersToDelete) {
+      await _answers.delete(answer.id);
+    }
+  }
+
   Box<ReflectionQuestion> get _questions {
     final box = _questionsBox;
     if (box == null) {

@@ -7,6 +7,35 @@ import '../theme/elio_colors.dart';
 import '../widgets/answered_question_chip.dart';
 import 'confirmation_screen.dart';
 
+Route _checkInRoute(Widget page) {
+  return PageRouteBuilder(
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionDuration: const Duration(milliseconds: 300),
+    reverseTransitionDuration: const Duration(milliseconds: 300),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final slideTween = Tween<Offset>(
+        begin: const Offset(0.0, 0.15),
+        end: Offset.zero,
+      );
+      final slideAnimation = animation.drive(
+        slideTween.chain(CurveTween(curve: Curves.easeInOut)),
+      );
+      final fadeAnimation = animation.drive(
+        Tween<double>(begin: 0.0, end: 1.0).chain(
+          CurveTween(curve: Curves.easeInOut),
+        ),
+      );
+      return SlideTransition(
+        position: slideAnimation,
+        child: FadeTransition(
+          opacity: fadeAnimation,
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 class ReflectionScreen extends StatefulWidget {
   const ReflectionScreen({
     super.key,
@@ -45,8 +74,8 @@ class _ReflectionScreenState extends State<ReflectionScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (_) => ConfirmationScreen(
+            _checkInRoute(
+              ConfirmationScreen(
                 moodWord: widget.moodWord,
                 moodValue: widget.moodValue,
                 intentionText: widget.intention,
@@ -134,8 +163,8 @@ class _ReflectionScreenState extends State<ReflectionScreen> {
     if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => ConfirmationScreen(
+      _checkInRoute(
+        ConfirmationScreen(
           moodWord: widget.moodWord,
           moodValue: widget.moodValue,
           intentionText: widget.intention,

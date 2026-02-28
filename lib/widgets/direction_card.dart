@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/direction.dart';
 import '../models/direction_stats.dart';
+import 'animated_tap.dart';
 
 class DirectionCard extends StatelessWidget {
   final Direction direction;
@@ -16,10 +17,14 @@ class DirectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+    return AnimatedTap(
+      onTap: onTap,
+      pressScale: 0.98,
+      enableHaptic: true,
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
