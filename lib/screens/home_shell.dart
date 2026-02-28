@@ -6,7 +6,7 @@ import 'insights_screen.dart';
 import 'directions_screen.dart';
 import 'mood_entry_screen.dart';
 import 'settings_screen.dart';
-import 'onboarding/onboarding_flow.dart';
+import '../main.dart';
 import '../services/storage_service.dart';
 
 class HomeShell extends StatefulWidget {
@@ -29,21 +29,16 @@ class _HomeShellState extends State<HomeShell> {
     _index = widget.initialIndex.clamp(0, 4);
   }
 
-  Future<void> _resetOnboarding(BuildContext context) async {
-    await StorageService.instance.setOnboardingCompleted(false);
-    await StorageService.instance.setNotificationsEnabled(false);
+  Future<void> _resetApp(BuildContext context) async {
+    // Wipe all data (entries, directions, settings, everything)
+    await StorageService.instance.wipeAllData();
+
     if (!context.mounted) return;
+
+    // Navigate to OnboardingGate — since settings are wiped,
+    // launcherCompleted is false, so it will show LauncherScreen
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => OnboardingFlow(
-          onFinished: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const HomeShell(initialIndex: 1)),
-              (route) => false,
-            );
-          },
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => const OnboardingGate()),
       (route) => false,
     );
   }
@@ -60,7 +55,7 @@ class _HomeShellState extends State<HomeShell> {
       _lastHomeTap = now;
       if (_homeTapCount >= 3) {
         _homeTapCount = 0;
-        await _resetOnboarding(context);
+        await _resetApp(context);
         return;
       }
     } else {
