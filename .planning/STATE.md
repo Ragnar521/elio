@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
+milestone: v2.0
 milestone_name: Demo Mode
-status: ready_to_plan
-last_updated: "2026-02-28T12:00:00.000Z"
+status: unknown
+last_updated: "2026-02-28T10:19:14.253Z"
 progress:
-  total_phases: 3
+  total_phases: 1
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 7 of 9 (Sample Data Engine)
-Plan: 0 of 0 in current phase
-Status: Ready to plan
-Last activity: 2026-02-28 — Roadmap created for v2.1 Demo Mode milestone
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-28 — Completed 07-01 Sample Data Service
 
 Progress: [██████░░░░] 67% (6 of 9 phases complete)
 
@@ -50,8 +50,13 @@ Progress: [██████░░░░] 67% (6 of 9 phases complete)
 **Recent Trend:**
 - v2.0 shipped successfully with 6 phases, 13 plans
 - Starting v2.1 with 3 focused phases (7-9)
+- Phase 07 Plan 01: 134s execution time
 
 *Performance metrics will update after v2.1 plan completions*
+
+| Phase | Duration | Tasks | Files |
+|-------|----------|-------|-------|
+| Phase 07 P01 | 134s | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -64,6 +69,7 @@ Recent decisions affecting current work:
 - Phase 6: Custom PageRouteBuilder for check-in flow — 300ms vertical slide + fade creates journey continuity
 - Phase 4: Denormalize direction/reflection in summaries — Snapshot integrity prevents stale references
 - v2.0 overall: App Store as quality target drove polish and completeness bar
+- [Phase 07-01]: Direct Hive box writes for backdated timestamps - SampleDataService bypasses service methods to write demo data with custom createdAt values
 
 ### Pending Todos
 
@@ -76,8 +82,8 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Roadmap created for v2.1 Demo Mode milestone (3 phases, 9 requirements)
-Resume file: None — ready to begin Phase 7 planning
+Stopped at: Completed 07-01-PLAN.md - Sample Data Service
+Resume file: None — ready for Plan 02
 
 ---
 *v2.1 Demo Mode — roadmap complete, ready for planning*
