@@ -9,9 +9,9 @@ Requirements for Demo Mode milestone. Each maps to roadmap phases.
 
 ### Launcher
 
-- [ ] **LAUNCH-01**: User sees a launcher screen on first app open with "Use sample data" and "Start fresh" options
-- [ ] **LAUNCH-02**: User selecting "Start fresh" goes through normal onboarding flow
-- [ ] **LAUNCH-03**: User selecting "Use sample data" loads demo data, sets name to "Alex", skips onboarding, and lands on main app
+- [x] **LAUNCH-01**: User sees a launcher screen on first app open with "Use sample data" and "Start fresh" options
+- [x] **LAUNCH-02**: User selecting "Start fresh" goes through normal onboarding flow
+- [x] **LAUNCH-03**: User selecting "Use sample data" loads demo data, sets name to "Alex", skips onboarding, and lands on main app
 
 ### Sample Data
 
@@ -46,9 +46,9 @@ None — focused milestone.
 | DATA-03 | Phase 7 | Complete |
 | DATA-04 | Phase 7 | Complete |
 | DATA-05 | Phase 7 | Complete |
-| LAUNCH-01 | Phase 8 | Pending |
-| LAUNCH-02 | Phase 8 | Pending |
-| LAUNCH-03 | Phase 8 | Pending |
+| LAUNCH-01 | Phase 8 | Complete |
+| LAUNCH-02 | Phase 8 | Complete |
+| LAUNCH-03 | Phase 8 | Complete |
 | RESET-01 | Phase 9 | Pending |
 
 **Coverage:**
