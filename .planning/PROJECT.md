@@ -8,14 +8,9 @@ Elio is a mood tracking and journaling app for iOS and Android that helps users 
 
 Users can quickly check in with their mood and intentions, then understand what their data means — through weekly summaries, smart nudges, visual patterns, and actionable takeaways that make self-reflection genuinely useful.
 
-## Current Milestone: v2.1 Demo Mode
+## Current State
 
-**Goal:** Add a demo/showcase mode with realistic sample data so the app can be demonstrated with a full, lived-in feel.
-
-**Target features:**
-- Launcher screen before onboarding (sample data vs fresh start)
-- ~90 days of realistic sample data covering all features
-- Triple-tap Home icon to reset back to launcher screen
+Shipped v2.1 Demo Mode on 2026-02-28. The app now includes a launcher screen for choosing between demo data and fresh start, with a triple-tap reset mechanism. No active milestone — ready for next milestone planning.
 
 ## Requirements
 
@@ -46,13 +41,13 @@ Users can quickly check in with their mood and intentions, then understand what 
 - ✓ Design consistency pass (every screen feels premium) — v2.0
 - ✓ Loading states (shimmer), empty states, and error handling polish — v2.0
 - ✓ Micro-interactions for all interactive elements — v2.0
+- ✓ Launcher screen with sample data / fresh start choice — v2.1
+- ✓ ~90 days of realistic sample data (entries, reflections, directions, connections, summaries) — v2.1
+- ✓ Triple-tap Home icon resets app to launcher screen — v2.1
 
 ### Active
 
-<!-- v2.1 Demo Mode -->
-- [ ] Launcher screen with sample data / fresh start choice
-- [ ] ~90 days of realistic sample data (entries, reflections, directions, connections, summaries)
-- [ ] Triple-tap Home icon resets app to launcher screen
+(None — next milestone not yet planned)
 
 ### Out of Scope
 
@@ -66,11 +61,11 @@ Users can quickly check in with their mood and intentions, then understand what 
 
 ## Context
 
-Shipped v2.0 with 12,909 LOC Dart across 71 modified files. Tech stack: Flutter, Hive (local NoSQL), manual TypeAdapters (typeIds 0-2, 4-7). StatefulWidget + Singleton Service pattern throughout. The app runs on both iOS and Android.
+Shipped v2.1 with ~14,200 LOC Dart. Tech stack: Flutter, Hive (local NoSQL), manual TypeAdapters (typeIds 0-2, 4-7). StatefulWidget + Singleton Service pattern throughout. The app runs on both iOS and Android.
 
 Hive TypeIDs in use: 0 (Entry), 1 (ReflectionQuestion), 2 (ReflectionAnswer), 3 (reserved), 4 (DirectionType), 5 (Direction), 6 (DirectionConnection), 7 (WeeklySummary).
 
-New services added in v2.0: FilterService, WeeklySummaryService, NudgeService. New widgets: AnimatedTap, EmptyStateView, CalendarHeatmap, DebouncedSearchBar, NudgeCard, WeeklySummaryCard.
+New services added in v2.1: SampleDataService. New screens: LauncherScreen.
 
 Minor tech debt: withOpacity() deprecation warnings (cosmetic), template widget_test.dart references MyApp. No functional issues.
 
@@ -95,6 +90,9 @@ Minor tech debt: withOpacity() deprecation warnings (cosmetic), template widget_
 | Column-of-Rows for calendar grid | 35-42 cells, no scrolling needed, simpler than GridView | ✓ Good — clean rendering |
 | AnimatedScale for press feedback | 150ms, consistent micro-interaction pattern | ✓ Good — premium feel across all cards |
 | Custom PageRouteBuilder for check-in flow | 300ms vertical slide + fade, flow continuity | ✓ Good — check-in feels like one journey |
+| Direct Hive writes for demo data | Service methods use DateTime.now(); demo needs backdated timestamps | ✓ Good — realistic 90-day history |
+| Deterministic seeding for demo data | Reproducible demo experience across loads | ✓ Good — consistent showcase |
+| Settings box cleared last in reset | Prevents partial-wipe state showing launcher before data cleared | ✓ Good — clean reset flow |
 
 ---
-*Last updated: 2026-02-28 after v2.1 milestone started*
+*Last updated: 2026-02-28 after v2.1 milestone*
