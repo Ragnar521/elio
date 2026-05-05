@@ -21,3 +21,21 @@
 
 ---
 
+## v2.1 Demo Mode (Shipped: 2026-02-28)
+
+**Phases completed:** 3 phases, 4 plans, 7 tasks
+
+**Key accomplishments:**
+- Sample data engine generating ~90 days of realistic entries with mood patterns, reflections, directions, and connections
+- Weekly summary generation with trends, direction insights, and unique takeaway messages for demo persona
+- Launcher screen with demo data / fresh start choice before onboarding
+- Triple-tap Home icon reset mechanism to wipe all data and return to launcher
+
+**Stats:**
+- Files modified: 5
+- Lines changed: +1,301 / -15
+- Timeline: 1 day (2026-02-28)
+- Git range: feat(07-01) → feat(09-01)
+
+---
+
