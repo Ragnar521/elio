@@ -10,7 +10,8 @@ class OnboardingCompleteScreen extends StatefulWidget {
   final VoidCallback onFinished;
 
   @override
-  State<OnboardingCompleteScreen> createState() => _OnboardingCompleteScreenState();
+  State<OnboardingCompleteScreen> createState() =>
+      _OnboardingCompleteScreenState();
 }
 
 class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
@@ -25,18 +26,33 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2000));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
     _glowScale = Tween<double>(begin: 0.6, end: 1.1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.75, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.75, curve: Curves.easeOutCubic),
+      ),
     );
     _glowOpacity = Tween<double>(begin: 0.6, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.75, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.75, curve: Curves.easeOutCubic),
+      ),
     );
     _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.5, 0.75, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.5, 0.75, curve: Curves.easeOutCubic),
+      ),
     );
     _buttonOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.75, 1.0, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.75, 1.0, curve: Curves.easeOutCubic),
+      ),
     );
     _controller.forward();
   }
@@ -56,11 +72,11 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
   Future<void> _handleEnableNotifications() async {
     if (_isWorking) return;
     setState(() => _isWorking = true);
-    final granted = await NotificationService.instance.requestPermissions();
+    final granted = await NotificationService.instance.enableDailyReminder();
     if (!mounted) return;
     if (granted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Daily reminder enabled')),
+        const SnackBar(content: Text('Daily reminder set for 8 PM')),
       );
       await Future.delayed(const Duration(milliseconds: 650));
       if (!mounted) return;
@@ -114,27 +130,25 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
                 Text(
                   'You just checked in.',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: ElioColors.darkPrimaryText,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: ElioColors.darkPrimaryText,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
                 Text(
                   'Day 1 — this is your start',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.75)),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: ElioColors.darkPrimaryText.withOpacity(0.75),
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   "Come back tomorrow. We'll keep it short.",
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.6)),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -180,16 +194,19 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
                             children: [
                               Text(
                                 'Daily Check-in',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
                                       color: ElioColors.darkPrimaryText,
                                       fontWeight: FontWeight.w600,
                                     ),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'A gentle nudge to maintain your streak',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                                'A gentle nudge around 8 PM',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: ElioColors.darkPrimaryText
+                                          .withOpacity(0.6),
                                     ),
                               ),
                             ],
@@ -204,20 +221,23 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
                     child: ElevatedButton(
                       onPressed: _isWorking ? null : _handleEnableNotifications,
                       style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                          (states) {
-                            if (states.contains(MaterialState.disabled)) {
-                              return ElioColors.darkAccent.withOpacity(0.4);
-                            }
-                            if (states.contains(MaterialState.pressed)) {
-                              return const Color(0xFFE5562E);
-                            }
-                            return ElioColors.darkAccent;
-                          },
+                        backgroundColor:
+                            MaterialStateProperty.resolveWith<Color>((states) {
+                              if (states.contains(MaterialState.disabled)) {
+                                return ElioColors.darkAccent.withOpacity(0.4);
+                              }
+                              if (states.contains(MaterialState.pressed)) {
+                                return const Color(0xFFE5562E);
+                              }
+                              return ElioColors.darkAccent;
+                            }),
+                        foregroundColor: MaterialStateProperty.all(
+                          ElioColors.darkPrimaryText,
                         ),
-                        foregroundColor: MaterialStateProperty.all(ElioColors.darkPrimaryText),
                         shape: MaterialStateProperty.all(
-                          RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
                         ),
                         elevation: MaterialStateProperty.all(0),
                       ),
@@ -228,7 +248,9 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen>
                   TextButton(
                     onPressed: _isWorking ? null : _handleMaybeLater,
                     style: TextButton.styleFrom(
-                      foregroundColor: ElioColors.darkPrimaryText.withOpacity(0.7),
+                      foregroundColor: ElioColors.darkPrimaryText.withOpacity(
+                        0.7,
+                      ),
                     ),
                     child: const Text('I\'ll set this up later'),
                   ),

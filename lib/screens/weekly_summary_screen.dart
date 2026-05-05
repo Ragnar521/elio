@@ -4,7 +4,6 @@ import '../models/entry.dart';
 import '../models/weekly_summary.dart';
 import '../services/storage_service.dart';
 import '../services/weekly_summary_service.dart';
-import '../services/direction_service.dart';
 import '../theme/elio_colors.dart';
 import '../widgets/mood_wave.dart';
 
