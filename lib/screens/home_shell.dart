@@ -47,7 +47,8 @@ class _HomeShellState extends State<HomeShell> {
     if (kDebugMode && value == 0) {
       final now = DateTime.now();
       final lastTap = _lastHomeTap;
-      if (lastTap == null || now.difference(lastTap) > const Duration(milliseconds: 800)) {
+      if (lastTap == null ||
+          now.difference(lastTap) > const Duration(milliseconds: 800)) {
         _homeTapCount = 1;
       } else {
         _homeTapCount += 1;
@@ -96,9 +97,9 @@ class _HomeShellState extends State<HomeShell> {
           showUnselectedLabels: true,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
+              icon: Icon(Icons.mood_outlined),
+              activeIcon: Icon(Icons.mood),
+              label: 'Mood',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.auto_graph_outlined),
