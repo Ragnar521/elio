@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:elio/screens/mood_entry_screen.dart';
 import 'package:elio/screens/onboarding/welcome_screen.dart';
 import 'package:elio/theme/elio_theme.dart';
 import 'package:flutter/material.dart';
@@ -43,5 +44,12 @@ void main() {
       source,
       contains('_streakCount = IntTween(begin: 0, end: actualStreak).animate('),
     );
+  });
+
+  test('mood entry greeting period follows day boundaries', () {
+    expect(moodEntryGreetingPeriod(DateTime(2026, 1, 1, 4)), 'Good evening');
+    expect(moodEntryGreetingPeriod(DateTime(2026, 1, 1, 5)), 'Good morning');
+    expect(moodEntryGreetingPeriod(DateTime(2026, 1, 1, 12)), 'Good afternoon');
+    expect(moodEntryGreetingPeriod(DateTime(2026, 1, 1, 18)), 'Good evening');
   });
 }
