@@ -1,31 +1,24 @@
 import 'package:hive/hive.dart';
 
 /// Direction types representing life areas
-enum DirectionType {
-  career,       // 💼
-  health,       // 💪
-  relationships, // 👥
-  growth,       // 🌱
-  peace,        // 🧘
-  creativity,   // 🎨
-}
+enum DirectionType { career, health, relationships, growth, peace, creativity }
 
 /// Extension for DirectionType utilities
 extension DirectionTypeExtension on DirectionType {
-  String get emoji {
+  String get iconAsset {
     switch (this) {
       case DirectionType.career:
-        return '💼';
+        return 'assets/direction_icons/career.png';
       case DirectionType.health:
-        return '💪';
+        return 'assets/direction_icons/health.png';
       case DirectionType.relationships:
-        return '👥';
+        return 'assets/direction_icons/relationships.png';
       case DirectionType.growth:
-        return '🌱';
+        return 'assets/direction_icons/growth.png';
       case DirectionType.peace:
-        return '🧘';
+        return 'assets/direction_icons/peace.png';
       case DirectionType.creativity:
-        return '🎨';
+        return 'assets/direction_icons/creativity.png';
     }
   }
 
@@ -112,15 +105,9 @@ extension DirectionTypeExtension on DirectionType {
           'What challenged you in a good way?',
         ];
       case DirectionType.peace:
-        return [
-          'What did you let go of today?',
-          'Where did you find calm?',
-        ];
+        return ['What did you let go of today?', 'Where did you find calm?'];
       case DirectionType.creativity:
-        return [
-          'Did you make something today?',
-          'What inspired you?',
-        ];
+        return ['Did you make something today?', 'What inspired you?'];
     }
   }
 }
@@ -143,8 +130,8 @@ class Direction {
     required this.createdAt,
   });
 
-  /// Get emoji from type
-  String get emoji => type.emoji;
+  /// Generated icon asset for this direction type.
+  String get iconAsset => type.iconAsset;
 
   /// Create a copy with updated fields
   Direction copyWith({

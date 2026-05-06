@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/direction.dart';
 import '../models/direction_stats.dart';
 import 'animated_tap.dart';
+import 'direction_icon.dart';
 
 class DirectionCard extends StatelessWidget {
   final Direction direction;
@@ -22,9 +23,7 @@ class DirectionCard extends StatelessWidget {
       pressScale: 0.98,
       enableHaptic: true,
       child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -33,10 +32,7 @@ class DirectionCard extends StatelessWidget {
               // Header row
               Row(
                 children: [
-                  Text(
-                    direction.emoji,
-                    style: const TextStyle(fontSize: 24),
-                  ),
+                  DirectionIcon(type: direction.type, size: 32),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -70,9 +66,9 @@ class DirectionCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     '${stats.monthlyConnections} this month',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                   ),
                 ],
               ),
@@ -81,10 +77,10 @@ class DirectionCard extends StatelessWidget {
               if (stats.totalConnections >= 3) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Avg mood: ${stats.avgMoodWhenConnected.toStringAsFixed(2)} ${_getMoodEmoji(stats.avgMoodWhenConnected)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
-                  ),
+                  'Avg mood: ${stats.avgMoodWhenConnected.toStringAsFixed(2)} ${_getMoodLabel(stats.avgMoodWhenConnected)}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                 ),
               ],
 
@@ -92,17 +88,13 @@ class DirectionCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(
-                    Icons.edit_note,
-                    size: 16,
-                    color: Colors.grey,
-                  ),
+                  Icon(Icons.edit_note, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
                     'Reflection questions: ${direction.reflectionEnabled ? "On" : "Off"}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                   ),
                 ],
               ),
@@ -113,11 +105,11 @@ class DirectionCard extends StatelessWidget {
     );
   }
 
-  String _getMoodEmoji(double value) {
-    if (value >= 0.8) return '😄';
-    if (value >= 0.6) return '😊';
-    if (value >= 0.4) return '😐';
-    if (value >= 0.2) return '😔';
-    return '😢';
+  String _getMoodLabel(double value) {
+    if (value >= 0.8) return 'excellent';
+    if (value >= 0.6) return 'good';
+    if (value >= 0.4) return 'steady';
+    if (value >= 0.2) return 'low';
+    return 'very low';
   }
 }

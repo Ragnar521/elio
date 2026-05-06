@@ -183,7 +183,7 @@ class WeeklySummaryService {
         directionSummaries.add({
           'directionId': direction.id,
           'title': direction.title,
-          'emoji': direction.emoji,
+          'iconAsset': direction.iconAsset,
           'weeklyConnections': weeklyConnections,
           'avgMoodWhenConnected': stats.avgMoodWhenConnected,
           'moodDifference': stats.moodDifference,

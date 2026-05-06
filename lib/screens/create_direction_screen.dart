@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/direction.dart';
 import '../services/direction_service.dart';
+import '../widgets/direction_icon.dart';
 
 class CreateDirectionScreen extends StatefulWidget {
   const CreateDirectionScreen({super.key});
@@ -26,9 +27,7 @@ class _CreateDirectionScreenState extends State<CreateDirectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('New Direction'),
-      ),
+      appBar: AppBar(title: const Text('New Direction')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -67,20 +66,22 @@ class _CreateDirectionScreenState extends State<CreateDirectionScreen> {
               const SizedBox(height: 8),
               Text(
                 'Examples:',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey),
               ),
               const SizedBox(height: 4),
-              ..._selectedType!.examples.map((example) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  '• "$example"',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
+              ..._selectedType!.examples.map(
+                (example) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '• "$example"',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                   ),
                 ),
-              )),
+              ),
             ],
 
             const SizedBox(height: 24),
@@ -90,9 +91,7 @@ class _CreateDirectionScreenState extends State<CreateDirectionScreen> {
             // Reflection toggle
             SwitchListTile(
               title: const Text('Enable reflection questions'),
-              subtitle: const Text(
-                'Ask about this direction during check-ins',
-              ),
+              subtitle: const Text('Ask about this direction during check-ins'),
               value: _reflectionEnabled,
               onChanged: (value) => setState(() => _reflectionEnabled = value),
               contentPadding: EdgeInsets.zero,
@@ -142,15 +141,9 @@ class _CreateDirectionScreenState extends State<CreateDirectionScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  type.emoji,
-                  style: const TextStyle(fontSize: 28),
-                ),
+                DirectionIcon(type: type, size: 36),
                 const SizedBox(height: 4),
-                Text(
-                  type.label,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                Text(type.label, style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),

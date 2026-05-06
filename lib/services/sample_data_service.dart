@@ -755,13 +755,10 @@ class SampleDataService {
         final overallAvgMood = entries.map((e) => e.moodValue).reduce((a, b) => a + b) / entries.length;
         final moodDifference = avgMoodWhenConnected - overallAvgMood;
 
-        // Get emoji for direction type
-        final emoji = _getDirectionEmoji(direction.type);
-
         directionSummaries.add({
           'directionId': direction.id,
           'title': direction.title,
-          'emoji': emoji,
+          'iconAsset': direction.type.iconAsset,
           'weeklyConnections': weeklyConnections,
           'avgMoodWhenConnected': avgMoodWhenConnected,
           'moodDifference': moodDifference,
@@ -879,24 +876,6 @@ class SampleDataService {
     final weekday = date.weekday;
     final mondayDate = date.subtract(Duration(days: weekday - 1));
     return DateTime(mondayDate.year, mondayDate.month, mondayDate.day);
-  }
-
-  /// Get emoji for direction type
-  String _getDirectionEmoji(DirectionType type) {
-    switch (type) {
-      case DirectionType.career:
-        return '💼';
-      case DirectionType.health:
-        return '💪';
-      case DirectionType.relationships:
-        return '👥';
-      case DirectionType.growth:
-        return '🌱';
-      case DirectionType.peace:
-        return '🧘';
-      case DirectionType.creativity:
-        return '🎨';
-    }
   }
 
   /// Generate unique takeaway message for each week

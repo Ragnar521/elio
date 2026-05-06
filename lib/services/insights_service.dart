@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/material.dart';
+
 import '../models/entry.dart';
 import 'direction_service.dart';
 
@@ -8,7 +10,7 @@ enum InsightsPeriod { week, month }
 class InsightItem {
   const InsightItem(this.icon, this.text);
 
-  final String icon;
+  final IconData icon;
   final String text;
 }
 
@@ -649,66 +651,66 @@ class InsightsService {
 
     // Priority 1: Perfect streak (7+ days)
     if (streak >= 7) {
-      insights.add(InsightItem("🔥", "You've checked in every day this $periodName. That's real commitment."));
+      insights.add(InsightItem(Icons.local_fire_department_outlined, "You've checked in every day this $periodName. That's real commitment."));
     }
     // Priority 2: Good streak (3+ days)
     else if (streak >= 3) {
-      insights.add(InsightItem("🔥", "$streak days in a row. You're building a rhythm."));
+      insights.add(InsightItem(Icons.local_fire_department_outlined, "$streak days in a row. You're building a rhythm."));
     }
 
     // Priority 3: Trend up
     if (trendUp && insights.length < 3) {
-      insights.add(InsightItem("📈", "Your mood lifted as the $periodName went on. Something's working."));
+      insights.add(InsightItem(Icons.trending_up, "Your mood lifted as the $periodName went on. Something's working."));
     }
     // Priority 4: Trend down
     else if (trendDown && insights.length < 3) {
-      insights.add(InsightItem("📉", "This $periodName felt heavier toward the end. Be gentle with yourself."));
+      insights.add(InsightItem(Icons.trending_down, "This $periodName felt heavier toward the end. Be gentle with yourself."));
     }
 
     // Priority 5: Better than previous
     if (moodChangeVsPrevious != null && moodChangeVsPrevious > 0.1 && insights.length < 3) {
-      insights.add(InsightItem("✨", "Your mood is up from last $periodName. Nice progress."));
+      insights.add(InsightItem(Icons.auto_awesome, "Your mood is up from last $periodName. Nice progress."));
     }
     // Priority 6: Worse than previous
     else if (moodChangeVsPrevious != null && moodChangeVsPrevious < -0.1 && insights.length < 3) {
-      insights.add(InsightItem("💪", "Tougher than last $periodName. That's okay — you're still here."));
+      insights.add(InsightItem(Icons.fitness_center, "Tougher than last $periodName. That's okay — you're still here."));
     }
 
     // Priority 7: High reflection rate
     if (reflectionRate >= 0.8 && insights.length < 3) {
-      insights.add(InsightItem("📝", "Reflected $reflectionDays of $checkInCount days. That's deep work."));
+      insights.add(InsightItem(Icons.edit_note, "Reflected $reflectionDays of $checkInCount days. That's deep work."));
     }
     // Priority 8: Medium reflection rate
     else if (reflectionRate >= 0.5 && insights.length < 3) {
-      insights.add(InsightItem("📝", "Reflection is becoming part of your routine."));
+      insights.add(InsightItem(Icons.edit_note, "Reflection is becoming part of your routine."));
     }
 
     // Priority 9: Stable
     if (stable && insights.length < 3) {
-      insights.add(InsightItem("⚖️", "A steady $periodName. Consistency can be its own strength."));
+      insights.add(InsightItem(Icons.balance, "A steady $periodName. Consistency can be its own strength."));
     }
     // Priority 10: Volatile
     else if (volatile && insights.length < 3) {
-      insights.add(InsightItem("🌊", "Some ups and downs this $periodName. That's completely human."));
+      insights.add(InsightItem(Icons.waves, "Some ups and downs this $periodName. That's completely human."));
     }
 
     // Priority 11: High mood
     if (avgMood > 0.7 && insights.length < 3) {
-      insights.add(InsightItem("☀️", "A good $periodName overall. Notice what made it work."));
+      insights.add(InsightItem(Icons.light_mode_outlined, "A good $periodName overall. Notice what made it work."));
     }
     // Priority 12: Low mood
     else if (avgMood < 0.3 && insights.length < 3) {
-      insights.add(InsightItem("🌱", "A tough $periodName. You still showed up — that matters."));
+      insights.add(InsightItem(Icons.spa_outlined, "A tough $periodName. You still showed up — that matters."));
     }
 
     // Priority 13: Few check-ins
     if (checkInCount <= 2 && insights.length < 3) {
-      insights.add(InsightItem("👣", "Just getting started. Every check-in counts."));
+      insights.add(InsightItem(Icons.directions_walk, "Just getting started. Every check-in counts."));
     }
 
     // Priority 14: Fallback
     if (insights.isEmpty) {
-      insights.add(InsightItem("👣", "You're here. That's the first step."));
+      insights.add(InsightItem(Icons.directions_walk, "You're here. That's the first step."));
     }
 
     // Direction insights (only for week view to keep it relevant)
@@ -718,7 +720,7 @@ class InsightsService {
       for (final direction in frequentDirections) {
         if (insights.length >= 3) break;
         final count = DirectionService.instance.getWeeklyConnectionCount(direction.id);
-        insights.add(InsightItem("🧭", "'${direction.title}' showed up $count times this week. It's clearly important to you."));
+        insights.add(InsightItem(Icons.explore_outlined, "'${direction.title}' showed up $count times this week. It's clearly important to you."));
       }
 
       // Priority 16: High mood correlation (≥0.15 difference)
@@ -726,7 +728,7 @@ class InsightsService {
         final correlations = await DirectionService.instance.getDirectionsWithMoodCorrelation();
         for (final entry in correlations.where((e) => e.value >= 0.15)) {
           if (insights.length >= 3) break;
-          insights.add(InsightItem("✨", "Your mood is higher when '${entry.key.title}' is part of your day."));
+          insights.add(InsightItem(Icons.auto_awesome, "Your mood is higher when '${entry.key.title}' is part of your day."));
         }
       }
 
@@ -735,7 +737,7 @@ class InsightsService {
         final correlations = await DirectionService.instance.getDirectionsWithMoodCorrelation();
         for (final entry in correlations.where((e) => e.value <= -0.1)) {
           if (insights.length >= 3) break;
-          insights.add(InsightItem("💭", "'${entry.key.title}' often comes up on tougher days. Worth reflecting on."));
+          insights.add(InsightItem(Icons.forum_outlined, "'${entry.key.title}' often comes up on tougher days. Worth reflecting on."));
         }
       }
 
@@ -744,7 +746,7 @@ class InsightsService {
         final dormantDirections = DirectionService.instance.getDormantDirections();
         for (final direction in dormantDirections) {
           if (insights.length >= 3) break;
-          insights.add(InsightItem("🌱", "Haven't connected to '${direction.title}' lately. Still matters?"));
+          insights.add(InsightItem(Icons.spa_outlined, "Haven't connected to '${direction.title}' lately. Still matters?"));
         }
       }
     }
@@ -754,7 +756,7 @@ class InsightsService {
 
   static String _generatePatternInsight(int? bestDay, int? worstDay) {
     if (bestDay == null || worstDay == null) {
-      return "💡 Your mood is fairly consistent across the week.";
+      return "Your mood is fairly consistent across the week.";
     }
 
     const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -762,11 +764,11 @@ class InsightsService {
     final worstName = dayNames[worstDay];
 
     if (worstDay == 1) {
-      return "💡 Mondays are your toughest day. Consider a gentler start to the week.";
+      return "Mondays are your toughest day. Consider a gentler start to the week.";
     } else if (bestDay == 6 || bestDay == 7) {
-      return "💡 ${bestName}s are your best days. What makes them work?";
+      return "${bestName}s are your best days. What makes them work?";
     } else {
-      return "💡 ${bestName}s tend to be your best. ${worstName}s are tougher.";
+      return "${bestName}s tend to be your best. ${worstName}s are tougher.";
     }
   }
 }

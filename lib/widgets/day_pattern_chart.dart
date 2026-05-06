@@ -30,31 +30,36 @@ class DayPatternChart extends StatelessWidget {
         Text(
           'YOUR WEEK PATTERN',
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: ElioColors.darkPrimaryText.withOpacity(0.6),
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.2,
-              ),
+            color: ElioColors.darkPrimaryText.withOpacity(0.6),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+          ),
         ),
         const SizedBox(height: 12),
         ...List.generate(7, (index) {
           final day = index + 1; // 1-7 (Monday-Sunday)
           final value = pattern[day] ?? 0.0;
-          final isBest = day == bestDay;
-          final isWorst = day == worstDay;
-
           return _buildDayRow(
             context,
             dayNames[index],
             day,
             value,
-            isBest ? '😊' : (isWorst ? '😔' : null),
+            isBest: day == bestDay,
+            isWorst: day == worstDay,
           );
         }),
       ],
     );
   }
 
-  Widget _buildDayRow(BuildContext context, String day, int dayIndex, double value, String? emoji) {
+  Widget _buildDayRow(
+    BuildContext context,
+    String day,
+    int dayIndex,
+    double value, {
+    required bool isBest,
+    required bool isWorst,
+  }) {
     final hasTapHandler = onDayTap != null;
 
     final content = Padding(
@@ -67,9 +72,9 @@ class DayPatternChart extends StatelessWidget {
             child: Text(
               day,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: ElioColors.darkPrimaryText,
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: ElioColors.darkPrimaryText,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -103,28 +108,30 @@ class DayPatternChart extends StatelessWidget {
               value.toStringAsFixed(2),
               textAlign: TextAlign.right,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: ElioColors.darkPrimaryText.withOpacity(0.8),
-                  ),
+                color: ElioColors.darkPrimaryText.withOpacity(0.8),
+              ),
             ),
           ),
           const SizedBox(width: 4),
 
-          // Emoji or chevron
+          // Marker or chevron
           SizedBox(
             width: 24,
-            child: emoji != null
-                ? Text(
-                    emoji,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16),
+            child: isBest || isWorst
+                ? Icon(
+                    isBest ? Icons.trending_up : Icons.trending_down,
+                    size: 16,
+                    color: isBest
+                        ? const Color(0xFF4CAF50)
+                        : ElioColors.darkAccent,
                   )
                 : (hasTapHandler
-                    ? Icon(
-                        Icons.chevron_right,
-                        size: 16,
-                        color: ElioColors.darkPrimaryText.withOpacity(0.4),
-                      )
-                    : const SizedBox.shrink()),
+                      ? Icon(
+                          Icons.chevron_right,
+                          size: 16,
+                          color: ElioColors.darkPrimaryText.withOpacity(0.4),
+                        )
+                      : const SizedBox.shrink()),
           ),
         ],
       ),
