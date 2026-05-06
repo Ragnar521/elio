@@ -28,19 +28,24 @@ Route _checkInRoute(Widget page) {
         slideTween.chain(CurveTween(curve: Curves.easeInOut)),
       );
       final fadeAnimation = animation.drive(
-        Tween<double>(begin: 0.0, end: 1.0).chain(
-          CurveTween(curve: Curves.easeInOut),
-        ),
+        Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
       );
       return SlideTransition(
         position: slideAnimation,
-        child: FadeTransition(
-          opacity: fadeAnimation,
-          child: child,
-        ),
+        child: FadeTransition(opacity: fadeAnimation, child: child),
       );
     },
   );
+}
+
+String moodEntryGreetingPeriod(DateTime dateTime) {
+  final hour = dateTime.hour;
+  if (hour >= 5 && hour < 12) return 'Good morning';
+  if (hour >= 12 && hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 class MoodEntryScreen extends StatefulWidget {
@@ -54,7 +59,6 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
   double _moodValue = 0.5;
   bool _hasInteracted = false;
   int _lastThresholdIndex = 0;
-  late String _userName;
   WeeklySummary? _pendingSummary;
   bool _summaryDismissed = false;
   Nudge? _currentNudge;
@@ -72,26 +76,21 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
     'Great',
   ];
 
-  static const _thresholds = [
-    0.0,
-    0.14,
-    0.28,
-    0.42,
-    0.56,
-    0.70,
-    0.84,
-    1.0,
-  ];
+  static const _thresholds = [0.0, 0.14, 0.28, 0.42, 0.56, 0.70, 0.84, 1.0];
 
   @override
   void initState() {
     super.initState();
     _lastThresholdIndex = _thresholdIndexFor(_moodValue);
-    _userName = StorageService.instance.userName;
     _checkForWeeklySummary();
     _checkForNudges();
     _lifecycleListener = AppLifecycleListener(
-      onResume: () => _checkForNudges(),
+      onResume: () {
+        if (mounted) {
+          setState(() {});
+        }
+        _checkForNudges();
+      },
     );
   }
 
@@ -102,7 +101,8 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
   }
 
   Future<void> _checkForWeeklySummary() async {
-    final summary = await WeeklySummaryService.instance.getOrGenerateCurrentSummary();
+    final summary = await WeeklySummaryService.instance
+        .getOrGenerateCurrentSummary();
     if (summary != null && !summary.hasBeenViewed && mounted) {
       setState(() => _pendingSummary = summary);
     }
@@ -120,16 +120,18 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
 
   void _openSummary() {
     if (_pendingSummary == null) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => WeeklySummaryScreen(summary: _pendingSummary!),
-      ),
-    ).then((_) {
-      setState(() {
-        _summaryDismissed = true;
-        _pendingSummary = null;
-      });
-    });
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => WeeklySummaryScreen(summary: _pendingSummary!),
+          ),
+        )
+        .then((_) {
+          setState(() {
+            _summaryDismissed = true;
+            _pendingSummary = null;
+          });
+        });
   }
 
   Future<void> _checkForNudges() async {
@@ -169,7 +171,9 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
 
     if (nudge.type == NudgeType.dormantDirection && nudge.directionId != null) {
       // Navigate to DirectionDetailScreen
-      final direction = DirectionService.instance.getDirection(nudge.directionId!);
+      final direction = DirectionService.instance.getDirection(
+        nudge.directionId!,
+      );
       if (direction != null) {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -181,11 +185,8 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
     // Streak celebrations and mood patterns: dismiss only (no navigation)
   }
 
-  String _greeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning, $_userName';
-    if (hour < 18) return 'Good afternoon, $_userName';
-    return 'Good evening, $_userName';
+  String _greeting(String userName) {
+    return '${moodEntryGreetingPeriod(DateTime.now())}, $userName';
   }
 
   int _thresholdIndexFor(double value) {
@@ -223,6 +224,7 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userName = StorageService.instance.userName;
     final moodWord = _moodWordFor(_moodValue);
     final glow = _moodGlow();
 
@@ -239,13 +241,17 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                   onDismiss: _dismissSummary,
                 ),
               ),
-            if (_currentNudge != null && !_nudgeDismissed && (_pendingSummary == null || _summaryDismissed))
+            if (_currentNudge != null &&
+                !_nudgeDismissed &&
+                (_pendingSummary == null || _summaryDismissed))
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
                 child: NudgeCard(
                   nudge: _currentNudge!,
                   onDismiss: _dismissNudge,
-                  onTap: _currentNudge!.actionText != null ? _handleNudgeTap : null,
+                  onTap: _currentNudge!.actionText != null
+                      ? _handleNudgeTap
+                      : null,
                 ),
               ),
             const SizedBox(height: 32),
@@ -254,20 +260,18 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
               child: Column(
                 children: [
                   Text(
-                    _greeting(),
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    _greeting(userName),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'How are you feeling right now?',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyLarge
-                        ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.6)),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -281,7 +285,10 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 32,
+                    ),
                     decoration: BoxDecoration(
                       color: ElioColors.darkSurface,
                       borderRadius: BorderRadius.circular(24),
@@ -309,7 +316,10 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                             return FadeTransition(
                               opacity: animation,
                               child: ScaleTransition(
-                                scale: Tween<double>(begin: 0.8, end: 1.0).animate(animation),
+                                scale: Tween<double>(
+                                  begin: 0.8,
+                                  end: 1.0,
+                                ).animate(animation),
                                 child: child,
                               ),
                             );
@@ -317,9 +327,7 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                           child: Text(
                             moodWord,
                             key: ValueKey(moodWord),
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineMedium
+                            style: Theme.of(context).textTheme.headlineMedium
                                 ?.copyWith(
                                   color: ElioColors.darkPrimaryText,
                                   fontWeight: FontWeight.w600,
@@ -330,11 +338,14 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                         SliderTheme(
                           data: SliderTheme.of(context).copyWith(
                             activeTrackColor: glow,
-                            inactiveTrackColor: ElioColors.darkPrimaryText.withOpacity(0.15),
+                            inactiveTrackColor: ElioColors.darkPrimaryText
+                                .withOpacity(0.15),
                             thumbColor: ElioColors.darkPrimaryText,
                             overlayColor: glow.withOpacity(0.15),
                             trackHeight: 6,
-                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+                            thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 10,
+                            ),
                           ),
                           child: Slider(
                             value: _moodValue,
@@ -349,14 +360,18 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                             children: [
                               Text(
                                 'Heavy',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: ElioColors.darkPrimaryText.withOpacity(0.5),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: ElioColors.darkPrimaryText
+                                          .withOpacity(0.5),
                                     ),
                               ),
                               Text(
                                 'Great',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: ElioColors.darkPrimaryText.withOpacity(0.5),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: ElioColors.darkPrimaryText
+                                          .withOpacity(0.5),
                                     ),
                               ),
                             ],
@@ -387,20 +402,24 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                         }
                       : null,
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                      (states) {
-                        if (states.contains(WidgetState.disabled)) {
-                          return ElioColors.darkAccent.withOpacity(0.4);
-                        }
-                        if (states.contains(WidgetState.pressed)) {
-                          return const Color(0xFFE5562E);
-                        }
-                        return ElioColors.darkAccent;
-                      },
+                    backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                      states,
+                    ) {
+                      if (states.contains(WidgetState.disabled)) {
+                        return ElioColors.darkAccent.withOpacity(0.4);
+                      }
+                      if (states.contains(WidgetState.pressed)) {
+                        return const Color(0xFFE5562E);
+                      }
+                      return ElioColors.darkAccent;
+                    }),
+                    foregroundColor: WidgetStateProperty.all(
+                      ElioColors.darkPrimaryText,
                     ),
-                    foregroundColor: WidgetStateProperty.all(ElioColors.darkPrimaryText),
                     shape: WidgetStateProperty.all(
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
                     ),
                     elevation: WidgetStateProperty.all(0),
                   ),
