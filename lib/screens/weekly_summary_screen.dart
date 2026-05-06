@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../models/direction.dart';
 import '../models/entry.dart';
 import '../models/weekly_summary.dart';
 import '../services/storage_service.dart';
 import '../services/weekly_summary_service.dart';
 import '../theme/elio_colors.dart';
+import '../widgets/direction_icon.dart';
 import '../widgets/mood_wave.dart';
 
 class WeeklySummaryScreen extends StatefulWidget {
@@ -231,12 +233,20 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: ElioColors.darkAccent, width: 1.5),
                 ),
-                child: Text(
-                  '${topDir['emoji']} ${topDir['title']} boosted your mood by $percentage%',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: ElioColors.darkPrimaryText,
-                    fontWeight: FontWeight.w500,
-                  ),
+                child: Row(
+                  children: [
+                    _buildSummaryDirectionIcon(topDir, size: 28),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${topDir['title']} boosted your mood by $percentage%',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: ElioColors.darkPrimaryText,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
@@ -245,7 +255,6 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
         // Direction mini cards
         ...directionSummaries.map((dirData) {
           final title = dirData['title'] as String;
-          final emoji = dirData['emoji'] as String;
           final weeklyConnections = dirData['weeklyConnections'] as int;
           final moodDifference = dirData['moodDifference'] as double;
 
@@ -261,14 +270,17 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      '$emoji $title',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: ElioColors.darkPrimaryText,
-                        fontWeight: FontWeight.w500,
+                    _buildSummaryDirectionIcon(dirData, size: 24),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: ElioColors.darkPrimaryText,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     Text(
                       '$weeklyConnections connections',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -297,6 +309,18 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
         }).toList(),
       ],
     );
+  }
+
+  Widget _buildSummaryDirectionIcon(
+    Map<String, dynamic> dirData, {
+    required double size,
+  }) {
+    final iconAsset = dirData['iconAsset'] as String?;
+    final type = DirectionType.values.firstWhere(
+      (value) => value.iconAsset == iconAsset,
+      orElse: () => DirectionType.growth,
+    );
+    return DirectionIcon(type: type, size: size);
   }
 
   Widget _buildReflectionSection(BuildContext context) {

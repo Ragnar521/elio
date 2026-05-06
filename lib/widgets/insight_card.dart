@@ -12,7 +12,11 @@ class InsightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Support both old single text and new multiple insights
-    final items = insights ?? (text != null ? [InsightItem('✦', text!)] : <InsightItem>[]);
+    final items =
+        insights ??
+        (text != null
+            ? [InsightItem(Icons.lightbulb_outline, text!)]
+            : <InsightItem>[]);
 
     if (items.isEmpty) {
       return const SizedBox.shrink();
@@ -32,19 +36,16 @@ class InsightCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  items[i].icon,
-                  style: const TextStyle(fontSize: 20),
-                ),
+                Icon(items[i].icon, size: 20, color: ElioColors.darkAccent),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     items[i].text,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: ElioColors.darkPrimaryText,
-                          fontSize: 15,
-                          height: 1.4,
-                        ),
+                      color: ElioColors.darkPrimaryText,
+                      fontSize: 15,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],

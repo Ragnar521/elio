@@ -1,7 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/nudge.dart';
-import '../models/direction.dart';
 import '../models/entry.dart';
 import 'direction_service.dart';
 import 'storage_service.dart';
@@ -20,7 +19,8 @@ class NudgeService {
     _isChecking = true;
 
     try {
-      final dormantDirections = DirectionService.instance.getDormantDirections();
+      final dormantDirections = DirectionService.instance
+          .getDormantDirections();
 
       if (dormantDirections.isEmpty) return null;
 
@@ -33,7 +33,8 @@ class NudgeService {
       return Nudge(
         id: _uuid.v4(),
         type: NudgeType.dormantDirection,
-        message: "It's been a while since you connected with ${direction.type.emoji} ${direction.title}. Still on your mind?",
+        message:
+            "It's been a while since you connected with ${direction.title}. Still on your mind?",
         actionText: "Reconnect →",
         directionId: direction.id,
       );
@@ -81,7 +82,9 @@ class NudgeService {
       final dayPattern = _calculateDayOfWeekPattern(entries);
       if (dayPattern.isEmpty) return null;
 
-      final overallAvg = entries.map((e) => e.moodValue).reduce((a, b) => a + b) / entries.length;
+      final overallAvg =
+          entries.map((e) => e.moodValue).reduce((a, b) => a + b) /
+          entries.length;
       final (bestDay, worstDay) = _findBestWorstDays(dayPattern, overallAvg);
 
       // Positive pattern (best day found)
@@ -93,7 +96,8 @@ class NudgeService {
         return Nudge(
           id: _uuid.v4(),
           type: NudgeType.moodPattern,
-          message: "Your mood is $percentDiff% higher on ${dayName}s. What makes them work?",
+          message:
+              "Your mood is $percentDiff% higher on ${dayName}s. What makes them work?",
         );
       }
 
@@ -104,7 +108,8 @@ class NudgeService {
         return Nudge(
           id: _uuid.v4(),
           type: NudgeType.moodPattern,
-          message: "${dayName}s seem harder lately. Consider planning something gentle.",
+          message:
+              "${dayName}s seem harder lately. Consider planning something gentle.",
         );
       }
 
@@ -147,8 +152,8 @@ class NudgeService {
     final cooldownDays = cooldownKey.startsWith('dormant_')
         ? 7
         : cooldownKey.startsWith('streak_')
-            ? 30
-            : 14;
+        ? 30
+        : 14;
 
     final cooldownEnd = dismissedAt.add(Duration(days: cooldownDays));
     return now.isBefore(cooldownEnd);

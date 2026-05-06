@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import '../models/direction.dart';
 import '../models/entry.dart';
 import '../services/direction_service.dart';
+import '../widgets/direction_icon.dart';
 
 class ConnectEntriesScreen extends StatefulWidget {
   final Direction direction;
 
-  const ConnectEntriesScreen({
-    super.key,
-    required this.direction,
-  });
+  const ConnectEntriesScreen({super.key, required this.direction});
 
   @override
   State<ConnectEntriesScreen> createState() => _ConnectEntriesScreenState();
@@ -28,12 +26,16 @@ class _ConnectEntriesScreenState extends State<ConnectEntriesScreen> {
 
   void _loadEntries() async {
     if (_showConnected) {
-      final entries = await DirectionService.instance.getConnectedEntries(widget.direction.id);
+      final entries = await DirectionService.instance.getConnectedEntries(
+        widget.direction.id,
+      );
       setState(() {
         _entries = entries;
       });
     } else {
-      final entries = await DirectionService.instance.getUnconnectedEntries(widget.direction.id);
+      final entries = await DirectionService.instance.getUnconnectedEntries(
+        widget.direction.id,
+      );
       setState(() {
         _entries = entries;
       });
@@ -44,7 +46,13 @@ class _ConnectEntriesScreenState extends State<ConnectEntriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Connect to ${widget.direction.emoji}'),
+        title: Row(
+          children: [
+            DirectionIcon(type: widget.direction.type, size: 28),
+            const SizedBox(width: 8),
+            const Text('Connect'),
+          ],
+        ),
         actions: [
           if (_selectedIds.isNotEmpty)
             TextButton(
@@ -82,9 +90,9 @@ class _ConnectEntriesScreenState extends State<ConnectEntriesScreen> {
                       _showConnected
                           ? 'No connected entries yet'
                           : 'All recent entries are connected',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                     ),
                   )
                 : ListView.builder(
@@ -106,9 +114,9 @@ class _ConnectEntriesScreenState extends State<ConnectEntriesScreen> {
                                   }
                                 });
                               },
-                        secondary: Text(
-                          entry.moodEmoji,
-                          style: const TextStyle(fontSize: 24),
+                        secondary: Icon(
+                          _getMoodIcon(entry.moodValue),
+                          color: _getMoodColor(entry.moodValue),
                         ),
                         title: Text(entry.intention),
                         subtitle: Text(_formatDate(entry.createdAt)),
@@ -119,6 +127,18 @@ class _ConnectEntriesScreenState extends State<ConnectEntriesScreen> {
         ],
       ),
     );
+  }
+
+  IconData _getMoodIcon(double value) {
+    if (value >= 0.75) return Icons.trending_up;
+    if (value >= 0.5) return Icons.remove;
+    return Icons.trending_down;
+  }
+
+  Color _getMoodColor(double value) {
+    if (value >= 0.75) return Colors.green;
+    if (value >= 0.5) return Colors.grey;
+    return Colors.orange;
   }
 
   String _formatDate(DateTime date) {

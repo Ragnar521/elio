@@ -24,18 +24,6 @@ class Entry {
   final DateTime? updatedAt;
 }
 
-/// Extension for Entry utilities
-extension EntryExtension on Entry {
-  /// Get mood emoji derived from moodValue
-  String get moodEmoji {
-    if (moodValue >= 0.8) return '😊';
-    if (moodValue >= 0.6) return '😌';
-    if (moodValue >= 0.4) return '😐';
-    if (moodValue >= 0.2) return '😔';
-    return '😢';
-  }
-}
-
 class EntryAdapter extends TypeAdapter<Entry> {
   @override
   final int typeId = 0;

@@ -3,16 +3,14 @@ import '../models/direction.dart';
 import '../models/direction_stats.dart';
 import '../models/entry.dart';
 import '../services/direction_service.dart';
+import '../widgets/direction_icon.dart';
 import 'connect_entries_screen.dart';
 import 'entry_detail_screen.dart';
 
 class DirectionDetailScreen extends StatefulWidget {
   final Direction direction;
 
-  const DirectionDetailScreen({
-    super.key,
-    required this.direction,
-  });
+  const DirectionDetailScreen({super.key, required this.direction});
 
   @override
   State<DirectionDetailScreen> createState() => _DirectionDetailScreenState();
@@ -31,7 +29,9 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
 
   void _loadStats() async {
     final stats = await DirectionService.instance.getStats(_direction.id);
-    final updatedDirection = DirectionService.instance.getDirection(_direction.id);
+    final updatedDirection = DirectionService.instance.getDirection(
+      _direction.id,
+    );
     setState(() {
       _stats = stats;
       _direction = updatedDirection ?? _direction;
@@ -45,13 +45,10 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
         appBar: AppBar(
           title: Row(
             children: [
-              Text(_direction.emoji),
+              DirectionIcon(type: _direction.type, size: 28),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  _direction.title,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: Text(_direction.title, overflow: TextOverflow.ellipsis),
               ),
             ],
           ),
@@ -64,13 +61,10 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            Text(_direction.emoji),
+            DirectionIcon(type: _direction.type, size: 28),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                _direction.title,
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text(_direction.title, overflow: TextOverflow.ellipsis),
             ),
           ],
         ),
@@ -114,9 +108,9 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
           children: [
             Text(
               'OVERVIEW',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Colors.grey,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: Colors.grey),
             ),
             const SizedBox(height: 12),
             Row(
@@ -127,9 +121,9 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
                     children: [
                       Text(
                         'Total',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey,
-                        ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                       ),
                       Text(
                         '${_stats!.totalConnections}',
@@ -145,9 +139,9 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
                     children: [
                       Text(
                         'This Month',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey,
-                        ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                       ),
                       Text(
                         '${_stats!.monthlyConnections}',
@@ -182,17 +176,17 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
           children: [
             Text(
               'MOOD CORRELATION',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Colors.grey,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: Colors.grey),
             ),
             const SizedBox(height: 12),
             if (!hasData)
               Text(
                 'Connect more entries to see mood patterns.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
               )
             else ...[
               Row(
@@ -203,7 +197,7 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
                       children: [
                         const Text('When connected:'),
                         Text(
-                          '${_stats!.avgMoodWhenConnected.toStringAsFixed(2)} ${_getMoodEmoji(_stats!.avgMoodWhenConnected)}',
+                          '${_stats!.avgMoodWhenConnected.toStringAsFixed(2)} ${_getMoodLabel(_stats!.avgMoodWhenConnected)}',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ],
@@ -227,7 +221,8 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: (isPositive ? Colors.green : Colors.orange).withOpacity(0.1),
+                  color: (isPositive ? Colors.green : Colors.orange)
+                      .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -277,9 +272,9 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
               const SizedBox(height: 8),
               Text(
                 'After your next check-in, come back here to connect entries that relate to this direction.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -296,21 +291,23 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
             padding: const EdgeInsets.all(16),
             child: Text(
               'RECENT CONNECTIONS',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Colors.grey,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: Colors.grey),
             ),
           ),
-          ..._stats!.recentEntries.map((entry) => ListTile(
-            leading: Text(
-              entry.moodEmoji,
-              style: const TextStyle(fontSize: 24),
+          ..._stats!.recentEntries.map(
+            (entry) => ListTile(
+              leading: Icon(
+                _getMoodIcon(entry.moodValue),
+                color: _getMoodColor(entry.moodValue),
+              ),
+              title: Text(entry.intention),
+              subtitle: Text(_formatDate(entry.createdAt)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _navigateToEntry(entry),
             ),
-            title: Text(entry.intention),
-            subtitle: Text(_formatDate(entry.createdAt)),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _navigateToEntry(entry),
-          )),
+          ),
         ],
       ),
     );
@@ -325,9 +322,9 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
             padding: const EdgeInsets.all(16),
             child: Text(
               'SETTINGS',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Colors.grey,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: Colors.grey),
             ),
           ),
           SwitchListTile(
@@ -348,18 +345,22 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
       onPressed: _confirmArchive,
       icon: const Icon(Icons.archive_outlined),
       label: const Text('Archive this direction'),
-      style: TextButton.styleFrom(
-        foregroundColor: Colors.grey,
-      ),
+      style: TextButton.styleFrom(foregroundColor: Colors.grey),
     );
   }
 
-  String _getMoodEmoji(double value) {
-    if (value >= 0.8) return '😄';
-    if (value >= 0.6) return '😊';
-    if (value >= 0.4) return '😐';
-    if (value >= 0.2) return '😔';
-    return '😢';
+  String _getMoodLabel(double value) {
+    if (value >= 0.8) return 'excellent';
+    if (value >= 0.6) return 'good';
+    if (value >= 0.4) return 'steady';
+    if (value >= 0.2) return 'low';
+    return 'very low';
+  }
+
+  IconData _getMoodIcon(double value) {
+    if (value >= 0.75) return Icons.trending_up;
+    if (value >= 0.5) return Icons.remove;
+    return Icons.trending_down;
   }
 
   String _formatDate(DateTime date) {
@@ -387,9 +388,7 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (context) => ConnectEntriesScreen(
-          direction: _direction,
-        ),
+        builder: (context) => ConnectEntriesScreen(direction: _direction),
       ),
     );
 

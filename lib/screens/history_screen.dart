@@ -9,6 +9,7 @@ import '../services/storage_service.dart';
 import '../services/filter_service.dart';
 import '../services/direction_service.dart';
 import '../theme/elio_colors.dart';
+import '../widgets/direction_icon.dart';
 import '../widgets/entry_card.dart';
 import '../widgets/search_bar_widget.dart';
 import '../widgets/empty_state_view.dart';
@@ -74,8 +75,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<void> _applyFilters() async {
     // Pre-fetch connected entry IDs if direction filter active
-    if (_filter.directionId != null && _filter.directionId != _lastDirectionId) {
-      _connectedEntryIds = await FilterService.instance.getConnectedEntryIds(_filter.directionId!);
+    if (_filter.directionId != null &&
+        _filter.directionId != _lastDirectionId) {
+      _connectedEntryIds = await FilterService.instance.getConnectedEntryIds(
+        _filter.directionId!,
+      );
       _lastDirectionId = _filter.directionId;
     } else if (_filter.directionId == null) {
       _connectedEntryIds = null;
@@ -176,17 +180,42 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(children: [
-                          Container(width: 8, height: 8, decoration: const BoxDecoration(color: ElioColors.darkSurface, shape: BoxShape.circle)),
-                          const SizedBox(width: 8),
-                          Container(width: 80, height: 16, color: ElioColors.darkSurface),
-                          const Spacer(),
-                          Container(width: 60, height: 12, color: ElioColors.darkSurface),
-                        ]),
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: ElioColors.darkSurface,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              width: 80,
+                              height: 16,
+                              color: ElioColors.darkSurface,
+                            ),
+                            const Spacer(),
+                            Container(
+                              width: 60,
+                              height: 12,
+                              color: ElioColors.darkSurface,
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 10),
-                        Container(width: double.infinity, height: 14, color: ElioColors.darkSurface),
+                        Container(
+                          width: double.infinity,
+                          height: 14,
+                          color: ElioColors.darkSurface,
+                        ),
                         const SizedBox(height: 4),
-                        Container(width: 200, height: 14, color: ElioColors.darkSurface),
+                        Container(
+                          width: 200,
+                          height: 14,
+                          color: ElioColors.darkSurface,
+                        ),
                       ],
                     ),
                   ),
@@ -208,10 +237,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         EmptyStateView(
                           svgAsset: 'assets/empty_states/history_empty.svg',
                           title: 'Your story starts here',
-                          description: 'Check in with your mood to start building your personal timeline.',
+                          description:
+                              'Check in with your mood to start building your personal timeline.',
                           ctaLabel: 'Start your first check-in',
                           onCtaPressed: () {
-                            Navigator.of(context).popUntil((route) => route.isFirst);
+                            Navigator.of(
+                              context,
+                            ).popUntil((route) => route.isFirst);
                           },
                         ),
                       ],
@@ -221,34 +253,39 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       children: [
                         Text(
                           'Your Journey',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineMedium
+                          style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           _filter.hasActiveFilters
                               ? '${_filteredEntries.length} of ${_allEntries.length} entries'
-                              : (streak > 0 ? '$streak day streak' : '${_allEntries.length} check-ins'),
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
+                              : (streak > 0
+                                    ? '$streak day streak'
+                                    : '${_allEntries.length} check-ins'),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: ElioColors.darkPrimaryText.withOpacity(
+                                  0.7,
+                                ),
+                              ),
                         ),
                         const SizedBox(height: 24),
                         _buildFilterSection(),
                         const SizedBox(height: 16),
-                        if (_allEntries.isNotEmpty && _filteredEntries.isEmpty && _filter.hasActiveFilters)
+                        if (_allEntries.isNotEmpty &&
+                            _filteredEntries.isEmpty &&
+                            _filter.hasActiveFilters)
                           Center(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 40),
                               child: Text(
                                 'No entries match your filters',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
-                                    ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.6)),
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
+                                      color: ElioColors.darkPrimaryText
+                                          .withOpacity(0.6),
+                                    ),
                               ),
                             ),
                           )
@@ -268,10 +305,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Search bar
-        DebouncedSearchBar(
-          key: _searchBarKey,
-          onSearch: _onSearchChanged,
-        ),
+        DebouncedSearchBar(key: _searchBarKey, onSearch: _onSearchChanged),
         const SizedBox(height: 12),
 
         // Filter chips
@@ -304,9 +338,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
-                  label: Text(_filter.dateRange != null
-                      ? '${_monthName(_filter.dateRange!.start.month)} ${_filter.dateRange!.start.day} - ${_monthName(_filter.dateRange!.end.month)} ${_filter.dateRange!.end.day}'
-                      : 'Dates'),
+                  label: Text(
+                    _filter.dateRange != null
+                        ? '${_monthName(_filter.dateRange!.start.month)} ${_filter.dateRange!.start.day} - ${_monthName(_filter.dateRange!.end.month)} ${_filter.dateRange!.end.day}'
+                        : 'Dates',
+                  ),
                   selected: _filter.dateRange != null,
                   onSelected: (_) => _selectDateRange(),
                   onDeleted: _filter.dateRange != null
@@ -330,14 +366,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
               // Direction chips
               ..._activeDirections.map((direction) {
                 final isSelected = _filter.directionId == direction.id;
+                final title = direction.title.length > 12
+                    ? '${direction.title.substring(0, 12)}...'
+                    : direction.title;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
-                    label: Text(
-                      '${direction.type.emoji} ${direction.title.length > 12 ? '${direction.title.substring(0, 12)}...' : direction.title}',
-                    ),
+                    avatar: DirectionIcon(type: direction.type, size: 20),
+                    label: Text(title),
                     selected: isSelected,
-                    onSelected: (_) => _onDirectionSelected(isSelected ? null : direction.id),
+                    onSelected: (_) =>
+                        _onDirectionSelected(isSelected ? null : direction.id),
                     selectedColor: ElioColors.darkAccent.withOpacity(0.3),
                     checkmarkColor: ElioColors.darkAccent,
                     backgroundColor: ElioColors.darkSurface,
@@ -379,8 +418,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Text(
             '${_filteredEntries.length} entries found',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: ElioColors.darkPrimaryText.withOpacity(0.6),
-                ),
+              color: ElioColors.darkPrimaryText.withOpacity(0.6),
+            ),
           ),
           const SizedBox(height: 8),
         ],
@@ -401,10 +440,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               _dateLabel(entry.createdAt),
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.85)),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: ElioColors.darkPrimaryText.withOpacity(0.85),
+              ),
             ),
           ),
         );
@@ -445,7 +483,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return widgets;
   }
 
-  DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+  DateTime _dateOnly(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 
   String _dateLabel(DateTime date) {
     final today = _dateOnly(DateTime.now());
