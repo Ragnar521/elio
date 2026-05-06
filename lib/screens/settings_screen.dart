@@ -29,6 +29,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
+  Future<void> _editUserName() async {
+    HapticFeedback.selectionClick();
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (_) =>
+          _EditUserNameDialog(initialName: StorageService.instance.userName),
+    );
+
+    if (newName == null || newName == StorageService.instance.userName) {
+      return;
+    }
+
+    await StorageService.instance.setUserName(newName);
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userName = StorageService.instance.userName;
@@ -41,29 +60,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Settings title
             Text(
               'Settings',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
 
-            // User name display
+            // User profile display
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back,',
+                  'Your profile',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: ElioColors.darkPrimaryText.withOpacity(0.6),
-                      ),
+                    color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                  ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  userName,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: ElioColors.darkPrimaryText,
-                        fontWeight: FontWeight.w500,
-                      ),
+                InkWell(
+                  onTap: _editUserName,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            userName,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: ElioColors.darkPrimaryText,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                          color: ElioColors.darkPrimaryText.withOpacity(0.55),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -73,36 +114,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             // Daily Reflection toggle
             Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Daily Reflection',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: ElioColors.darkPrimaryText,
-                                fontWeight: FontWeight.w500,
-                              ),
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Daily Reflection',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: ElioColors.darkPrimaryText,
+                          fontWeight: FontWeight.w500,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Answer reflection questions during check-ins',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: ElioColors.darkPrimaryText.withOpacity(0.6),
-                              ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Answer reflection questions during check-ins',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: ElioColors.darkPrimaryText.withOpacity(0.6),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Switch(
-                    value: _reflectionEnabled,
-                    onChanged: _toggleReflection,
-                    activeColor: ElioColors.darkAccent,
-                    activeTrackColor: ElioColors.darkAccent.withOpacity(0.4),
-                  ),
-                ],
-              ),
+                ),
+                Switch(
+                  value: _reflectionEnabled,
+                  onChanged: _toggleReflection,
+                  activeColor: ElioColors.darkAccent,
+                  activeTrackColor: ElioColors.darkAccent.withOpacity(0.4),
+                ),
+              ],
+            ),
 
             // Manage questions button (only show if enabled)
             if (_reflectionEnabled) ...[
@@ -134,6 +175,101 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _EditUserNameDialog extends StatefulWidget {
+  const _EditUserNameDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_EditUserNameDialog> createState() => _EditUserNameDialogState();
+}
+
+class _EditUserNameDialogState extends State<_EditUserNameDialog> {
+  late final TextEditingController _controller;
+  late bool _canSave;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialName);
+    _canSave = _controller.text.trim().isNotEmpty;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onNameChanged(String value) {
+    final canSave = value.trim().isNotEmpty;
+    if (canSave != _canSave) {
+      setState(() => _canSave = canSave);
+    }
+  }
+
+  void _save() {
+    if (_canSave) {
+      Navigator.of(context).pop(_controller.text.trim());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: ElioColors.darkSurface,
+      title: Text(
+        'Edit name',
+        style: Theme.of(
+          context,
+        ).textTheme.titleLarge?.copyWith(color: ElioColors.darkPrimaryText),
+      ),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLength: 20,
+        keyboardAppearance: Brightness.dark,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: ElioColors.darkPrimaryText),
+        decoration: InputDecoration(
+          hintText: 'Your name',
+          hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: ElioColors.darkPrimaryText.withOpacity(0.5),
+          ),
+          counterText: '',
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: ElioColors.darkPrimaryText.withOpacity(0.25),
+            ),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: ElioColors.darkAccent),
+          ),
+        ),
+        textInputAction: TextInputAction.done,
+        onChanged: _onNameChanged,
+        onSubmitted: (_) => _save(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            'Cancel',
+            style: TextStyle(
+              color: ElioColors.darkPrimaryText.withOpacity(0.8),
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: _canSave ? _save : null,
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
