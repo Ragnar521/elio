@@ -63,16 +63,19 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
         title: Text(
           'Week of ${widget.summary.weekLabel}',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: ElioColors.darkPrimaryText,
-                fontWeight: FontWeight.w600,
-              ),
+            color: ElioColors.darkPrimaryText,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -101,9 +104,9 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
         Text(
           'Mood Overview',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: ElioColors.darkPrimaryText,
-                fontWeight: FontWeight.w600,
-              ),
+            color: ElioColors.darkPrimaryText,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 16),
         MoodWave(
@@ -139,9 +142,9 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
             child: Text(
               'Best day: ${widget.summary.bestMoodDay} — ${widget.summary.bestMoodWord}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: ElioColors.darkAccent,
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: ElioColors.darkAccent,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -155,17 +158,17 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: ElioColors.darkPrimaryText.withOpacity(0.6),
-                fontSize: 12,
-              ),
+            color: ElioColors.darkPrimaryText.withOpacity(0.6),
+            fontSize: 12,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           value,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: ElioColors.darkPrimaryText,
-                fontWeight: FontWeight.w600,
-              ),
+            color: ElioColors.darkPrimaryText,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
@@ -179,16 +182,16 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
           Text(
             'Directions',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: ElioColors.darkPrimaryText,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: ElioColors.darkPrimaryText,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
             'Add a direction to see how your mood connects to what matters',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: ElioColors.darkPrimaryText.withOpacity(0.6),
-                ),
+              color: ElioColors.darkPrimaryText.withOpacity(0.6),
+            ),
           ),
         ],
       );
@@ -202,9 +205,9 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
         Text(
           'Directions',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: ElioColors.darkPrimaryText,
-                fontWeight: FontWeight.w600,
-              ),
+            color: ElioColors.darkPrimaryText,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 12),
         // Top direction highlight
@@ -226,17 +229,14 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                 decoration: BoxDecoration(
                   color: ElioColors.darkSurface,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: ElioColors.darkAccent,
-                    width: 1.5,
-                  ),
+                  border: Border.all(color: ElioColors.darkAccent, width: 1.5),
                 ),
                 child: Text(
                   '${topDir['emoji']} ${topDir['title']} boosted your mood by $percentage%',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: ElioColors.darkPrimaryText,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: ElioColors.darkPrimaryText,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               );
             },
@@ -264,16 +264,16 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                     Text(
                       '$emoji $title',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: ElioColors.darkPrimaryText,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: ElioColors.darkPrimaryText,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const Spacer(),
                     Text(
                       '$weeklyConnections connections',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: ElioColors.darkPrimaryText.withOpacity(0.6),
-                          ),
+                        color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                      ),
                     ),
                   ],
                 ),
@@ -284,11 +284,11 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                         ? '↑ ${(moodDifference * 100).toStringAsFixed(0)}% higher mood'
                         : '↓ ${(moodDifference.abs() * 100).toStringAsFixed(0)}% lower mood',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: moodDifference > 0
-                              ? const Color(0xFF4CAF50)
-                              : ElioColors.darkAccent,
-                          fontSize: 12,
-                        ),
+                      color: moodDifference > 0
+                          ? const Color(0xFF4CAF50)
+                          : ElioColors.darkAccent,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ],
@@ -310,9 +310,9 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
         Text(
           'Reflections',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: ElioColors.darkPrimaryText,
-                fontWeight: FontWeight.w600,
-              ),
+            color: ElioColors.darkPrimaryText,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 12),
         ...reflections.map((reflection) {
@@ -342,8 +342,8 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                       child: Text(
                         questionText,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: ElioColors.darkPrimaryText.withOpacity(0.6),
-                            ),
+                          color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                        ),
                       ),
                     ),
                   ],
@@ -352,8 +352,8 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                 Text(
                   answer,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: ElioColors.darkPrimaryText,
-                      ),
+                    color: ElioColors.darkPrimaryText,
+                  ),
                 ),
               ],
             ),
@@ -375,9 +375,9 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
           widget.summary.takeaway,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: ElioColors.darkPrimaryText,
-                height: 1.5,
-              ),
+            color: ElioColors.darkPrimaryText,
+            height: 1.5,
+          ),
         ),
       ),
     );

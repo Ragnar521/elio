@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:elio/screens/onboarding/welcome_screen.dart';
 import 'package:elio/theme/elio_theme.dart';
 import 'package:flutter/material.dart';
@@ -28,5 +30,18 @@ void main() {
 
     await tester.tap(find.text('Get Started'));
     expect(tapped, isTrue);
+  });
+
+  test('confirmation streak animation can be rebound after save', () {
+    final source = File(
+      'lib/screens/confirmation_screen.dart',
+    ).readAsStringSync();
+
+    expect(source, contains('late Animation<int> _streakCount;'));
+    expect(source, isNot(contains('late final Animation<int> _streakCount;')));
+    expect(
+      source,
+      contains('_streakCount = IntTween(begin: 0, end: actualStreak).animate('),
+    );
   });
 }

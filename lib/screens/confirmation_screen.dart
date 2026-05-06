@@ -39,7 +39,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
   late final Animation<double> _intentionOpacity;
   late final Animation<Offset> _reflectionSlide;
   late final Animation<double> _reflectionOpacity;
-  late final Animation<int> _streakCount;
+  late Animation<int> _streakCount;
   late final Animation<double> _streakScale;
   late final Animation<double> _buttonOpacity;
 
