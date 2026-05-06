@@ -43,7 +43,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
   late final Animation<double> _intentionOpacity;
   late final Animation<Offset> _reflectionSlide;
   late final Animation<double> _reflectionOpacity;
-  late final Animation<int> _streakCount;
+  late Animation<int> _streakCount;
   late final Animation<double> _streakScale;
   late final Animation<double> _buttonOpacity;
 
@@ -67,61 +67,109 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
 
     // Glow animations (keep as-is)
     _glowScale = Tween<double>(begin: 0.6, end: 1.1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
+      ),
     );
     _glowOpacity = Tween<double>(begin: 0.6, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.2, 0.9, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.2, 0.9, curve: Curves.easeOutCubic),
+      ),
     );
 
     // Affirmation: 0.3-0.5 fade + scale
     _affirmOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 0.5, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.3, 0.5, curve: Curves.easeOutCubic),
+      ),
     );
     _affirmScale = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 0.5, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.3, 0.5, curve: Curves.easeOutCubic),
+      ),
     );
 
     // Mood chip: 0.4-0.6 slide + fade
-    _moodSlide = Tween<Offset>(begin: const Offset(-0.3, 0.0), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.4, 0.6, curve: Curves.easeOutCubic)),
-    );
+    _moodSlide = Tween<Offset>(begin: const Offset(-0.3, 0.0), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.4, 0.6, curve: Curves.easeOutCubic),
+          ),
+        );
     _moodOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.4, 0.6, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.4, 0.6, curve: Curves.easeOutCubic),
+      ),
     );
 
     // Intention chip: 0.5-0.7 slide + fade
-    _intentionSlide = Tween<Offset>(begin: const Offset(-0.3, 0.0), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.5, 0.7, curve: Curves.easeOutCubic)),
-    );
+    _intentionSlide =
+        Tween<Offset>(begin: const Offset(-0.3, 0.0), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.5, 0.7, curve: Curves.easeOutCubic),
+          ),
+        );
     _intentionOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.5, 0.7, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.5, 0.7, curve: Curves.easeOutCubic),
+      ),
     );
 
     // Reflection chips: 0.55-0.75 slide + fade
-    _reflectionSlide = Tween<Offset>(begin: const Offset(-0.3, 0.0), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.55, 0.75, curve: Curves.easeOutCubic)),
-    );
+    _reflectionSlide =
+        Tween<Offset>(begin: const Offset(-0.3, 0.0), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.55, 0.75, curve: Curves.easeOutCubic),
+          ),
+        );
     _reflectionOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.55, 0.75, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.55, 0.75, curve: Curves.easeOutCubic),
+      ),
     );
 
     // Streak counter: 0.6-0.85 count-up + scale pulse (will be set after loading streak)
     _streakCount = IntTween(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.6, 0.85, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.6, 0.85, curve: Curves.easeOutCubic),
+      ),
     );
 
     // Streak scale pulse: 1.0 -> 1.15 -> 1.0
     final streakScaleTween = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.15), weight: 50),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.15, end: 1.0), weight: 50),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 1.15),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.15, end: 1.0),
+        weight: 50,
+      ),
     ]);
     _streakScale = streakScaleTween.animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.6, 0.85, curve: Curves.easeInOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.6, 0.85, curve: Curves.easeInOut),
+      ),
     );
 
     // Done button: 0.8-1.0 fade
     _buttonOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.8, 1.0, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.8, 1.0, curve: Curves.easeOutCubic),
+      ),
     );
 
     _saveEntryAndStart();
@@ -165,7 +213,8 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
       );
 
       // Save reflection answers if any, using the entry ID
-      if (widget.answeredQuestions != null && widget.answeredQuestions!.isNotEmpty) {
+      if (widget.answeredQuestions != null &&
+          widget.answeredQuestions!.isNotEmpty) {
         final answerIds = <String>[];
         for (final aq in widget.answeredQuestions!) {
           final answer = await ReflectionService.instance.saveAnswer(
@@ -204,7 +253,10 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
     // Update the streak count IntTween with the actual loaded value
     final actualStreak = _loadedStreakCount ?? widget.streakCount ?? 1;
     _streakCount = IntTween(begin: 0, end: actualStreak).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.6, 0.85, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.6, 0.85, curve: Curves.easeOutCubic),
+      ),
     );
 
     // Evaluate post-check-in nudges (non-blocking)
@@ -231,7 +283,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
 
   Future<void> _evaluatePostCheckInNudges() async {
     try {
-      final currentStreak = _loadedStreakCount ?? await StorageService.instance.getCurrentStreak();
+      final currentStreak =
+          _loadedStreakCount ??
+          await StorageService.instance.getCurrentStreak();
       final nudge = await NudgeService.instance.checkPostCheckIn(currentStreak);
       if (nudge != null) {
         NudgeService.instance.setPendingNudge(nudge);
@@ -287,9 +341,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
                   child: Text(
                     _affirmation,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: ElioColors.darkPrimaryText,
-                        ),
+                      fontWeight: FontWeight.w600,
+                      color: ElioColors.darkPrimaryText,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -302,10 +356,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
                   opacity: _moodOpacity,
                   child: Text(
                     'Feeling ${widget.moodWord}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: ElioColors.darkPrimaryText.withOpacity(0.7),
+                    ),
                   ),
                 ),
               ),
@@ -317,10 +370,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
                   opacity: _intentionOpacity,
                   child: Text(
                     _truncate(widget.intentionText, 50),
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: ElioColors.darkPrimaryText.withOpacity(0.7),
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -337,13 +389,15 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Column(
                         children: widget.answeredQuestions!
-                            .map((aq) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: AnsweredQuestionChip(
-                                    questionText: aq.questionText as String,
-                                    answer: aq.answer as String,
-                                  ),
-                                ))
+                            .map(
+                              (aq) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: AnsweredQuestionChip(
+                                  questionText: aq.questionText as String,
+                                  answer: aq.answer as String,
+                                ),
+                              ),
+                            )
                             .toList(),
                       ),
                     ),
@@ -359,10 +413,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
                     scale: _streakScale,
                     child: Text(
                       _streakLabelFor(_streakCount.value),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.6)),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                      ),
                     ),
                   );
                 },
@@ -379,8 +432,12 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
                       onPressed: _closeFlow,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: ElioColors.darkPrimaryText,
-                        side: BorderSide(color: ElioColors.darkPrimaryText.withOpacity(0.4)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                        side: BorderSide(
+                          color: ElioColors.darkPrimaryText.withOpacity(0.4),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
                       ),
                       child: const Text('Done'),
                     ),
