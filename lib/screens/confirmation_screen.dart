@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:hive/hive.dart';
-
-import '../models/entry.dart';
-import '../services/reflection_service.dart';
 import '../services/storage_service.dart';
 import '../services/nudge_service.dart';
 import '../theme/elio_colors.dart';
@@ -48,6 +44,8 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
   late final Animation<double> _buttonOpacity;
 
   bool _canDismiss = false;
+  bool _isSaving = true;
+  bool _saveFailed = false;
   int? _loadedStreakCount;
 
   static const _affirmations = [
@@ -201,47 +199,55 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
+  List<ReflectionAnswerDraft> _reflectionAnswerDrafts() {
+    final answers = widget.answeredQuestions;
+    if (answers == null || answers.isEmpty) return const [];
+
+    return answers
+        .map(
+          (answer) => ReflectionAnswerDraft(
+            questionId: answer.questionId as String,
+            questionText: answer.questionText as String,
+            answer: answer.answer as String,
+          ),
+        )
+        .toList();
+  }
+
+  Future<void> _retrySave() async {
+    setState(() {
+      _isSaving = true;
+      _saveFailed = false;
+    });
+    await _saveEntryAndStart();
+  }
+
   Future<void> _saveEntryAndStart() async {
-    List<String>? reflectionAnswerIds;
+    final reflectionAnswers = _reflectionAnswerDrafts();
 
     try {
-      // Save the entry first to get its ID
-      final entry = await StorageService.instance.saveEntry(
-        moodValue: widget.moodValue,
-        moodWord: widget.moodWord,
-        intention: widget.intentionText,
-      );
-
-      // Save reflection answers if any, using the entry ID
-      if (widget.answeredQuestions != null &&
-          widget.answeredQuestions!.isNotEmpty) {
-        final answerIds = <String>[];
-        for (final aq in widget.answeredQuestions!) {
-          final answer = await ReflectionService.instance.saveAnswer(
-            entryId: entry.id,
-            questionId: aq.questionId as String,
-            questionText: aq.questionText as String,
-            answer: aq.answer as String,
-          );
-          answerIds.add(answer.id);
-        }
-        reflectionAnswerIds = answerIds;
-
-        // Update the entry with reflection answer IDs
-        final updatedEntry = Entry(
-          id: entry.id,
-          moodValue: entry.moodValue,
-          moodWord: entry.moodWord,
-          intention: entry.intention,
-          createdAt: entry.createdAt,
-          reflectionAnswerIds: reflectionAnswerIds,
+      if (reflectionAnswers.isEmpty) {
+        await StorageService.instance.saveEntry(
+          moodValue: widget.moodValue,
+          moodWord: widget.moodWord,
+          intention: widget.intentionText,
         );
-
-        // Save the updated entry
-        await Hive.box<Entry>('entries').put(entry.id, updatedEntry);
+      } else {
+        await StorageService.instance.saveEntryWithReflectionAnswers(
+          moodValue: widget.moodValue,
+          moodWord: widget.moodWord,
+          intention: widget.intentionText,
+          reflectionAnswers: reflectionAnswers,
+        );
       }
     } catch (e) {
       debugPrint('Error saving entry: $e');
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+        _saveFailed = true;
+      });
+      return;
     }
 
     try {
@@ -263,7 +269,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
     _evaluatePostCheckInNudges();
 
     if (!mounted) return;
-    setState(() {});
+    setState(() => _isSaving = false);
 
     _controller.forward();
 
@@ -298,6 +304,60 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_saveFailed) {
+      return Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Icon(
+                  Icons.cloud_off_outlined,
+                  size: 56,
+                  color: ElioColors.darkAccent.withOpacity(0.8),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Couldn\'t save this check-in',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: ElioColors.darkPrimaryText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Your entry was not saved. Try again before leaving this screen.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: ElioColors.darkPrimaryText.withOpacity(0.7),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _isSaving ? null : _retrySave,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ElioColors.darkAccent,
+                      foregroundColor: ElioColors.darkPrimaryText,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text('Try Again'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: GestureDetector(

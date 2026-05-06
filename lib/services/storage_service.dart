@@ -9,6 +9,18 @@ import '../models/reflection_question.dart';
 import '../models/weekly_summary.dart';
 import 'reflection_service.dart';
 
+class ReflectionAnswerDraft {
+  const ReflectionAnswerDraft({
+    required this.questionId,
+    required this.questionText,
+    required this.answer,
+  });
+
+  final String questionId;
+  final String questionText;
+  final String answer;
+}
+
 class StorageService {
   StorageService._();
 
@@ -63,6 +75,57 @@ class StorageService {
     await updateLongestStreak(currentStreak);
 
     return entry;
+  }
+
+  Future<Entry> saveEntryWithReflectionAnswers({
+    required double moodValue,
+    required String moodWord,
+    required String intention,
+    required List<ReflectionAnswerDraft> reflectionAnswers,
+  }) async {
+    final entry = Entry(
+      id: _uuid.v4(),
+      moodValue: moodValue,
+      moodWord: moodWord,
+      intention: intention,
+      createdAt: DateTime.now(),
+    );
+    final answerIds = <String>[];
+
+    try {
+      await _box.put(entry.id, entry);
+
+      for (final draft in reflectionAnswers) {
+        final answer = await ReflectionService.instance.saveAnswer(
+          entryId: entry.id,
+          questionId: draft.questionId,
+          questionText: draft.questionText,
+          answer: draft.answer,
+        );
+        answerIds.add(answer.id);
+      }
+
+      final updatedEntry = Entry(
+        id: entry.id,
+        moodValue: entry.moodValue,
+        moodWord: entry.moodWord,
+        intention: entry.intention,
+        createdAt: entry.createdAt,
+        reflectionAnswerIds: answerIds,
+      );
+      await _box.put(entry.id, updatedEntry);
+
+      final currentStreak = await getCurrentStreak();
+      await updateLongestStreak(currentStreak);
+
+      return updatedEntry;
+    } catch (_) {
+      for (final answerId in answerIds) {
+        await ReflectionService.instance.deleteAnswer(answerId);
+      }
+      await _box.delete(entry.id);
+      rethrow;
+    }
   }
 
   Future<List<Entry>> getAllEntries() async {
@@ -187,7 +250,9 @@ class StorageService {
 
   Future<List<Entry>> getEntriesForPeriod(DateTime start, DateTime end) async {
     final entries = _box.values.where((entry) {
-      return !entry.createdAt.isBefore(start) && entry.createdAt.isBefore(end) && !entry.isDeleted;
+      return !entry.createdAt.isBefore(start) &&
+          entry.createdAt.isBefore(end) &&
+          !entry.isDeleted;
     }).toList();
     entries.sort((a, b) => a.createdAt.compareTo(b.createdAt));
     return entries;
@@ -252,8 +317,8 @@ class StorageService {
     final cutoffDate = DateTime.now().subtract(const Duration(days: 30));
     final entriesToDelete = _box.values.where((entry) {
       return entry.isDeleted &&
-             entry.deletedAt != null &&
-             entry.deletedAt!.isBefore(cutoffDate);
+          entry.deletedAt != null &&
+          entry.deletedAt!.isBefore(cutoffDate);
     }).toList();
 
     for (final entry in entriesToDelete) {
@@ -309,16 +374,22 @@ class StorageService {
     final entriesBox = await Hive.openBox<Entry>('entries');
     await entriesBox.clear();
 
-    final answersBox = await Hive.openBox<ReflectionAnswer>('reflectionAnswers');
+    final answersBox = await Hive.openBox<ReflectionAnswer>(
+      'reflectionAnswers',
+    );
     await answersBox.clear();
 
-    final questionsBox = await Hive.openBox<ReflectionQuestion>('reflectionQuestions');
+    final questionsBox = await Hive.openBox<ReflectionQuestion>(
+      'reflectionQuestions',
+    );
     await questionsBox.clear();
 
     final directionsBox = await Hive.openBox<Direction>('directions');
     await directionsBox.clear();
 
-    final connectionsBox = await Hive.openBox<DirectionConnection>('direction_connections');
+    final connectionsBox = await Hive.openBox<DirectionConnection>(
+      'direction_connections',
+    );
     await connectionsBox.clear();
 
     final summariesBox = await Hive.openBox<WeeklySummary>('weekly_summaries');
