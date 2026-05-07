@@ -116,6 +116,11 @@ extension DirectionTypeExtension on DirectionType {
 class Direction {
   final String id;
   final String title; // max 50 chars
+  final String? description;
+  final String? subtasks;
+  final String? actionItems;
+  final String? blockers;
+  final String? supportIdeas;
   final DirectionType type;
   final bool reflectionEnabled; // show questions during check-in
   final bool isArchived;
@@ -124,6 +129,11 @@ class Direction {
   Direction({
     required this.id,
     required this.title,
+    this.description = '',
+    this.subtasks = '',
+    this.actionItems = '',
+    this.blockers = '',
+    this.supportIdeas = '',
     required this.type,
     required this.reflectionEnabled,
     this.isArchived = false,
@@ -136,13 +146,24 @@ class Direction {
   /// Create a copy with updated fields
   Direction copyWith({
     String? title,
+    String? description,
+    String? subtasks,
+    String? actionItems,
+    String? blockers,
+    String? supportIdeas,
+    DirectionType? type,
     bool? reflectionEnabled,
     bool? isArchived,
   }) {
     return Direction(
       id: id,
       title: title ?? this.title,
-      type: type,
+      description: description ?? this.description,
+      subtasks: subtasks ?? this.subtasks,
+      actionItems: actionItems ?? this.actionItems,
+      blockers: blockers ?? this.blockers,
+      supportIdeas: supportIdeas ?? this.supportIdeas,
+      type: type ?? this.type,
       reflectionEnabled: reflectionEnabled ?? this.reflectionEnabled,
       isArchived: isArchived ?? this.isArchived,
       createdAt: createdAt,
@@ -186,13 +207,18 @@ class DirectionAdapter extends TypeAdapter<Direction> {
       reflectionEnabled: fields[3] as bool,
       isArchived: fields[4] as bool? ?? false,
       createdAt: fields[5] as DateTime,
+      description: fields[6] as String? ?? '',
+      subtasks: fields[7] as String? ?? '',
+      actionItems: fields[8] as String? ?? '',
+      blockers: fields[9] as String? ?? '',
+      supportIdeas: fields[10] as String? ?? '',
     );
   }
 
   @override
   void write(BinaryWriter writer, Direction obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -204,6 +230,16 @@ class DirectionAdapter extends TypeAdapter<Direction> {
       ..writeByte(4)
       ..write(obj.isArchived)
       ..writeByte(5)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(6)
+      ..write(obj.description ?? '')
+      ..writeByte(7)
+      ..write(obj.subtasks ?? '')
+      ..writeByte(8)
+      ..write(obj.actionItems ?? '')
+      ..writeByte(9)
+      ..write(obj.blockers ?? '')
+      ..writeByte(10)
+      ..write(obj.supportIdeas ?? '');
   }
 }

@@ -30,23 +30,18 @@ class _DirectionsScreenState extends State<DirectionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final canAdd = DirectionService.instance.canAddDirection();
     final activeCount = DirectionService.instance.getActiveCount();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Directions'),
         actions: [
-          if (canAdd)
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: _navigateToCreate,
-            ),
+          IconButton(icon: const Icon(Icons.add), onPressed: _navigateToCreate),
         ],
       ),
       body: _directions.isEmpty
           ? _buildEmptyState()
-          : _buildDirectionsList(canAdd, activeCount),
+          : _buildDirectionsList(activeCount),
     );
   }
 
@@ -54,51 +49,53 @@ class _DirectionsScreenState extends State<DirectionsScreen> {
     return EmptyStateView(
       svgAsset: 'assets/empty_states/directions_empty.svg',
       title: 'What matters to you?',
-      description: 'Add life directions to connect your daily check-ins and discover patterns that matter.',
+      description:
+          'Add life directions to connect your daily check-ins and discover patterns that matter.',
       ctaLabel: 'Add Your First Direction',
       onCtaPressed: _navigateToCreate,
     );
   }
 
-  Widget _buildDirectionsList(bool canAdd, int activeCount) {
+  Widget _buildDirectionsList(int activeCount) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         // Header text
         Text(
           'Your life compass. Connect your daily check-ins to see patterns.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Colors.grey,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
         ),
         const SizedBox(height: 16),
 
         // Direction cards
-        ..._directions.map((direction) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: FutureBuilder(
-            future: DirectionService.instance.getStats(direction.id),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(40),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
+        ..._directions.map(
+          (direction) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: FutureBuilder(
+              future: DirectionService.instance.getStats(direction.id),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  );
+                }
+                return DirectionCard(
+                  direction: direction,
+                  stats: snapshot.data!,
+                  onTap: () => _navigateToDetail(direction),
                 );
-              }
-              return DirectionCard(
-                direction: direction,
-                stats: snapshot.data!,
-                onTap: () => _navigateToDetail(direction),
-              );
-            },
+              },
+            ),
           ),
-        )),
+        ),
 
         // Add direction card
-        if (canAdd)
-          _buildAddCard(activeCount),
+        _buildAddCard(activeCount),
       ],
     );
   }
@@ -123,7 +120,7 @@ class _DirectionsScreenState extends State<DirectionsScreen> {
             children: [
               const Icon(Icons.add, size: 20),
               const SizedBox(width: 8),
-              Text('Add direction ($activeCount of 5)'),
+              Text('Add direction ($activeCount added)'),
             ],
           ),
         ),
@@ -134,9 +131,7 @@ class _DirectionsScreenState extends State<DirectionsScreen> {
   void _navigateToCreate() async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => const CreateDirectionScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const CreateDirectionScreen()),
     );
 
     if (result == true) {
@@ -148,9 +143,7 @@ class _DirectionsScreenState extends State<DirectionsScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DirectionDetailScreen(
-          direction: direction,
-        ),
+        builder: (context) => DirectionDetailScreen(direction: direction),
       ),
     );
 

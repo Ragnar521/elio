@@ -13,7 +13,6 @@ class DirectionService {
 
   static const String _directionsBoxName = 'directions';
   static const String _connectionsBoxName = 'direction_connections';
-  static const int maxDirections = 5;
 
   final Uuid _uuid = const Uuid();
   Box<Direction>? _directionsBox;
@@ -33,7 +32,9 @@ class DirectionService {
     }
 
     _directionsBox = await Hive.openBox<Direction>(_directionsBoxName);
-    _connectionsBox = await Hive.openBox<DirectionConnection>(_connectionsBoxName);
+    _connectionsBox = await Hive.openBox<DirectionConnection>(
+      _connectionsBoxName,
+    );
   }
 
   Box<Direction> get _directions {
@@ -54,15 +55,13 @@ class DirectionService {
 
   // ============ DIRECTIONS CRUD ============
 
-  /// Get all active (non-archived) directions
+  /// Get all visible directions
   List<Direction> getActiveDirections() {
-    return _directions.values
-        .where((d) => !d.isArchived)
-        .toList()
+    return _directions.values.where((d) => !d.isArchived).toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 
-  /// Get all directions including archived
+  /// Get all directions, including older archived records
   List<Direction> getAllDirections() {
     return _directions.values.toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
@@ -79,7 +78,7 @@ class DirectionService {
 
   /// Check if user can add more directions
   bool canAddDirection() {
-    return getActiveDirections().length < maxDirections;
+    return true;
   }
 
   /// Get count of active directions
@@ -90,16 +89,24 @@ class DirectionService {
   /// Create a new direction
   Future<Direction> createDirection({
     required String title,
+    String description = '',
+    String subtasks = '',
+    String actionItems = '',
+    String blockers = '',
+    String supportIdeas = '',
     required DirectionType type,
     required bool reflectionEnabled,
   }) async {
-    if (!canAddDirection()) {
-      throw Exception('Maximum $maxDirections directions allowed');
-    }
+    final trimmedTitle = title.trim();
 
     final direction = Direction(
       id: _uuid.v4(),
-      title: title.trim().substring(0, title.length.clamp(0, 50)),
+      title: trimmedTitle.substring(0, trimmedTitle.length.clamp(0, 50)),
+      description: description.trim(),
+      subtasks: subtasks.trim(),
+      actionItems: actionItems.trim(),
+      blockers: blockers.trim(),
+      supportIdeas: supportIdeas.trim(),
       type: type,
       reflectionEnabled: reflectionEnabled,
       createdAt: DateTime.now(),
@@ -114,18 +121,15 @@ class DirectionService {
     await _directions.put(direction.id, direction);
   }
 
-  /// Archive a direction (soft delete)
+  /// Delete a direction. Kept for compatibility with older call sites.
   Future<void> archiveDirection(String id) async {
-    final direction = getDirection(id);
-    if (direction != null) {
-      await _directions.put(id, direction.copyWith(isArchived: true));
-    }
+    await deleteDirection(id);
   }
 
   /// Restore an archived direction
   Future<void> restoreDirection(String id) async {
     final direction = getDirection(id);
-    if (direction != null && canAddDirection()) {
+    if (direction != null) {
       await _directions.put(id, direction.copyWith(isArchived: false));
     }
   }
@@ -175,9 +179,9 @@ class DirectionService {
     required String directionId,
     required String entryId,
   }) async {
-    final toDelete = _connections.values.where(
-      (c) => c.directionId == directionId && c.entryId == entryId,
-    ).toList();
+    final toDelete = _connections.values
+        .where((c) => c.directionId == directionId && c.entryId == entryId)
+        .toList();
 
     for (final connection in toDelete) {
       await _connections.delete(connection.id);
@@ -199,9 +203,7 @@ class DirectionService {
         .toSet();
 
     final allEntries = await StorageService.instance.getAllEntries();
-    return allEntries
-        .where((e) => entryIds.contains(e.id))
-        .toList()
+    return allEntries.where((e) => entryIds.contains(e.id)).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt)); // newest first
   }
 
@@ -218,7 +220,10 @@ class DirectionService {
   }
 
   /// Get recent unconnected entries (for connection picker)
-  Future<List<Entry>> getUnconnectedEntries(String directionId, {int limit = 20}) async {
+  Future<List<Entry>> getUnconnectedEntries(
+    String directionId, {
+    int limit = 20,
+  }) async {
     final connectedIds = _connections.values
         .where((c) => c.directionId == directionId)
         .map((c) => c.entryId)
@@ -246,9 +251,10 @@ class DirectionService {
     final startOfMonth = DateTime(now.year, now.month, 1);
 
     return _connections.values
-        .where((c) =>
-            c.directionId == directionId &&
-            c.createdAt.isAfter(startOfMonth))
+        .where(
+          (c) =>
+              c.directionId == directionId && c.createdAt.isAfter(startOfMonth),
+        )
         .length;
   }
 
@@ -275,7 +281,8 @@ class DirectionService {
     final connectedEntries = await getConnectedEntries(directionId);
     final avgConnected = connectedEntries.isEmpty
         ? 0.0
-        : connectedEntries.fold<double>(0.0, (sum, e) => sum + e.moodValue) / connectedEntries.length;
+        : connectedEntries.fold<double>(0.0, (sum, e) => sum + e.moodValue) /
+              connectedEntries.length;
 
     return DirectionStats(
       totalConnections: getConnectionCount(directionId),
@@ -290,9 +297,7 @@ class DirectionService {
 
   /// Get directions that have reflection enabled
   List<Direction> getDirectionsWithReflection() {
-    return getActiveDirections()
-        .where((d) => d.reflectionEnabled)
-        .toList();
+    return getActiveDirections().where((d) => d.reflectionEnabled).toList();
   }
 
   /// Get a random reflection question from enabled directions
@@ -351,9 +356,9 @@ class DirectionService {
     final weekAgo = now.subtract(const Duration(days: 7));
 
     return _connections.values
-        .where((c) =>
-            c.directionId == directionId &&
-            c.createdAt.isAfter(weekAgo))
+        .where(
+          (c) => c.directionId == directionId && c.createdAt.isAfter(weekAgo),
+        )
         .length;
   }
 
@@ -377,7 +382,8 @@ class DirectionService {
   }
 
   /// Get directions with significant mood correlation
-  Future<List<MapEntry<Direction, double>>> getDirectionsWithMoodCorrelation() async {
+  Future<List<MapEntry<Direction, double>>>
+  getDirectionsWithMoodCorrelation() async {
     final overallAvg = await getOverallAverageMood();
 
     final results = <MapEntry<Direction, double>>[];

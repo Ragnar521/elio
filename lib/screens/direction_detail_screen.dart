@@ -5,6 +5,7 @@ import '../models/entry.dart';
 import '../services/direction_service.dart';
 import '../widgets/direction_icon.dart';
 import 'connect_entries_screen.dart';
+import 'create_direction_screen.dart';
 import 'entry_detail_screen.dart';
 
 class DirectionDetailScreen extends StatefulWidget {
@@ -52,6 +53,12 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
               ),
             ],
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: _navigateToEdit,
+            ),
+          ],
         ),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -68,6 +75,12 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: _navigateToEdit,
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -75,6 +88,12 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
           // Overview card
           _buildOverviewCard(),
           const SizedBox(height: 16),
+
+          // Direction details
+          if (_hasDirectionDetails) ...[
+            _buildDirectionDetailsCard(),
+            const SizedBox(height: 16),
+          ],
 
           // Mood correlation card
           _buildMoodCorrelationCard(),
@@ -92,12 +111,19 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
           _buildSettings(),
           const SizedBox(height: 16),
 
-          // Archive button
-          _buildArchiveButton(),
+          // Delete button
+          _buildDeleteButton(),
         ],
       ),
     );
   }
+
+  bool get _hasDirectionDetails =>
+      (_direction.description ?? '').isNotEmpty ||
+      (_direction.subtasks ?? '').isNotEmpty ||
+      (_direction.actionItems ?? '').isNotEmpty ||
+      (_direction.blockers ?? '').isNotEmpty ||
+      (_direction.supportIdeas ?? '').isNotEmpty;
 
   Widget _buildOverviewCard() {
     return Card(
@@ -160,6 +186,54 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDirectionDetailsCard() {
+    final description = _direction.description ?? '';
+    final legacySubtasks = _direction.subtasks ?? '';
+    final actionItems = (_direction.actionItems ?? '').isNotEmpty
+        ? _direction.actionItems ?? ''
+        : legacySubtasks;
+    final blockers = _direction.blockers ?? '';
+    final supportIdeas = _direction.supportIdeas ?? '';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'DETAILS',
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: Colors.grey),
+            ),
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(description, style: Theme.of(context).textTheme.bodyMedium),
+            ],
+            _buildDetailTextSection('What I need to do', actionItems),
+            _buildDetailTextSection('What is blocking or scaring me', blockers),
+            _buildDetailTextSection('What might help', supportIdeas),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailTextSection(String title, String value) {
+    if (value.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(title, style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 8),
+        Text(value, style: Theme.of(context).textTheme.bodyMedium),
+      ],
     );
   }
 
@@ -340,12 +414,12 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
     );
   }
 
-  Widget _buildArchiveButton() {
+  Widget _buildDeleteButton() {
     return TextButton.icon(
-      onPressed: _confirmArchive,
-      icon: const Icon(Icons.archive_outlined),
-      label: const Text('Archive this direction'),
-      style: TextButton.styleFrom(foregroundColor: Colors.grey),
+      onPressed: _confirmDelete,
+      icon: const Icon(Icons.delete_outline),
+      label: const Text('Delete this direction'),
+      style: TextButton.styleFrom(foregroundColor: Colors.red),
     );
   }
 
@@ -397,6 +471,19 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
     }
   }
 
+  void _navigateToEdit() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateDirectionScreen(direction: _direction),
+      ),
+    );
+
+    if (result == true) {
+      _loadStats();
+    }
+  }
+
   void _navigateToEntry(Entry entry) {
     Navigator.push(
       context,
@@ -429,13 +516,13 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
     _loadStats();
   }
 
-  void _confirmArchive() {
+  void _confirmDelete() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Archive direction?'),
+        title: const Text('Delete direction?'),
         content: Text(
-          'This will hide "${_direction.title}" from your directions. Your connections will be preserved.',
+          'This will permanently delete "${_direction.title}" and remove its entry connections.',
         ),
         actions: [
           TextButton(
@@ -443,12 +530,13 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              DirectionService.instance.archiveDirection(_direction.id);
+            onPressed: () async {
+              await DirectionService.instance.deleteDirection(_direction.id);
+              if (!context.mounted) return;
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Return to list
             },
-            child: const Text('Archive'),
+            child: const Text('Delete'),
           ),
         ],
       ),

@@ -18,6 +18,8 @@ class DirectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final description = direction.description ?? '';
+
     return AnimatedTap(
       onTap: onTap,
       pressScale: 0.98,
@@ -38,11 +40,25 @@ class DirectionCard extends StatelessWidget {
                     child: Text(
                       direction.title,
                       style: Theme.of(context).textTheme.titleMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const Icon(Icons.chevron_right),
                 ],
               ),
+
+              if (description.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                ),
+              ],
 
               const SizedBox(height: 12),
 

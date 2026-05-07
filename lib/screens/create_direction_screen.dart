@@ -4,7 +4,9 @@ import '../services/direction_service.dart';
 import '../widgets/direction_icon.dart';
 
 class CreateDirectionScreen extends StatefulWidget {
-  const CreateDirectionScreen({super.key});
+  final Direction? direction;
+
+  const CreateDirectionScreen({super.key, this.direction});
 
   @override
   State<CreateDirectionScreen> createState() => _CreateDirectionScreenState();
@@ -13,21 +15,53 @@ class CreateDirectionScreen extends StatefulWidget {
 class _CreateDirectionScreenState extends State<CreateDirectionScreen> {
   DirectionType? _selectedType;
   final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _actionItemsController = TextEditingController();
+  final _blockersController = TextEditingController();
+  final _supportIdeasController = TextEditingController();
   bool _reflectionEnabled = false;
+
+  bool get _isEditing => widget.direction != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final direction = widget.direction;
+    if (direction != null) {
+      _selectedType = direction.type;
+      _titleController.text = direction.title;
+      _descriptionController.text = direction.description ?? '';
+      _actionItemsController.text = (direction.actionItems ?? '').isNotEmpty
+          ? direction.actionItems ?? ''
+          : direction.subtasks ?? '';
+      _blockersController.text = direction.blockers ?? '';
+      _supportIdeasController.text = direction.supportIdeas ?? '';
+      _reflectionEnabled = direction.reflectionEnabled;
+    }
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
+    _descriptionController.dispose();
+    _actionItemsController.dispose();
+    _blockersController.dispose();
+    _supportIdeasController.dispose();
     super.dispose();
   }
 
   bool get _canCreate =>
-      _selectedType != null && _titleController.text.trim().isNotEmpty;
+      _selectedType != null &&
+      _titleController.text.trim().isNotEmpty &&
+      _descriptionController.text.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Direction')),
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Edit Direction' : 'New Direction'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -45,20 +79,86 @@ class _CreateDirectionScreenState extends State<CreateDirectionScreen> {
             const Divider(),
             const SizedBox(height: 24),
 
-            // Title input
-            Text(
-              'Describe it in your words:',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Title *', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             TextField(
               controller: _titleController,
               maxLength: 50,
               decoration: const InputDecoration(
                 hintText: 'e.g., Feel strong and rested',
+                helperText: 'A short name for this direction',
                 border: OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
+            ),
+
+            const SizedBox(height: 16),
+            Text(
+              'Description *',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _descriptionController,
+              minLines: 3,
+              maxLines: 6,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'What do you want to achieve now or later?',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+
+            const SizedBox(height: 16),
+            Text(
+              'What I need to do',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _actionItemsController,
+              minLines: 2,
+              maxLines: 5,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'Small steps, tasks, or next actions',
+                border: OutlineInputBorder(),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+            Text(
+              'What is blocking or scaring me',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _blockersController,
+              minLines: 2,
+              maxLines: 5,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'Fears, blockers, risks, or friction',
+                border: OutlineInputBorder(),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+            Text(
+              'What might help',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _supportIdeasController,
+              minLines: 2,
+              maxLines: 5,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'People, resources, habits, or ideas',
+                border: OutlineInputBorder(),
+              ),
             ),
 
             // Examples
@@ -103,8 +203,8 @@ class _CreateDirectionScreenState extends State<CreateDirectionScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: _canCreate ? _create : null,
-                child: const Text('Create'),
+                onPressed: _canCreate ? _save : null,
+                child: Text(_isEditing ? 'Save' : 'Create'),
               ),
             ),
           ],
@@ -152,14 +252,34 @@ class _CreateDirectionScreenState extends State<CreateDirectionScreen> {
     );
   }
 
-  Future<void> _create() async {
+  Future<void> _save() async {
     if (!_canCreate) return;
 
-    await DirectionService.instance.createDirection(
-      title: _titleController.text.trim(),
-      type: _selectedType!,
-      reflectionEnabled: _reflectionEnabled,
-    );
+    final direction = widget.direction;
+    if (direction == null) {
+      await DirectionService.instance.createDirection(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        actionItems: _actionItemsController.text.trim(),
+        blockers: _blockersController.text.trim(),
+        supportIdeas: _supportIdeasController.text.trim(),
+        type: _selectedType!,
+        reflectionEnabled: _reflectionEnabled,
+      );
+    } else {
+      await DirectionService.instance.updateDirection(
+        direction.copyWith(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          subtasks: '',
+          actionItems: _actionItemsController.text.trim(),
+          blockers: _blockersController.text.trim(),
+          supportIdeas: _supportIdeasController.text.trim(),
+          type: _selectedType!,
+          reflectionEnabled: _reflectionEnabled,
+        ),
+      );
+    }
 
     if (mounted) {
       Navigator.pop(context, true);
