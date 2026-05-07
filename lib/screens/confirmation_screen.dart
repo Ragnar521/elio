@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/direction_check_in.dart';
+import '../models/entry.dart';
+import '../services/direction_service.dart';
+import '../services/reflection_service.dart';
 import '../services/storage_service.dart';
 import '../services/nudge_service.dart';
 import '../theme/elio_colors.dart';
@@ -14,6 +18,7 @@ class ConfirmationScreen extends StatefulWidget {
     required this.intentionText,
     this.streakCount,
     this.answeredQuestions,
+    this.directionCheckIns = const [],
   });
 
   final double moodValue;
@@ -21,6 +26,7 @@ class ConfirmationScreen extends StatefulWidget {
   final String intentionText;
   final int? streakCount;
   final List<dynamic>? answeredQuestions;
+  final List<DirectionCheckInDraft> directionCheckIns;
 
   @override
   State<ConfirmationScreen> createState() => _ConfirmationScreenState();
@@ -209,6 +215,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
             questionId: answer.questionId as String,
             questionText: answer.questionText as String,
             answer: answer.answer as String,
+            directionId: answer.directionId as String?,
           ),
         )
         .toList();
@@ -226,18 +233,28 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
     final reflectionAnswers = _reflectionAnswerDrafts();
 
     try {
+      late final Entry entry;
       if (reflectionAnswers.isEmpty) {
-        await StorageService.instance.saveEntry(
+        entry = await StorageService.instance.saveEntry(
           moodValue: widget.moodValue,
           moodWord: widget.moodWord,
           intention: widget.intentionText,
         );
       } else {
-        await StorageService.instance.saveEntryWithReflectionAnswers(
+        entry = await StorageService.instance.saveEntryWithReflectionAnswers(
           moodValue: widget.moodValue,
           moodWord: widget.moodWord,
           intention: widget.intentionText,
           reflectionAnswers: reflectionAnswers,
+        );
+      }
+
+      if (widget.directionCheckIns.isNotEmpty) {
+        final answerIdsByDirectionId = _answerIdsByDirectionId(entry);
+        await DirectionService.instance.recordCheckIns(
+          entryId: entry.id,
+          drafts: widget.directionCheckIns,
+          reflectionAnswerIdsByDirectionId: answerIdsByDirectionId,
         );
       }
     } catch (e) {
@@ -285,6 +302,21 @@ class _ConfirmationScreenState extends State<ConfirmationScreen>
     Future.delayed(const Duration(milliseconds: 2000), () {
       if (mounted) setState(() => _canDismiss = true);
     });
+  }
+
+  Map<String, String> _answerIdsByDirectionId(Entry entry) {
+    final answerIds = entry.reflectionAnswerIds;
+    if (answerIds == null || answerIds.isEmpty) return const {};
+
+    final answers = ReflectionService.instance.getAnswersByIds(answerIds);
+    final mapped = <String, String>{};
+    for (final answer in answers) {
+      const prefix = 'direction_goal:';
+      if (answer.questionId.startsWith(prefix)) {
+        mapped[answer.questionId.substring(prefix.length)] = answer.id;
+      }
+    }
+    return mapped;
   }
 
   Future<void> _evaluatePostCheckInNudges() async {

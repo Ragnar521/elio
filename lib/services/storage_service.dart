@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/entry.dart';
 import '../models/direction.dart';
+import '../models/direction_check_in.dart';
 import '../models/direction_connection.dart';
 import '../models/reflection_answer.dart';
 import '../models/reflection_question.dart';
@@ -14,11 +15,13 @@ class ReflectionAnswerDraft {
     required this.questionId,
     required this.questionText,
     required this.answer,
+    this.directionId,
   });
 
   final String questionId;
   final String questionText;
   final String answer;
+  final String? directionId;
 }
 
 class StorageService {
@@ -391,6 +394,11 @@ class StorageService {
       'direction_connections',
     );
     await connectionsBox.clear();
+
+    final directionCheckInsBox = await Hive.openBox<DirectionCheckIn>(
+      'direction_check_ins',
+    );
+    await directionCheckInsBox.clear();
 
     final summariesBox = await Hive.openBox<WeeklySummary>('weekly_summaries');
     await summariesBox.clear();

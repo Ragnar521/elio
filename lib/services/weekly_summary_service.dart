@@ -27,7 +27,9 @@ class WeeklySummaryService {
   Box<WeeklySummary> get _summaries {
     final box = _box;
     if (box == null) {
-      throw StateError('WeeklySummaryService not initialized. Call init() first.');
+      throw StateError(
+        'WeeklySummaryService not initialized. Call init() first.',
+      );
     }
     return box;
   }
@@ -36,7 +38,9 @@ class WeeklySummaryService {
   Future<bool> hasUnviewedSummary() async {
     final now = DateTime.now();
     final currentWeekStart = _startOfWeek(now);
-    final previousWeekStart = currentWeekStart.subtract(const Duration(days: 7));
+    final previousWeekStart = currentWeekStart.subtract(
+      const Duration(days: 7),
+    );
 
     // Look for existing summary for previous week
     final summary = getSummaryForWeek(previousWeekStart);
@@ -47,7 +51,9 @@ class WeeklySummaryService {
   Future<WeeklySummary?> getOrGenerateCurrentSummary() async {
     final now = DateTime.now();
     final currentWeekStart = _startOfWeek(now);
-    final previousWeekStart = currentWeekStart.subtract(const Duration(days: 7));
+    final previousWeekStart = currentWeekStart.subtract(
+      const Duration(days: 7),
+    );
 
     // Check if summary already exists
     final existingSummary = getSummaryForWeek(previousWeekStart);
@@ -154,12 +160,22 @@ class WeeklySummaryService {
     double? bestMoodValue;
     String? bestMoodWord;
     if (weekEntries.isNotEmpty) {
-      final bestEntry = weekEntries.reduce((a, b) => a.moodValue > b.moodValue ? a : b);
+      final bestEntry = weekEntries.reduce(
+        (a, b) => a.moodValue > b.moodValue ? a : b,
+      );
       bestMoodValue = bestEntry.moodValue;
       bestMoodWord = bestEntry.moodWord;
 
       // Get weekday name
-      final weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      final weekdayNames = [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ];
       bestMoodDay = weekdayNames[bestEntry.createdAt.weekday - 1];
     }
 
@@ -174,7 +190,11 @@ class WeeklySummaryService {
 
       for (final direction in directions) {
         // Calculate weekly connections for this specific week
-        final weeklyConnections = await _countWeeklyConnections(direction.id, weekStart, weekEnd);
+        final weeklyConnections = await _countWeeklyConnections(
+          direction.id,
+          weekStart,
+          weekEnd,
+        );
 
         // Get mood correlation stats
         final stats = await DirectionService.instance.getStats(direction.id);
@@ -185,12 +205,22 @@ class WeeklySummaryService {
           'title': direction.title,
           'iconAsset': direction.iconAsset,
           'weeklyConnections': weeklyConnections,
+          'weeklyGoalPresence': DirectionService.instance.getWeeklyCheckInCount(
+            direction.id,
+          ),
+          'weeklyProgress': DirectionService.instance.getWeeklyProgressCount(
+            direction.id,
+          ),
+          'weeklyBlockers': DirectionService.instance.getWeeklyBlockerCount(
+            direction.id,
+          ),
           'avgMoodWhenConnected': stats.avgMoodWhenConnected,
           'moodDifference': stats.moodDifference,
         });
 
         // Track top direction (highest positive correlation >= 0.1)
-        if (stats.moodDifference >= 0.1 && stats.moodDifference > highestMoodDifference) {
+        if (stats.moodDifference >= 0.1 &&
+            stats.moodDifference > highestMoodDifference) {
           highestMoodDifference = stats.moodDifference;
           topDirectionId = direction.id;
         }
@@ -241,20 +271,29 @@ class WeeklySummaryService {
   }
 
   /// Count connections for a specific week period (not the generic "last 7 days from now")
-  Future<int> _countWeeklyConnections(String directionId, DateTime weekStart, DateTime weekEnd) async {
+  Future<int> _countWeeklyConnections(
+    String directionId,
+    DateTime weekStart,
+    DateTime weekEnd,
+  ) async {
     // Get all connected entries for this direction
-    final connectedEntries = await DirectionService.instance.getConnectedEntries(directionId);
+    final connectedEntries = await DirectionService.instance
+        .getConnectedEntries(directionId);
 
     // Filter to only entries within the week range
-    final weekConnections = connectedEntries.where((entry) =>
-        !entry.createdAt.isBefore(weekStart) &&
-        entry.createdAt.isBefore(weekEnd));
+    final weekConnections = connectedEntries.where(
+      (entry) =>
+          !entry.createdAt.isBefore(weekStart) &&
+          entry.createdAt.isBefore(weekEnd),
+    );
 
     return weekConnections.length;
   }
 
   /// Select 1-2 standout reflection answers from the week
-  Future<List<Map<String, dynamic>>?> _selectStandoutReflections(List<Entry> entries) async {
+  Future<List<Map<String, dynamic>>?> _selectStandoutReflections(
+    List<Entry> entries,
+  ) async {
     // Collect all reflection answer IDs
     final allAnswerIds = <String>[];
     for (final entry in entries) {

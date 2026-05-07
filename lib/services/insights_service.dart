@@ -101,14 +101,27 @@ class InsightsService {
     required int longestStreakAllTime,
   }) async {
     final periodRange = _periodRange(now, period, offset);
-    final periodEntries = _entriesInRange(allEntries, periodRange.start, periodRange.end);
+    final periodEntries = _entriesInRange(
+      allEntries,
+      periodRange.start,
+      periodRange.end,
+    );
     final daysInPeriod = periodRange.end.difference(periodRange.start).inDays;
     final daysWithEntries = _daysWithEntries(periodEntries);
     final checkInCount = periodEntries.length;
     final mostFeltResult = _mostFelt(periodEntries);
-    final avgMood = _average(periodEntries.map((entry) => entry.moodValue).toList());
-    final stdDev = _standardDeviation(periodEntries.map((entry) => entry.moodValue).toList());
-    final trend = _trend(periodEntries, periodRange.start, daysInPeriod, period);
+    final avgMood = _average(
+      periodEntries.map((entry) => entry.moodValue).toList(),
+    );
+    final stdDev = _standardDeviation(
+      periodEntries.map((entry) => entry.moodValue).toList(),
+    );
+    final trend = _trend(
+      periodEntries,
+      periodRange.start,
+      daysInPeriod,
+      period,
+    );
     final stable = stdDev > 0 && stdDev < 0.15;
     final volatile = stdDev > 0.3;
     final weekendsBetter = _weekendsBetter(periodEntries, avgMood);
@@ -124,7 +137,11 @@ class InsightsService {
     final reflectionStats = _calculateReflectionStats(periodEntries);
     final dayPattern = _calculateDayOfWeekPattern(periodEntries);
     final bestWorstDays = _findBestWorstDays(dayPattern);
-    final longestInPeriod = _calculateLongestStreakInPeriod(periodEntries, periodRange.start, periodRange.end);
+    final longestInPeriod = _calculateLongestStreakInPeriod(
+      periodEntries,
+      periodRange.start,
+      periodRange.end,
+    );
 
     // Comparison to previous period
     double? prevAvg;
@@ -133,7 +150,9 @@ class InsightsService {
     int? checkInChange;
 
     final duration = periodRange.end.difference(periodRange.start);
-    final prevStart = periodRange.start.subtract(duration).subtract(const Duration(days: 1));
+    final prevStart = periodRange.start
+        .subtract(duration)
+        .subtract(const Duration(days: 1));
     final prevEnd = periodRange.start.subtract(const Duration(days: 1));
     final prevEntries = _entriesInRange(allEntries, prevStart, prevEnd);
 
@@ -174,7 +193,10 @@ class InsightsService {
       reflectionRate: reflectionStats.$2,
     );
 
-    final patternInsight = _generatePatternInsight(bestWorstDays.$1, bestWorstDays.$2);
+    final patternInsight = _generatePatternInsight(
+      bestWorstDays.$1,
+      bestWorstDays.$2,
+    );
 
     return InsightsData(
       period: period,
@@ -224,24 +246,46 @@ class InsightsService {
   }) {
     // Synchronous wrapper - will be replaced
     final periodRange = _periodRange(now, period, offset);
-    final periodEntries = _entriesInRange(allEntries, periodRange.start, periodRange.end);
+    final periodEntries = _entriesInRange(
+      allEntries,
+      periodRange.start,
+      periodRange.end,
+    );
     final daysInPeriod = periodRange.end.difference(periodRange.start).inDays;
     final daysWithEntries = _daysWithEntries(periodEntries);
     final checkInCount = periodEntries.length;
     final mostFeltResult = _mostFelt(periodEntries);
-    final avgMood = _average(periodEntries.map((entry) => entry.moodValue).toList());
-    final stdDev = _standardDeviation(periodEntries.map((entry) => entry.moodValue).toList());
-    final trend = _trend(periodEntries, periodRange.start, daysInPeriod, period);
+    final avgMood = _average(
+      periodEntries.map((entry) => entry.moodValue).toList(),
+    );
+    final stdDev = _standardDeviation(
+      periodEntries.map((entry) => entry.moodValue).toList(),
+    );
+    final trend = _trend(
+      periodEntries,
+      periodRange.start,
+      daysInPeriod,
+      period,
+    );
     final stable = stdDev > 0 && stdDev < 0.15;
     final volatile = stdDev > 0.3;
     final weekendsBetter = _weekendsBetter(periodEntries, avgMood);
     final mondaysWorse = _mondaysWorse(periodEntries, avgMood);
-    final monthlyComparison = _monthlyComparison(allEntries, period, periodRange.start, avgMood);
+    final monthlyComparison = _monthlyComparison(
+      allEntries,
+      period,
+      periodRange.start,
+      avgMood,
+    );
 
     final reflectionStats = _calculateReflectionStats(periodEntries);
     final dayPattern = _calculateDayOfWeekPattern(periodEntries);
     final bestWorstDays = _findBestWorstDays(dayPattern);
-    final longestInPeriod = _calculateLongestStreakInPeriod(periodEntries, periodRange.start, periodRange.end);
+    final longestInPeriod = _calculateLongestStreakInPeriod(
+      periodEntries,
+      periodRange.start,
+      periodRange.end,
+    );
 
     double? prevAvg;
     int? prevCheckIns;
@@ -249,7 +293,9 @@ class InsightsService {
     int? checkInChange;
 
     final duration = periodRange.end.difference(periodRange.start);
-    final prevStart = periodRange.start.subtract(duration).subtract(const Duration(days: 1));
+    final prevStart = periodRange.start
+        .subtract(duration)
+        .subtract(const Duration(days: 1));
     final prevEnd = periodRange.start.subtract(const Duration(days: 1));
     final prevEntries = _entriesInRange(allEntries, prevStart, prevEnd);
 
@@ -279,7 +325,10 @@ class InsightsService {
     // This method should be deprecated in favor of getInsightsForPeriod
     final insights = <InsightItem>[];
 
-    final patternInsight = _generatePatternInsight(bestWorstDays.$1, bestWorstDays.$2);
+    final patternInsight = _generatePatternInsight(
+      bestWorstDays.$1,
+      bestWorstDays.$2,
+    );
 
     return InsightsData(
       period: period,
@@ -319,7 +368,11 @@ class InsightsService {
     );
   }
 
-  static _PeriodRange _periodRange(DateTime now, InsightsPeriod period, int offset) {
+  static _PeriodRange _periodRange(
+    DateTime now,
+    InsightsPeriod period,
+    int offset,
+  ) {
     final date = DateTime(now.year, now.month, now.day);
     if (period == InsightsPeriod.week) {
       final start = _startOfWeek(date).add(Duration(days: offset * 7));
@@ -336,7 +389,11 @@ class InsightsService {
     return date.subtract(Duration(days: weekday - 1));
   }
 
-  static List<Entry> _entriesInRange(List<Entry> entries, DateTime start, DateTime end) {
+  static List<Entry> _entriesInRange(
+    List<Entry> entries,
+    DateTime start,
+    DateTime end,
+  ) {
     final results = entries.where((entry) {
       return !entry.createdAt.isBefore(start) && entry.createdAt.isBefore(end);
     }).toList();
@@ -440,7 +497,8 @@ class InsightsService {
       }
     }
     if (weekend.length < 2 || weekday.length < 2) return false;
-    return _average(weekend) > _average(weekday) + 0.05 && _average(weekend) > overall;
+    return _average(weekend) > _average(weekday) + 0.05 &&
+        _average(weekend) > overall;
   }
 
   static bool _mondaysWorse(List<Entry> entries, double overall) {
@@ -466,11 +524,17 @@ class InsightsService {
     }
     final previousStart = DateTime(periodStart.year, periodStart.month - 1, 1);
     final previousEnd = DateTime(periodStart.year, periodStart.month, 1);
-    final previousEntries = _entriesInRange(entries, previousStart, previousEnd);
+    final previousEntries = _entriesInRange(
+      entries,
+      previousStart,
+      previousEnd,
+    );
     if (previousEntries.isEmpty) {
       return const _MonthComparison(false, false);
     }
-    final previousAvg = _average(previousEntries.map((entry) => entry.moodValue).toList());
+    final previousAvg = _average(
+      previousEntries.map((entry) => entry.moodValue).toList(),
+    );
     return _MonthComparison(
       currentAvg > previousAvg + 0.05,
       currentAvg < previousAvg - 0.05,
@@ -543,13 +607,15 @@ class InsightsService {
     return "You're here. That's the first step.";
   }
 
-  static DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+  static DateTime _dateOnly(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 
   static (int, double) _calculateReflectionStats(List<Entry> entries) {
     int daysWithReflection = 0;
 
     for (final entry in entries) {
-      if (entry.reflectionAnswerIds != null && entry.reflectionAnswerIds!.isNotEmpty) {
+      if (entry.reflectionAnswerIds != null &&
+          entry.reflectionAnswerIds!.isNotEmpty) {
         daysWithReflection++;
       }
     }
@@ -601,7 +667,11 @@ class InsightsService {
     return (bestDay, worstDay);
   }
 
-  static int _calculateLongestStreakInPeriod(List<Entry> entries, DateTime start, DateTime end) {
+  static int _calculateLongestStreakInPeriod(
+    List<Entry> entries,
+    DateTime start,
+    DateTime end,
+  ) {
     if (entries.isEmpty) return 0;
 
     final daysWithEntries = <DateTime>{};
@@ -651,102 +721,233 @@ class InsightsService {
 
     // Priority 1: Perfect streak (7+ days)
     if (streak >= 7) {
-      insights.add(InsightItem(Icons.local_fire_department_outlined, "You've checked in every day this $periodName. That's real commitment."));
+      insights.add(
+        InsightItem(
+          Icons.local_fire_department_outlined,
+          "You've checked in every day this $periodName. That's real commitment.",
+        ),
+      );
     }
     // Priority 2: Good streak (3+ days)
     else if (streak >= 3) {
-      insights.add(InsightItem(Icons.local_fire_department_outlined, "$streak days in a row. You're building a rhythm."));
+      insights.add(
+        InsightItem(
+          Icons.local_fire_department_outlined,
+          "$streak days in a row. You're building a rhythm.",
+        ),
+      );
     }
 
     // Priority 3: Trend up
     if (trendUp && insights.length < 3) {
-      insights.add(InsightItem(Icons.trending_up, "Your mood lifted as the $periodName went on. Something's working."));
+      insights.add(
+        InsightItem(
+          Icons.trending_up,
+          "Your mood lifted as the $periodName went on. Something's working.",
+        ),
+      );
     }
     // Priority 4: Trend down
     else if (trendDown && insights.length < 3) {
-      insights.add(InsightItem(Icons.trending_down, "This $periodName felt heavier toward the end. Be gentle with yourself."));
+      insights.add(
+        InsightItem(
+          Icons.trending_down,
+          "This $periodName felt heavier toward the end. Be gentle with yourself.",
+        ),
+      );
     }
 
     // Priority 5: Better than previous
-    if (moodChangeVsPrevious != null && moodChangeVsPrevious > 0.1 && insights.length < 3) {
-      insights.add(InsightItem(Icons.auto_awesome, "Your mood is up from last $periodName. Nice progress."));
+    if (moodChangeVsPrevious != null &&
+        moodChangeVsPrevious > 0.1 &&
+        insights.length < 3) {
+      insights.add(
+        InsightItem(
+          Icons.auto_awesome,
+          "Your mood is up from last $periodName. Nice progress.",
+        ),
+      );
     }
     // Priority 6: Worse than previous
-    else if (moodChangeVsPrevious != null && moodChangeVsPrevious < -0.1 && insights.length < 3) {
-      insights.add(InsightItem(Icons.fitness_center, "Tougher than last $periodName. That's okay — you're still here."));
+    else if (moodChangeVsPrevious != null &&
+        moodChangeVsPrevious < -0.1 &&
+        insights.length < 3) {
+      insights.add(
+        InsightItem(
+          Icons.fitness_center,
+          "Tougher than last $periodName. That's okay — you're still here.",
+        ),
+      );
     }
 
     // Priority 7: High reflection rate
     if (reflectionRate >= 0.8 && insights.length < 3) {
-      insights.add(InsightItem(Icons.edit_note, "Reflected $reflectionDays of $checkInCount days. That's deep work."));
+      insights.add(
+        InsightItem(
+          Icons.edit_note,
+          "Reflected $reflectionDays of $checkInCount days. That's deep work.",
+        ),
+      );
     }
     // Priority 8: Medium reflection rate
     else if (reflectionRate >= 0.5 && insights.length < 3) {
-      insights.add(InsightItem(Icons.edit_note, "Reflection is becoming part of your routine."));
+      insights.add(
+        InsightItem(
+          Icons.edit_note,
+          "Reflection is becoming part of your routine.",
+        ),
+      );
     }
 
     // Priority 9: Stable
     if (stable && insights.length < 3) {
-      insights.add(InsightItem(Icons.balance, "A steady $periodName. Consistency can be its own strength."));
+      insights.add(
+        InsightItem(
+          Icons.balance,
+          "A steady $periodName. Consistency can be its own strength.",
+        ),
+      );
     }
     // Priority 10: Volatile
     else if (volatile && insights.length < 3) {
-      insights.add(InsightItem(Icons.waves, "Some ups and downs this $periodName. That's completely human."));
+      insights.add(
+        InsightItem(
+          Icons.waves,
+          "Some ups and downs this $periodName. That's completely human.",
+        ),
+      );
     }
 
     // Priority 11: High mood
     if (avgMood > 0.7 && insights.length < 3) {
-      insights.add(InsightItem(Icons.light_mode_outlined, "A good $periodName overall. Notice what made it work."));
+      insights.add(
+        InsightItem(
+          Icons.light_mode_outlined,
+          "A good $periodName overall. Notice what made it work.",
+        ),
+      );
     }
     // Priority 12: Low mood
     else if (avgMood < 0.3 && insights.length < 3) {
-      insights.add(InsightItem(Icons.spa_outlined, "A tough $periodName. You still showed up — that matters."));
+      insights.add(
+        InsightItem(
+          Icons.spa_outlined,
+          "A tough $periodName. You still showed up — that matters.",
+        ),
+      );
     }
 
     // Priority 13: Few check-ins
     if (checkInCount <= 2 && insights.length < 3) {
-      insights.add(InsightItem(Icons.directions_walk, "Just getting started. Every check-in counts."));
+      insights.add(
+        InsightItem(
+          Icons.directions_walk,
+          "Just getting started. Every check-in counts.",
+        ),
+      );
     }
 
     // Priority 14: Fallback
     if (insights.isEmpty) {
-      insights.add(InsightItem(Icons.directions_walk, "You're here. That's the first step."));
+      insights.add(
+        InsightItem(
+          Icons.directions_walk,
+          "You're here. That's the first step.",
+        ),
+      );
     }
 
     // Direction insights (only for week view to keep it relevant)
     if (period == InsightsPeriod.week && insights.length < 3) {
+      // Priority 15: Goals with small steps this week
+      final progressDirections = DirectionService.instance
+          .getDirectionsWithProgressThisWeek();
+      for (final entry in progressDirections) {
+        if (insights.length >= 3) break;
+        final count = entry.value;
+        insights.add(
+          InsightItem(
+            Icons.task_alt_outlined,
+            count == 1
+                ? "You made one small step toward '${entry.key.title}' this week."
+                : "You made $count small steps toward '${entry.key.title}' this week.",
+          ),
+        );
+      }
+
+      // Priority 16: Goals with blockers this week
+      if (insights.length < 3) {
+        final blockerDirections = DirectionService.instance
+            .getDirectionsWithBlockersThisWeek();
+        for (final entry in blockerDirections) {
+          if (insights.length >= 3) break;
+          insights.add(
+            InsightItem(
+              Icons.psychology_alt_outlined,
+              "'${entry.key.title}' had blockers this week. Worth making the next step smaller?",
+            ),
+          );
+        }
+      }
+
       // Priority 15: Direction connected 5+ times this week
-      final frequentDirections = await DirectionService.instance.getFrequentDirectionsThisWeek();
+      final frequentDirections = await DirectionService.instance
+          .getFrequentDirectionsThisWeek();
       for (final direction in frequentDirections) {
         if (insights.length >= 3) break;
-        final count = DirectionService.instance.getWeeklyConnectionCount(direction.id);
-        insights.add(InsightItem(Icons.explore_outlined, "'${direction.title}' showed up $count times this week. It's clearly important to you."));
+        final count = DirectionService.instance.getWeeklyConnectionCount(
+          direction.id,
+        );
+        insights.add(
+          InsightItem(
+            Icons.explore_outlined,
+            "'${direction.title}' showed up $count times this week. It's clearly important to you.",
+          ),
+        );
       }
 
       // Priority 16: High mood correlation (≥0.15 difference)
       if (insights.length < 3) {
-        final correlations = await DirectionService.instance.getDirectionsWithMoodCorrelation();
+        final correlations = await DirectionService.instance
+            .getDirectionsWithMoodCorrelation();
         for (final entry in correlations.where((e) => e.value >= 0.15)) {
           if (insights.length >= 3) break;
-          insights.add(InsightItem(Icons.auto_awesome, "Your mood is higher when '${entry.key.title}' is part of your day."));
+          insights.add(
+            InsightItem(
+              Icons.auto_awesome,
+              "Your mood is higher when '${entry.key.title}' is part of your day.",
+            ),
+          );
         }
       }
 
       // Priority 17: Low mood correlation (≤-0.1 difference)
       if (insights.length < 3) {
-        final correlations = await DirectionService.instance.getDirectionsWithMoodCorrelation();
+        final correlations = await DirectionService.instance
+            .getDirectionsWithMoodCorrelation();
         for (final entry in correlations.where((e) => e.value <= -0.1)) {
           if (insights.length >= 3) break;
-          insights.add(InsightItem(Icons.forum_outlined, "'${entry.key.title}' often comes up on tougher days. Worth reflecting on."));
+          insights.add(
+            InsightItem(
+              Icons.forum_outlined,
+              "'${entry.key.title}' often comes up on tougher days. Worth reflecting on.",
+            ),
+          );
         }
       }
 
       // Priority 18: Direction not connected in 7+ days
       if (insights.length < 3) {
-        final dormantDirections = DirectionService.instance.getDormantDirections();
+        final dormantDirections = DirectionService.instance
+            .getDormantDirections();
         for (final direction in dormantDirections) {
           if (insights.length >= 3) break;
-          insights.add(InsightItem(Icons.spa_outlined, "Haven't connected to '${direction.title}' lately. Still matters?"));
+          insights.add(
+            InsightItem(
+              Icons.spa_outlined,
+              "Haven't connected to '${direction.title}' lately. Still matters?",
+            ),
+          );
         }
       }
     }
@@ -759,7 +960,16 @@ class InsightsService {
       return "Your mood is fairly consistent across the week.";
     }
 
-    const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const dayNames = [
+      '',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
     final bestName = dayNames[bestDay];
     final worstName = dayNames[worstDay];
 

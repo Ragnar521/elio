@@ -256,6 +256,8 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
         ...directionSummaries.map((dirData) {
           final title = dirData['title'] as String;
           final weeklyConnections = dirData['weeklyConnections'] as int;
+          final weeklyProgress = dirData['weeklyProgress'] as int? ?? 0;
+          final weeklyBlockers = dirData['weeklyBlockers'] as int? ?? 0;
           final moodDifference = dirData['moodDifference'] as double;
 
           return Container(
@@ -282,13 +284,26 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                       ),
                     ),
                     Text(
-                      '$weeklyConnections connections',
+                      '$weeklyConnections present',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: ElioColors.darkPrimaryText.withOpacity(0.6),
                       ),
                     ),
                   ],
                 ),
+                if (weeklyProgress > 0 || weeklyBlockers > 0) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    [
+                      if (weeklyProgress > 0) '$weeklyProgress small steps',
+                      if (weeklyBlockers > 0) '$weeklyBlockers blockers',
+                    ].join(' · '),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: ElioColors.darkPrimaryText.withOpacity(0.6),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
                 if (moodDifference.abs() >= 0.1) ...[
                   const SizedBox(height: 4),
                   Text(

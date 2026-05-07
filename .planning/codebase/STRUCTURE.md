@@ -25,11 +25,12 @@ elio/
 
 **lib/models/**
 - Purpose: Domain models with Hive serialization logic
-- Contains: Data classes (Entry, Direction, ReflectionQuestion, ReflectionAnswer, DirectionConnection, DirectionStats)
+- Contains: Data classes (Entry, Direction, ReflectionQuestion, ReflectionAnswer, DirectionConnection, DirectionCheckIn, DirectionStats)
 - Key files:
   - `entry.dart`: Mood entry model (typeId: 0) + moodEmoji extension
   - `direction.dart`: Life direction model (typeId: 5) + DirectionType enum (typeId: 4)
   - `direction_connection.dart`: Entry-Direction join table (typeId: 6)
+  - `direction_check_in.dart`: Per-entry direction presence/progress/blocker record (typeId: 8)
   - `direction_stats.dart`: Analytics model (not persisted, computed on-demand)
   - `reflection_question.dart`: Question model (typeId: 1) with category/favorite flags
   - `reflection_answer.dart`: Answer model (typeId: 2) with snapshot of question text
@@ -41,6 +42,7 @@ elio/
   - `home_shell.dart`: Bottom navigation wrapper (5 tabs)
   - `mood_entry_screen.dart`: Mood slider entry (Home tab)
   - `intention_screen.dart`: Intention text input
+  - `direction_check_in_screen.dart`: Multi-goal selection and optional per-goal detail before reflection
   - `reflection_screen.dart`: Reflection Q&A flow (up to 3 questions)
   - `confirmation_screen.dart`: Save entry + show streak
   - `insights_screen.dart`: Analytics dashboard (week/month view)
@@ -71,7 +73,7 @@ elio/
 - Key files:
   - `storage_service.dart`: Entry CRUD, settings persistence, streak calculation
   - `reflection_service.dart`: Question library, rotation logic, answer storage
-  - `direction_service.dart`: Direction CRUD, connections, stats, insights integration
+  - `direction_service.dart`: Direction CRUD, connections, check-ins, stats, insights integration
   - `insights_service.dart`: Analytics calculations, pattern detection, insight generation
   - `notification_service.dart`: Local notifications (future feature, minimal implementation)
 
@@ -109,7 +111,7 @@ elio/
 **Core Logic:**
 - `lib/services/storage_service.dart`: Entry persistence, settings
 - `lib/services/reflection_service.dart`: Question seeding + rotation
-- `lib/services/direction_service.dart`: Direction management + connections
+- `lib/services/direction_service.dart`: Direction management + connections + check-ins
 - `lib/services/insights_service.dart`: Analytics engine
 
 **Testing:**

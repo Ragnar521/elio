@@ -1,16 +1,31 @@
-# elio
+# Elio
 
-A new Flutter project.
+Elio is a Flutter mood and clarity app for iOS and Android. It helps users check in with their mood, set a daily intention, connect the day to goals or life directions, and reflect without turning personal growth into a checklist.
 
-## Getting Started
+## Current Product Loop
 
-This project is a starting point for a Flutter application.
+1. Capture mood with a simple slider and mood word.
+2. Write one intention.
+3. Select any goals or life directions that were present today.
+4. Optionally add per-goal notes: one small step, what blocked or scared you, and what might help.
+5. Choose whether selected goals should get goal-specific reflection prompts.
+6. Save the check-in and review patterns over time.
 
-A few resources to get you started if this is your first Flutter project:
+Directions separate presence from progress. A goal can matter today even if no step happened; progress is counted only when the user writes a small step.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Product Principles
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Local-first and private.
+- Warm, non-clinical language.
+- No streak shame or completion pressure.
+- Useful patterns over heavy dashboards.
+- Goals as gentle directions, not hard tasks.
+
+## Development
+
+Run checks before opening a PR:
+
+```sh
+flutter analyze
+flutter test
+```

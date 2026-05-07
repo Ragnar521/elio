@@ -1,4 +1,5 @@
 import 'entry.dart';
+import 'direction_check_in.dart';
 
 /// Statistics for a direction
 class DirectionStats {
@@ -8,6 +9,11 @@ class DirectionStats {
   final double avgMoodWhenConnected;
   final double overallAvgMood;
   final List<Entry> recentEntries; // last 5 connected entries
+  final int totalGoalCheckIns;
+  final int monthlyGoalCheckIns;
+  final int progressCount;
+  final int blockerCount;
+  final List<DirectionCheckIn> recentCheckIns;
 
   DirectionStats({
     required this.totalConnections,
@@ -16,6 +22,11 @@ class DirectionStats {
     required this.avgMoodWhenConnected,
     required this.overallAvgMood,
     required this.recentEntries,
+    this.totalGoalCheckIns = 0,
+    this.monthlyGoalCheckIns = 0,
+    this.progressCount = 0,
+    this.blockerCount = 0,
+    this.recentCheckIns = const [],
   });
 
   /// Mood difference (positive = better mood when connected)

@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/direction.dart';
+import '../models/direction_check_in.dart';
 import '../models/direction_connection.dart';
 import '../models/direction_stats.dart';
 import '../models/entry.dart';
@@ -13,10 +14,12 @@ class DirectionService {
 
   static const String _directionsBoxName = 'directions';
   static const String _connectionsBoxName = 'direction_connections';
+  static const String _checkInsBoxName = 'direction_check_ins';
 
   final Uuid _uuid = const Uuid();
   Box<Direction>? _directionsBox;
   Box<DirectionConnection>? _connectionsBox;
+  Box<DirectionCheckIn>? _checkInsBox;
 
   /// Initialize Hive boxes
   Future<void> init() async {
@@ -30,11 +33,15 @@ class DirectionService {
     if (!Hive.isAdapterRegistered(DirectionConnectionAdapter().typeId)) {
       Hive.registerAdapter(DirectionConnectionAdapter());
     }
+    if (!Hive.isAdapterRegistered(DirectionCheckInAdapter().typeId)) {
+      Hive.registerAdapter(DirectionCheckInAdapter());
+    }
 
     _directionsBox = await Hive.openBox<Direction>(_directionsBoxName);
     _connectionsBox = await Hive.openBox<DirectionConnection>(
       _connectionsBoxName,
     );
+    _checkInsBox = await Hive.openBox<DirectionCheckIn>(_checkInsBoxName);
   }
 
   Box<Direction> get _directions {
@@ -51,6 +58,24 @@ class DirectionService {
       throw StateError('DirectionService not initialized. Call init() first.');
     }
     return box;
+  }
+
+  Box<DirectionCheckIn>? get _optionalCheckIns {
+    if (_checkInsBox != null) return _checkInsBox;
+    if (Hive.isBoxOpen(_checkInsBoxName)) {
+      _checkInsBox = Hive.box<DirectionCheckIn>(_checkInsBoxName);
+      return _checkInsBox;
+    }
+    return null;
+  }
+
+  Future<Box<DirectionCheckIn>> _ensureCheckInsOpen() async {
+    if (!Hive.isAdapterRegistered(DirectionCheckInAdapter().typeId)) {
+      Hive.registerAdapter(DirectionCheckInAdapter());
+    }
+    if (_checkInsBox != null) return _checkInsBox!;
+    _checkInsBox = await Hive.openBox<DirectionCheckIn>(_checkInsBoxName);
+    return _checkInsBox!;
   }
 
   // ============ DIRECTIONS CRUD ============
@@ -144,6 +169,14 @@ class DirectionService {
       await _connections.delete(connection.id);
     }
 
+    final checkInsBox = await _ensureCheckInsOpen();
+    final checkInsToDelete = checkInsBox.values
+        .where((c) => c.directionId == id)
+        .toList();
+    for (final checkIn in checkInsToDelete) {
+      await checkInsBox.delete(checkIn.id);
+    }
+
     // Delete the direction
     await _directions.delete(id);
   }
@@ -188,6 +221,55 @@ class DirectionService {
     }
   }
 
+  /// Record goal presence/progress for a saved entry.
+  Future<List<DirectionCheckIn>> recordCheckIns({
+    required String entryId,
+    required List<DirectionCheckInDraft> drafts,
+    Map<String, String> reflectionAnswerIdsByDirectionId = const {},
+  }) async {
+    final saved = <DirectionCheckIn>[];
+    final checkInsBox = await _ensureCheckInsOpen();
+
+    for (final draft in drafts) {
+      await connectEntry(directionId: draft.directionId, entryId: entryId);
+
+      final existing = checkInsBox.values
+          .where(
+            (c) => c.directionId == draft.directionId && c.entryId == entryId,
+          )
+          .toList();
+      final reflectionAnswerId =
+          reflectionAnswerIdsByDirectionId[draft.directionId];
+
+      final checkIn = existing.isNotEmpty
+          ? DirectionCheckIn(
+              id: existing.first.id,
+              directionId: existing.first.directionId,
+              entryId: existing.first.entryId,
+              stepText: draft.stepText?.trim(),
+              blockerText: draft.blockerText?.trim(),
+              supportText: draft.supportText?.trim(),
+              reflectionAnswerId: reflectionAnswerId,
+              createdAt: existing.first.createdAt,
+            )
+          : DirectionCheckIn(
+              id: _uuid.v4(),
+              directionId: draft.directionId,
+              entryId: entryId,
+              stepText: draft.stepText?.trim(),
+              blockerText: draft.blockerText?.trim(),
+              supportText: draft.supportText?.trim(),
+              reflectionAnswerId: reflectionAnswerId,
+              createdAt: DateTime.now(),
+            );
+
+      await checkInsBox.put(checkIn.id, checkIn);
+      saved.add(checkIn);
+    }
+
+    return saved;
+  }
+
   /// Check if entry is connected to direction
   bool isEntryConnected(String directionId, String entryId) {
     return _connections.values.any(
@@ -216,6 +298,30 @@ class DirectionService {
 
     return getActiveDirections()
         .where((d) => directionIds.contains(d.id))
+        .toList();
+  }
+
+  List<DirectionCheckIn> getCheckInsForEntry(String entryId) {
+    final box = _optionalCheckIns;
+    if (box == null) return [];
+    return box.values.where((c) => c.entryId == entryId).toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  }
+
+  List<DirectionCheckIn> getCheckInsForDirection(String directionId) {
+    final box = _optionalCheckIns;
+    if (box == null) return [];
+    return box.values.where((c) => c.directionId == directionId).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  List<DirectionCheckIn> getCheckInsForDirectionInPeriod({
+    required String directionId,
+    required DateTime start,
+    required DateTime end,
+  }) {
+    return getCheckInsForDirection(directionId)
+        .where((c) => !c.createdAt.isBefore(start) && c.createdAt.isBefore(end))
         .toList();
   }
 
@@ -258,6 +364,20 @@ class DirectionService {
         .length;
   }
 
+  int getMonthlyCheckInCount(String directionId) {
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+
+    final box = _optionalCheckIns;
+    if (box == null) return 0;
+    return box.values
+        .where(
+          (c) =>
+              c.directionId == directionId && c.createdAt.isAfter(startOfMonth),
+        )
+        .length;
+  }
+
   /// Get average mood when connected to a direction
   Future<double> getAverageMoodWhenConnected(String directionId) async {
     final entries = await getConnectedEntries(directionId);
@@ -279,6 +399,7 @@ class DirectionService {
   /// Get complete stats for a direction
   Future<DirectionStats> getStats(String directionId) async {
     final connectedEntries = await getConnectedEntries(directionId);
+    final checkIns = getCheckInsForDirection(directionId);
     final avgConnected = connectedEntries.isEmpty
         ? 0.0
         : connectedEntries.fold<double>(0.0, (sum, e) => sum + e.moodValue) /
@@ -290,6 +411,11 @@ class DirectionService {
       avgMoodWhenConnected: avgConnected,
       overallAvgMood: await getOverallAverageMood(),
       recentEntries: connectedEntries.take(5).toList(),
+      totalGoalCheckIns: checkIns.length,
+      monthlyGoalCheckIns: getMonthlyCheckInCount(directionId),
+      progressCount: checkIns.where((c) => c.hasStep).length,
+      blockerCount: checkIns.where((c) => c.hasBlocker).length,
+      recentCheckIns: checkIns.take(5).toList(),
     );
   }
 
@@ -360,6 +486,69 @@ class DirectionService {
           (c) => c.directionId == directionId && c.createdAt.isAfter(weekAgo),
         )
         .length;
+  }
+
+  int getWeeklyCheckInCount(String directionId) {
+    final now = DateTime.now();
+    final weekAgo = now.subtract(const Duration(days: 7));
+
+    final box = _optionalCheckIns;
+    if (box == null) return 0;
+    return box.values
+        .where(
+          (c) => c.directionId == directionId && c.createdAt.isAfter(weekAgo),
+        )
+        .length;
+  }
+
+  int getWeeklyProgressCount(String directionId) {
+    final now = DateTime.now();
+    final weekAgo = now.subtract(const Duration(days: 7));
+
+    final box = _optionalCheckIns;
+    if (box == null) return 0;
+    return box.values
+        .where(
+          (c) =>
+              c.directionId == directionId &&
+              c.createdAt.isAfter(weekAgo) &&
+              c.hasStep,
+        )
+        .length;
+  }
+
+  int getWeeklyBlockerCount(String directionId) {
+    final now = DateTime.now();
+    final weekAgo = now.subtract(const Duration(days: 7));
+
+    final box = _optionalCheckIns;
+    if (box == null) return 0;
+    return box.values
+        .where(
+          (c) =>
+              c.directionId == directionId &&
+              c.createdAt.isAfter(weekAgo) &&
+              c.hasBlocker,
+        )
+        .length;
+  }
+
+  List<MapEntry<Direction, int>> getDirectionsWithProgressThisWeek() {
+    final entries = <MapEntry<Direction, int>>[];
+    for (final direction in getActiveDirections()) {
+      final count = getWeeklyProgressCount(direction.id);
+      if (count > 0) entries.add(MapEntry(direction, count));
+    }
+    return entries..sort((a, b) => b.value.compareTo(a.value));
+  }
+
+  List<MapEntry<Direction, int>> getDirectionsWithBlockersThisWeek() {
+    final entries = <MapEntry<Direction, int>>[];
+    for (final direction in getActiveDirections()) {
+      final count = getWeeklyBlockerCount(direction.id);
+      if (count > 0) entries.add(MapEntry(direction, count));
+    }
+    return entries..sort((a, b) => b.value.compareTo(a.value));
   }
 
   /// Get directions not connected in 7+ days

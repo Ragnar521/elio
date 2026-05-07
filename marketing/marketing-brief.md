@@ -6,7 +6,7 @@ Elio is your everyday clarity coach: a quick mood and reflection app that helps 
 
 ## Short Description
 
-Elio helps busy people check in with their mood, set a simple intention, answer thoughtful reflection prompts, and notice emotional patterns over time. It is designed to feel warm, private, and practical - more like a calm daily coach than a clinical tracker or productivity tool.
+Elio helps busy people check in with their mood, set a simple intention, connect the day to one or more life directions, and answer thoughtful reflection prompts when they want more depth. It is designed to feel warm, private, and practical - more like a calm daily coach than a clinical tracker or productivity tool.
 
 ## Product Promise
 
@@ -34,7 +34,8 @@ Elio gives users a gentle way to ask: What am I feeling? What matters right now?
 
 ## Differentiators
 
-- Mood plus direction: Elio connects emotional patterns to life areas users care about, such as health, relationships, career, growth, peace, and creativity.
+- Mood plus direction: Elio connects emotional patterns to life goals and areas users care about, such as health, relationships, career, growth, peace, and creativity.
+- Goal-aware reflection: Users can mark multiple directions as present in a check-in, optionally note one small step, a blocker, and what might help, then choose which directions deserve a reflection prompt.
 - Fast daily check-ins: The main flow is built for 2-minute use, not long journaling sessions.
 - Non-clinical by design: Elio avoids diagnosis, symptom framing, and therapy claims.
 - Gentle insights: Weekly summaries, mood waves, day patterns, and nudges are supportive, not judgmental.
@@ -55,17 +56,18 @@ Sample copy:
 
 ### 2. A Compass, Not A Checklist
 
-Directions help users connect entries to life areas that matter without creating pressure to "complete" themselves.
+Directions help users connect entries to goals and life areas that matter without creating pressure to "complete" themselves. A direction can simply be present today; progress is only counted when the user chooses to write a small step.
 
 Sample copy:
 
 - "Life is not a checklist. Elio helps you notice your direction."
 - "Connect your days to the things that matter."
 - "See which parts of life lift you, drain you, or need attention."
+- "Notice what showed up, what moved forward, and what got in the way."
 
 ### 3. Reflection Without Pressure
 
-Elio supports optional reflections, skip-friendly flows, and no-guilt language.
+Elio supports optional reflections, skip-friendly flows, and no-guilt language. Generic reflection prompts remain available, but if a user chooses goal-specific prompts, Elio reflects on those selected directions instead.
 
 Sample copy:
 
@@ -75,7 +77,7 @@ Sample copy:
 
 ### 4. Useful Patterns, Not Data Overload
 
-Elio turns mood entries into weekly summaries, mood waves, day patterns, and simple insights.
+Elio turns mood entries into weekly summaries, mood waves, day patterns, direction presence, small-step progress, blockers, and simple insights.
 
 Sample copy:
 
@@ -122,6 +124,7 @@ Safe claims:
 - "Helps you notice patterns over time."
 - "Designed for quick daily check-ins."
 - "Supports intention setting and reflection."
+- "Helps users connect check-ins to goals and life directions."
 - "Stores data locally on device" if this remains true at launch.
 
 Avoid claims:
@@ -143,4 +146,4 @@ Avoid claims:
 
 ## Brand Boilerplate
 
-Elio is a mood and clarity app for people who want a simple daily way to understand how they feel and stay connected to what matters. Through quick mood check-ins, intentions, reflections, life directions, and gentle weekly insights, Elio helps users build self-awareness without pressure, clinical language, or data overload.
+Elio is a mood and clarity app for people who want a simple daily way to understand how they feel and stay connected to what matters. Through quick mood check-ins, intentions, goal-aware reflections, life directions, and gentle weekly insights, Elio helps users build self-awareness without pressure, clinical language, or data overload.

@@ -11,7 +11,8 @@ Elio is a simple daily clarity coach:
 - Check in with your mood.
 - Set one intention.
 - Reflect with gentle prompts.
-- Connect entries to life directions like health, career, relationships, growth, peace, or creativity.
+- Connect the day to one or more life directions like health, career, relationships, growth, peace, or creativity.
+- Notice small steps, blockers, and what might help.
 - Review weekly patterns without turning your life into a dashboard.
 
 It is designed to be quick, warm, and non-clinical. No pressure. No streak shame. No "fix yourself" language.
@@ -30,7 +31,7 @@ You can collect weeks of mood entries and still be left asking: "Okay, what does
 
 That is the gap Elio is built around.
 
-Instead of only showing mood history, Elio connects entries to life directions: health, relationships, career, growth, peace, and creativity.
+Instead of only showing mood history, Elio connects entries to life directions: health, relationships, career, growth, peace, and creativity. A direction can simply be present today, and when there is more to capture, you can add a small step, a blocker, or what might help.
 
 The point is not to diagnose your mood. The point is to notice your rhythm and understand what helps you feel more aligned.
 
@@ -43,13 +44,15 @@ Mood tracking should create clarity, not more data.
 2/ Most mood trackers help you log how you felt. Elio helps you connect that feeling to what matters.
 
 3/ The daily flow is simple:
-Mood -> Intention -> Reflection -> Confirmation
+Mood -> Intention -> Directions -> Reflection -> Confirmation
 
 Designed to take about 2 minutes.
 
 4/ Elio also has "Directions" - life areas like health, relationships, career, growth, peace, and creativity.
 
-You can connect entries to directions and see how they relate to your mood over time.
+You can connect each check-in to one or more directions and see how they relate to your mood over time.
+
+You can also capture small steps, blockers, and what might help without turning the goal into a task list.
 
 5/ Weekly insights are intentionally gentle:
 "Mondays feel heavier. Consider a gentler start to the week."
@@ -76,7 +79,8 @@ A 2-minute check-in:
 1. Capture your mood
 2. Set one intention
 3. Reflect if you want
-4. Notice patterns over time
+4. Connect what showed up today
+5. Notice patterns over time
 
 That is Elio.
 
@@ -86,7 +90,7 @@ That is Elio.
 
 Life is not a checklist.
 
-Elio uses Directions instead of goals, so you can connect your mood to what matters without turning everything into a task.
+Elio uses Directions instead of a hard goal tracker, so you can connect your mood to what matters without turning everything into a task.
 
 [link]
 
@@ -102,7 +106,7 @@ Elio is built to feel warm, fast, private, and practical.
 
 Meet Elio: a calmer way to check in with yourself.
 
-Track your mood, set one intention, reflect with gentle prompts, and see how your week connects to the life directions that matter most.
+Track your mood, set one intention, reflect with gentle prompts, and see how your week connects to the goals and life directions that matter most.
 
 No pressure. No clinical labels. No data overload.
 
@@ -125,6 +129,7 @@ Slide 4:
 Check in with your mood.
 Set one intention.
 Reflect when you want.
+Mark which goals showed up today.
 
 Slide 5:
 Connect entries to life directions:
@@ -142,12 +147,13 @@ Hook:
 "If mood tracking has never helped you know what to do next, this is for you."
 
 Body:
-"Elio is a mood and clarity app that helps you check in, set one intention, and connect your mood to the parts of life that matter - like health, relationships, work, growth, peace, or creativity."
+"Elio is a mood and clarity app that helps you check in, set one intention, and connect your mood to the parts of life that matter - like health, relationships, work, growth, peace, creativity, or a personal goal you are carrying."
 
 Screen beats:
 
 - Show mood slider.
 - Show intention screen.
+- Show goal selection.
 - Show reflection prompt.
 - Show Directions.
 - Show weekly mood wave.
@@ -170,9 +176,9 @@ I built Elio because mood tracking often creates data without direction.
 
 You log how you feel, maybe see a chart, and then wonder what to do with it. Elio is designed around a different loop:
 
-Mood -> Intention -> Reflection -> Direction -> Weekly Insight
+Mood -> Intention -> Direction -> Reflection -> Weekly Insight
 
-The app helps users check in quickly, reflect without pressure, and connect entries to life areas that matter, such as health, relationships, career, growth, peace, and creativity.
+The app helps users check in quickly, reflect without pressure, and connect entries to life areas or personal goals that matter, such as health, relationships, career, growth, peace, creativity, reading more, traveling, or starting meditation.
 
 Elio is intentionally non-clinical. It is not therapy, not a diagnosis tool, and not another productivity checklist. It is a small daily clarity ritual for people who want to understand their emotional rhythm and move forward with a little more intention.
 
@@ -195,7 +201,8 @@ The app lets you:
 - Set one small intention.
 - Answer optional reflection prompts.
 - Create "Directions" like health, relationships, career, growth, peace, or creativity.
-- Connect entries to those directions.
+- Connect entries to one or more directions.
+- Add optional small steps, blockers, and what might help for each direction.
 - See weekly patterns and gentle insights.
 
 I am intentionally avoiding clinical language and productivity pressure. No diagnosis, no "fix yourself," no streak shame.
@@ -222,7 +229,7 @@ Elio is now ready to try.
 
 It is a mood and clarity app designed for quick daily check-ins, gentle reflection, and useful weekly patterns.
 
-With Elio, you can capture your mood, set one intention, answer optional prompts, and connect entries to life directions like health, relationships, career, growth, peace, or creativity.
+With Elio, you can capture your mood, set one intention, answer optional prompts, and connect entries to life directions or personal goals like health, relationships, career, growth, peace, creativity, reading more, traveling, or starting meditation.
 
 The goal is simple: help you understand how you feel and what that feeling connects to.
 

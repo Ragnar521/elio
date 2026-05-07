@@ -50,14 +50,18 @@
 1. User opens `MoodEntryScreen` (Home tab via `HomeShell`)
 2. User adjusts mood slider → state updates locally in StatefulWidget
 3. User taps Continue → Navigator pushes to `IntentionScreen` with mood data
-4. User enters intention → Navigator pushes to `ReflectionScreen` (if enabled)
-5. `ReflectionService.getNextQuestion()` returns rotation-based question
-6. User answers → Answer stored temporarily in screen state
-7. User taps Continue → `ConfirmationScreen` receives all data
-8. `StorageService.saveEntry()` persists Entry to Hive, auto-updates longest streak
-9. `ReflectionService.saveAnswer()` persists each ReflectionAnswer to Hive
-10. `DirectionService.connectEntry()` links entry to selected directions (if any)
-11. Screen shows confirmation → Navigator pops back to HomeShell
+4. User enters intention
+5. If active directions exist, Navigator pushes to `DirectionCheckInScreen`; otherwise flow continues to reflection/confirmation
+6. User selects zero or more directions that were present today
+7. For each selected direction, user may add optional small step, blocker, and support text, and choose whether that direction gets a reflection prompt
+8. If goal-specific prompts are selected, `ReflectionScreen` asks those prompts instead of generic questions; if no goals are selected, the existing generic reflection flow remains
+9. User answers or skips prompts → answers stored temporarily in screen state
+10. User taps Continue → `ConfirmationScreen` receives mood, intention, reflection answers, and direction check-in drafts
+11. `StorageService.saveEntry()` persists Entry to Hive, auto-updates longest streak
+12. `ReflectionService.saveAnswer()` persists each ReflectionAnswer to Hive
+13. `DirectionService.recordCheckIns()` writes one `DirectionCheckIn` per selected direction and links goal reflection answers when present
+14. `DirectionService.connectEntry()` writes existing `DirectionConnection` rows so mood correlation and history filtering keep working
+15. Screen shows confirmation → Navigator pops back to HomeShell
 
 **Insights Analytics Flow:**
 
@@ -86,7 +90,7 @@
 
 **Hive TypeAdapter:**
 - Purpose: Manual serialization for domain models
-- Examples: `EntryAdapter` (typeId: 0), `DirectionAdapter` (typeId: 5), `DirectionConnectionAdapter` (typeId: 6)
+- Examples: `EntryAdapter` (typeId: 0), `DirectionAdapter` (typeId: 5), `DirectionConnectionAdapter` (typeId: 6), `DirectionCheckInAdapter` (typeId: 8)
 - Pattern: Extend `TypeAdapter<T>`, implement `read()` and `write()` with field byte mapping
 - Registration: Adapters registered in service `init()` methods before opening boxes
 
@@ -95,6 +99,12 @@
 - Examples: `DirectionConnection` model links directionId to entryId
 - Pattern: Separate join table in Hive, queried via `DirectionService` helper methods
 - Usage: `connectEntry()`, `disconnectEntry()`, `getConnectedEntries()`, `getDirectionsForEntry()`
+
+**Direction Check-In:**
+- Purpose: Per-entry goal context for one selected direction
+- Examples: `DirectionCheckIn` stores directionId, entryId, optional stepText, blockerText, supportText, and optional reflectionAnswerId
+- Pattern: One persisted record per selected direction after the entry is created
+- Usage: Direction details and weekly insights distinguish presence, progress, blockers, and mood relationship
 
 **Question Rotation Logic:**
 - Purpose: Deterministic daily reflection question selection
@@ -160,7 +170,7 @@
 
 **Validation:**
 - Input length limits (intention: 100 chars, direction title: 50 chars)
-- Business rules (max 5 active directions, max 2 favorite questions)
+- Business rules (unlimited active directions, max 2 favorite questions)
 - Enforced in services before persistence
 
 **Authentication:** Not applicable (local-only app)

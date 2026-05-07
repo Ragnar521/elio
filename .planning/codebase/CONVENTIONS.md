@@ -170,7 +170,7 @@ class StorageService {
 **Pattern:**
 - Private static constants in service classes: `static const _entriesBoxName = 'entries';`
 - Theme constants in dedicated files: `lib/theme/elio_colors.dart`
-- Magic numbers avoided; named constants preferred (e.g., `maxDirections = 5`)
+- Magic numbers avoided; named constants preferred (for example, reflection question limits and field length limits)
 
 ## Widget Structure
 

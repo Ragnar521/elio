@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/direction.dart';
+import '../models/direction_check_in.dart';
 import '../models/direction_connection.dart';
 import '../models/entry.dart';
 import '../models/reflection_answer.dart';
@@ -31,9 +32,16 @@ class SampleDataService {
   Future<void> loadDemoData() async {
     // Open all Hive boxes (already initialized by this point)
     final entriesBox = await Hive.openBox<Entry>('entries');
-    final answersBox = await Hive.openBox<ReflectionAnswer>('reflectionAnswers');
+    final answersBox = await Hive.openBox<ReflectionAnswer>(
+      'reflectionAnswers',
+    );
     final directionsBox = await Hive.openBox<Direction>('directions');
-    final connectionsBox = await Hive.openBox<DirectionConnection>('direction_connections');
+    final connectionsBox = await Hive.openBox<DirectionConnection>(
+      'direction_connections',
+    );
+    final directionCheckInsBox = await Hive.openBox<DirectionCheckIn>(
+      'direction_check_ins',
+    );
     final settingsBox = await Hive.openBox('settings');
 
     // Clear existing data
@@ -41,6 +49,7 @@ class SampleDataService {
     await answersBox.clear();
     await directionsBox.clear();
     await connectionsBox.clear();
+    await directionCheckInsBox.clear();
 
     // 1. Write settings
     await settingsBox.put('user_name', 'Alex');
@@ -160,14 +169,22 @@ class SampleDataService {
     for (int daysAgo = 90; daysAgo >= 1; daysAgo--) {
       if (gapDays.contains(daysAgo)) continue; // Skip gap days
 
-      final date = DateTime(now.year, now.month, now.day).subtract(Duration(days: daysAgo));
+      final date = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: daysAgo));
       final weekday = date.weekday; // 1=Monday, 7=Sunday
 
       if (doubleEntryDays.contains(daysAgo)) {
         // Create morning entry
-        entries.add(_createEntry(date, weekday, random, daysAgo, isMorning: true));
+        entries.add(
+          _createEntry(date, weekday, random, daysAgo, isMorning: true),
+        );
         // Create evening entry
-        entries.add(_createEntry(date, weekday, random, daysAgo, isMorning: false));
+        entries.add(
+          _createEntry(date, weekday, random, daysAgo, isMorning: false),
+        );
       } else {
         // Create single entry at random time
         entries.add(_createEntry(date, weekday, random, daysAgo));
@@ -190,19 +207,39 @@ class SampleDataService {
     if (isMorning != null) {
       if (isMorning) {
         // Morning: 7-9 AM
-        createdAt = DateTime(date.year, date.month, date.day, 7 + random.nextInt(2), random.nextInt(60));
+        createdAt = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          7 + random.nextInt(2),
+          random.nextInt(60),
+        );
       } else {
         // Evening: 9-10 PM
-        createdAt = DateTime(date.year, date.month, date.day, 21 + random.nextInt(1), random.nextInt(60));
+        createdAt = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          21 + random.nextInt(1),
+          random.nextInt(60),
+        );
       }
     } else {
       // Random time: 7 AM - 10 PM
       final hour = 7 + random.nextInt(15);
-      createdAt = DateTime(date.year, date.month, date.day, hour, random.nextInt(60));
+      createdAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        hour,
+        random.nextInt(60),
+      );
     }
 
     // Calculate mood based on day of week + slight upward trend over time
-    final baseImprovement = daysAgo <= 30 ? 0.05 : 0.0; // Last 30 days slightly better
+    final baseImprovement = daysAgo <= 30
+        ? 0.05
+        : 0.0; // Last 30 days slightly better
     double baseMood;
 
     switch (weekday) {
@@ -232,7 +269,9 @@ class SampleDataService {
     }
 
     // Add random variation and improvement
-    final moodValue = (baseMood + baseImprovement + (random.nextDouble() * 0.10 - 0.05)).clamp(0.0, 1.0);
+    final moodValue =
+        (baseMood + baseImprovement + (random.nextDouble() * 0.10 - 0.05))
+            .clamp(0.0, 1.0);
     final moodWord = _getMoodWord(moodValue);
 
     // Get intention for this entry
@@ -267,14 +306,17 @@ class SampleDataService {
   ) {
     final answers = <ReflectionAnswer>[];
     final random = Random(43); // Different seed for variety
-    final updatedEntries = <String, List<String>>{}; // Track answer IDs per entry
+    final updatedEntries =
+        <String, List<String>>{}; // Track answer IDs per entry
 
     for (final entry in entries) {
       // 75% chance of having reflections
       if (random.nextDouble() > 0.75) continue;
 
       // Determine number of answers (1-3, weighted toward 1)
-      final numAnswers = random.nextDouble() < 0.7 ? 1 : (random.nextDouble() < 0.8 ? 2 : 3);
+      final numAnswers = random.nextDouble() < 0.7
+          ? 1
+          : (random.nextDouble() < 0.8 ? 2 : 3);
       final answerIds = <String>[];
 
       for (int i = 0; i < numAnswers; i++) {
@@ -327,42 +369,50 @@ class SampleDataService {
     for (final entry in entries) {
       // Career: 45% chance (Alex thinks about work a lot)
       if (random.nextDouble() < 0.45) {
-        connections.add(DirectionConnection(
-          id: _uuid.v4(),
-          directionId: careerId,
-          entryId: entry.id,
-          createdAt: entry.createdAt,
-        ));
+        connections.add(
+          DirectionConnection(
+            id: _uuid.v4(),
+            directionId: careerId,
+            entryId: entry.id,
+            createdAt: entry.createdAt,
+          ),
+        );
       }
 
       // Health: 28% chance (gym days, sleep mentions)
       if (random.nextDouble() < 0.28) {
-        connections.add(DirectionConnection(
-          id: _uuid.v4(),
-          directionId: healthId,
-          entryId: entry.id,
-          createdAt: entry.createdAt,
-        ));
+        connections.add(
+          DirectionConnection(
+            id: _uuid.v4(),
+            directionId: healthId,
+            entryId: entry.id,
+            createdAt: entry.createdAt,
+          ),
+        );
       }
 
       // Relationships: 23% chance (Sarah/Tom/Mom entries)
       if (random.nextDouble() < 0.23) {
-        connections.add(DirectionConnection(
-          id: _uuid.v4(),
-          directionId: relationshipsId,
-          entryId: entry.id,
-          createdAt: entry.createdAt,
-        ));
+        connections.add(
+          DirectionConnection(
+            id: _uuid.v4(),
+            directionId: relationshipsId,
+            entryId: entry.id,
+            createdAt: entry.createdAt,
+          ),
+        );
       }
 
       // Peace: 12% chance (meditation, quiet weekends)
       if (random.nextDouble() < 0.12) {
-        connections.add(DirectionConnection(
-          id: _uuid.v4(),
-          directionId: peaceId,
-          entryId: entry.id,
-          createdAt: entry.createdAt,
-        ));
+        connections.add(
+          DirectionConnection(
+            id: _uuid.v4(),
+            directionId: peaceId,
+            entryId: entry.id,
+            createdAt: entry.createdAt,
+          ),
+        );
       }
     }
 
@@ -651,7 +701,9 @@ class SampleDataService {
     Direction peaceDirection,
   ) async {
     final summaryBox = await Hive.openBox<WeeklySummary>('weekly_summaries');
-    final connectionsBox = await Hive.openBox<DirectionConnection>('direction_connections');
+    final connectionsBox = await Hive.openBox<DirectionConnection>(
+      'direction_connections',
+    );
 
     // Build a map of entryId -> list of answer objects for quick lookup
     final entryAnswersMap = <String, List<ReflectionAnswer>>{};
@@ -662,7 +714,9 @@ class SampleDataService {
     // Build a map of entryId -> list of directionIds for quick lookup
     final entryDirectionsMap = <String, Set<String>>{};
     for (final connection in connectionsBox.values) {
-      entryDirectionsMap.putIfAbsent(connection.entryId, () => {}).add(connection.directionId);
+      entryDirectionsMap
+          .putIfAbsent(connection.entryId, () => {})
+          .add(connection.directionId);
     }
 
     // Calculate week boundaries
@@ -681,7 +735,8 @@ class SampleDataService {
 
       // Get entries for this week
       final weekEntries = entries.where((entry) {
-        return !entry.createdAt.isBefore(weekStart) && entry.createdAt.isBefore(weekEnd);
+        return !entry.createdAt.isBefore(weekStart) &&
+            entry.createdAt.isBefore(weekEnd);
       }).toList();
 
       // Only create summary if week has entries
@@ -695,8 +750,16 @@ class SampleDataService {
 
       // Calculate stats
       final checkInCount = weekEntries.length;
-      final daysWithEntries = weekEntries.map((e) => DateTime(e.createdAt.year, e.createdAt.month, e.createdAt.day)).toSet().length;
-      final avgMood = weekEntries.map((e) => e.moodValue).reduce((a, b) => a + b) / weekEntries.length;
+      final daysWithEntries = weekEntries
+          .map(
+            (e) =>
+                DateTime(e.createdAt.year, e.createdAt.month, e.createdAt.day),
+          )
+          .toSet()
+          .length;
+      final avgMood =
+          weekEntries.map((e) => e.moodValue).reduce((a, b) => a + b) /
+          weekEntries.length;
 
       // Determine mood trend
       String moodTrend = 'stable';
@@ -714,11 +777,23 @@ class SampleDataService {
       for (final entry in weekEntries) {
         moodCounts[entry.moodWord] = (moodCounts[entry.moodWord] ?? 0) + 1;
       }
-      final mostFeltMood = moodCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+      final mostFeltMood = moodCounts.entries
+          .reduce((a, b) => a.value > b.value ? a : b)
+          .key;
 
       // Find best mood day
-      final bestEntry = weekEntries.reduce((a, b) => a.moodValue > b.moodValue ? a : b);
-      final weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      final bestEntry = weekEntries.reduce(
+        (a, b) => a.moodValue > b.moodValue ? a : b,
+      );
+      final weekdayNames = [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ];
       final bestMoodDay = weekdayNames[bestEntry.createdAt.weekday - 1];
       final bestMoodValue = bestEntry.moodValue;
       final bestMoodWord = bestEntry.moodWord;
@@ -748,11 +823,17 @@ class SampleDataService {
 
         double avgMoodWhenConnected = 0.0;
         if (allConnectedEntries.isNotEmpty) {
-          avgMoodWhenConnected = allConnectedEntries.map((e) => e.moodValue).reduce((a, b) => a + b) / allConnectedEntries.length;
+          avgMoodWhenConnected =
+              allConnectedEntries
+                  .map((e) => e.moodValue)
+                  .reduce((a, b) => a + b) /
+              allConnectedEntries.length;
         }
 
         // Calculate overall avg mood (all entries)
-        final overallAvgMood = entries.map((e) => e.moodValue).reduce((a, b) => a + b) / entries.length;
+        final overallAvgMood =
+            entries.map((e) => e.moodValue).reduce((a, b) => a + b) /
+            entries.length;
         final moodDifference = avgMoodWhenConnected - overallAvgMood;
 
         directionSummaries.add({
@@ -864,7 +945,11 @@ class SampleDataService {
         standoutReflectionAnswers: summary.standoutReflectionAnswers,
         takeaway: summary.takeaway,
         createdAt: summary.createdAt,
-        viewedAt: isLastSummary ? null : summary.createdAt.add(const Duration(hours: 2)), // Viewed ~2 hours after creation, except last
+        viewedAt: isLastSummary
+            ? null
+            : summary.createdAt.add(
+                const Duration(hours: 2),
+              ), // Viewed ~2 hours after creation, except last
       );
 
       await summaryBox.put(finalSummary.id, finalSummary);

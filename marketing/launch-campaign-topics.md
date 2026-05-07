@@ -2,7 +2,7 @@
 
 ## Campaign Goal
 
-Introduce Elio as a new kind of mood app: not therapy, not a habit tracker, not a data dashboard, but an everyday clarity coach that connects emotions to intentional action.
+Introduce Elio as a new kind of mood app: not therapy, not a habit tracker, not a data dashboard, but an everyday clarity coach that connects emotions to intentional action and the goals that were present in the day.
 
 ## Campaign Theme
 
@@ -17,7 +17,7 @@ Most people do not need another dashboard or another streak to maintain. They ne
 Elio launches around this shift:
 
 - From passive mood tracking to meaningful reflection.
-- From generic journaling to personal directions.
+- From generic journaling to personal directions and goal-aware check-ins.
 - From pressure and streak guilt to calm consistency.
 - From data overload to one useful insight.
 
@@ -69,7 +69,7 @@ Topics:
 - Why mood data alone is not enough.
 - How life directions make self-reflection more useful.
 - Career, health, relationships, growth, peace, creativity: which one shaped your week?
-- The difference between goals and directions.
+- The difference between goal presence, small-step progress, and blockers.
 
 Sample headline:
 
@@ -82,6 +82,7 @@ Topics:
 - Why Elio uses "Directions" instead of goals.
 - Personal growth without pressure.
 - How to notice progress without turning life into tasks.
+- Why a goal can matter today even if no step happened.
 - The anti-productivity productivity app.
 
 Sample headline:
@@ -152,7 +153,7 @@ Post topics:
 
 - "I built a mood app for people who hate clinical mood apps."
 - "Question: what makes journaling apps hard to keep using?"
-- "I wanted mood tracking to connect to goals, so I built this."
+- "I wanted mood tracking to connect to goals without becoming a habit tracker, so I built this."
 
 ### LinkedIn
 
@@ -259,7 +260,7 @@ Content:
 - Founder announcement across LinkedIn and X/Twitter.
 - Reddit feedback posts.
 - App Store screenshot carousel.
-- Demo video: mood -> intention -> reflection -> insight.
+- Demo video: mood -> intention -> directions present today -> optional goal reflection -> insight.
 
 ### Week +1: Social Proof And Use Cases
 
@@ -272,6 +273,7 @@ Content:
 
 - "What early users are noticing."
 - "5 ways people use Directions."
+- "How small steps and blockers make mood entries more useful."
 - "The weekly summary that made me rethink my Monday."
 - Reminder to review/rate the app.
 
@@ -292,7 +294,7 @@ Screenshot concepts:
 - "Check in with your mood in seconds."
 - "Set one intention for the day ahead."
 - "Reflect with prompts that feel human."
-- "Connect entries to life directions."
+- "Connect entries to goals and life directions."
 - "See weekly patterns without data overload."
 - "Review your mood wave and insights."
 
