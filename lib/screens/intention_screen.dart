@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../services/direction_service.dart';
 import '../services/storage_service.dart';
 import '../theme/elio_colors.dart';
 import 'confirmation_screen.dart';
+import 'direction_check_in_screen.dart';
 import 'reflection_screen.dart';
 
 Route _checkInRoute(Widget page) {
@@ -20,23 +22,25 @@ Route _checkInRoute(Widget page) {
         slideTween.chain(CurveTween(curve: Curves.easeInOut)),
       );
       final fadeAnimation = animation.drive(
-        Tween<double>(begin: 0.0, end: 1.0).chain(
-          CurveTween(curve: Curves.easeInOut),
-        ),
+        Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
       );
       return SlideTransition(
         position: slideAnimation,
-        child: FadeTransition(
-          opacity: fadeAnimation,
-          child: child,
-        ),
+        child: FadeTransition(opacity: fadeAnimation, child: child),
       );
     },
   );
 }
 
 class IntentionScreen extends StatefulWidget {
-  const IntentionScreen({super.key, required this.moodValue, required this.moodWord});
+  const IntentionScreen({
+    super.key,
+    required this.moodValue,
+    required this.moodWord,
+  });
 
   final double moodValue;
   final String moodWord;
@@ -103,20 +107,31 @@ class _IntentionScreenState extends State<IntentionScreen> {
         'Connect with someone',
       ];
     }
-    return const [
-      'Share this energy',
-      'Tackle something hard',
-      'Help someone',
-    ];
+    return const ['Share this energy', 'Tackle something hard', 'Help someone'];
   }
 
   void _applySuggestion(String suggestion) {
     HapticFeedback.selectionClick();
     _controller.text = suggestion;
-    _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
+    _controller.selection = TextSelection.collapsed(
+      offset: _controller.text.length,
+    );
   }
 
   void _navigateNext() {
+    if (DirectionService.instance.getActiveDirections().isNotEmpty) {
+      Navigator.of(context).push(
+        _checkInRoute(
+          DirectionCheckInScreen(
+            moodWord: widget.moodWord,
+            moodValue: widget.moodValue,
+            intention: _controller.text.trim(),
+          ),
+        ),
+      );
+      return;
+    }
+
     final reflectionEnabled = StorageService.instance.reflectionEnabled;
 
     if (reflectionEnabled) {
@@ -154,10 +169,9 @@ class _IntentionScreenState extends State<IntentionScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
                 "You're feeling ${widget.moodWord}",
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.7)),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: ElioColors.darkPrimaryText.withOpacity(0.7),
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -165,10 +179,9 @@ class _IntentionScreenState extends State<IntentionScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
                 _promptText,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -191,25 +204,29 @@ class _IntentionScreenState extends State<IntentionScreen> {
                   focusNode: _focusNode,
                   maxLength: 100,
                   keyboardAppearance: Brightness.dark,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(color: ElioColors.darkPrimaryText),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: ElioColors.darkPrimaryText,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'e.g., Be patient in my meeting',
-                    hintStyle: Theme.of(context)
-                        .textTheme
-                        .bodyLarge
-                        ?.copyWith(color: ElioColors.darkPrimaryText.withOpacity(0.5)),
+                    hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: ElioColors.darkPrimaryText.withOpacity(0.5),
+                    ),
                     counterText: '',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18),
-                      borderSide: const BorderSide(color: ElioColors.darkAccent, width: 1),
+                      borderSide: const BorderSide(
+                        color: ElioColors.darkAccent,
+                        width: 1,
+                      ),
                     ),
                   ),
                   textInputAction: TextInputAction.done,
@@ -228,16 +245,17 @@ class _IntentionScreenState extends State<IntentionScreen> {
                       (suggestion) => GestureDetector(
                         onTap: () => _applySuggestion(suggestion),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: ElioColors.darkSurface,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
                             suggestion,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
+                            style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: ElioColors.darkPrimaryText),
                           ),
                         ),
@@ -255,20 +273,24 @@ class _IntentionScreenState extends State<IntentionScreen> {
                 child: ElevatedButton(
                   onPressed: _hasText ? _navigateNext : null,
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                      (states) {
-                        if (states.contains(WidgetState.disabled)) {
-                          return ElioColors.darkAccent.withOpacity(0.4);
-                        }
-                        if (states.contains(WidgetState.pressed)) {
-                          return const Color(0xFFE5562E);
-                        }
-                        return ElioColors.darkAccent;
-                      },
+                    backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                      states,
+                    ) {
+                      if (states.contains(WidgetState.disabled)) {
+                        return ElioColors.darkAccent.withOpacity(0.4);
+                      }
+                      if (states.contains(WidgetState.pressed)) {
+                        return const Color(0xFFE5562E);
+                      }
+                      return ElioColors.darkAccent;
+                    }),
+                    foregroundColor: WidgetStateProperty.all(
+                      ElioColors.darkPrimaryText,
                     ),
-                    foregroundColor: WidgetStateProperty.all(ElioColors.darkPrimaryText),
                     shape: WidgetStateProperty.all(
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
                     ),
                     elevation: WidgetStateProperty.all(0),
                   ),

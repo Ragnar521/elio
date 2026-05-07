@@ -23,6 +23,7 @@
     - `reflectionAnswers` - User answers (ReflectionAnswer, typeId: 2)
     - `directions` - Life directions (Direction, typeId: 5)
     - `direction_connections` - Entry-to-direction links (DirectionConnection, typeId: 6)
+    - `direction_check_ins` - Per-entry direction presence/progress/blocker records (DirectionCheckIn, typeId: 8)
 
 **File Storage:**
 - Local filesystem only

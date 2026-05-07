@@ -64,9 +64,19 @@ class DirectionCard extends StatelessWidget {
 
               // Stats row
               Text(
-                '${stats.totalConnections} connections',
+                '${stats.totalConnections} connected days',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
+
+              if (stats.totalGoalCheckIns > 0) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '${stats.progressCount} small steps · ${stats.blockerCount} blockers',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                ),
+              ],
 
               const SizedBox(height: 8),
 

@@ -30,8 +30,8 @@ Features that set the product apart. Not required, but valuable if aligned with 
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Directions (life compass)** | Unique to Elio. Connects mood to life areas. Competitors use tags/activities, not intentional direction-setting. | MEDIUM | ✓ Already shipped in v1.1.0. Good differentiator. |
-| **Mood correlation insights** | "Your mood is 15% higher when connected to Health direction" — actionable, not just analytics. | MEDIUM | ✓ Partially implemented. Elio shows correlation but could surface this more prominently. |
+| **Directions (life compass)** | Unique to Elio. Connects mood to life areas and personal goals. Competitors use tags/activities, not intentional direction-setting. | MEDIUM | ✓ Shipped in v1.1.0; direction loop branch expands this into multi-goal check-ins with presence, small steps, blockers, and support notes. |
+| **Mood correlation insights** | "Your mood is 15% higher when connected to Health direction" plus presence/progress/blocker patterns — actionable, not just analytics. | MEDIUM | ✓ Implemented through DirectionConnection mood correlation and DirectionCheckIn presence/progress/blocker stats. |
 | **No-guilt design** | Skip buttons, positive language, optional features. Counters shame loops common in tracking apps. | LOW | ✓ Core philosophy already embedded. Maintain in all new features. |
 | **Intention setting** | Focus on forward-looking ("what do you want?") vs backward-only ("how did you feel?"). | LOW | ✓ Already core feature. Good differentiator vs pure mood trackers. |
 | **Smart weekly summaries** | Automated "Here's your week" recap with insights. Finch does this well. | MEDIUM | Elio missing. Generate weekly digest with top mood, patterns, streak, suggested actions. |
@@ -51,7 +51,7 @@ Features that seem good but create problems or dilute the product.
 | **Cloud sync / accounts** | "Use on multiple devices" | Adds auth complexity, privacy concerns, server costs. Dilutes local-first value prop. | Defer to v3+ with E2E encryption. Focus on single-device excellence first. |
 | **Photo/video/voice attachments** | "Richer journaling" | Storage bloat (Hive not ideal for blobs). Scope creep. Slows check-in flow. | Text-only keeps it fast. Consider mood-associated photo gallery in v3+ if validated. |
 | **Mood tracking multiple times per day** | "I want to log every mood change" | Creates obsessive tracking. Against simplicity. Complicates insights (which entry is "the day"?). | One check-in per day. If user wants more, suggest separate evening reflection (v2+). |
-| **Unlimited directions** | "I have 10 life areas!" | Decision paralysis. Dilutes focus. Harder to see patterns. | Enforce 5 active directions. Archive less important ones. |
+| **Unlimited directions** | "I have more than 5 goals or life directions." | Too many prompts can make check-ins feel long. | Allow unlimited directions, but keep check-ins selective and make goal-specific reflections user-chosen. Presence should not imply progress. |
 | **Complex mood scales** | "I want 10-point scale or emoji matrix" | Analysis paralysis. Slows entry. Harder to see trends. | Keep 0.0-1.0 slider. Add more mood words if needed, not more scales. |
 | **Gamification (levels, achievements)** | "Make it more engaging" | Creates extrinsic motivation. Mood tracking shouldn't be a game. Can create guilt when you "fail". | Use streaks minimally. Focus on intrinsic value (self-awareness), not points. |
 | **AI chat / therapist bot** | "Give me advice" | Liability risk. Not a mental health professional. Can give harmful advice. | Show patterns, let user reflect. Add resources link, not AI therapist. |

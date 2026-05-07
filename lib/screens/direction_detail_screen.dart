@@ -95,6 +95,12 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
             const SizedBox(height: 16),
           ],
 
+          // Goal progress
+          if (_stats!.totalGoalCheckIns > 0) ...[
+            _buildGoalProgressCard(),
+            const SizedBox(height: 16),
+          ],
+
           // Mood correlation card
           _buildMoodCorrelationCard(),
           const SizedBox(height: 16),
@@ -320,6 +326,91 @@ class _DirectionDetailScreenState extends State<DirectionDetailScreen> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildGoalProgressCard() {
+    final weeklyPresence = DirectionService.instance.getWeeklyCheckInCount(
+      _direction.id,
+    );
+    final weeklyProgress = DirectionService.instance.getWeeklyProgressCount(
+      _direction.id,
+    );
+    final weeklyBlockers = DirectionService.instance.getWeeklyBlockerCount(
+      _direction.id,
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'GOAL PROGRESS',
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _buildProgressStat('Present', '$weeklyPresence'),
+                _buildProgressStat('Small steps', '$weeklyProgress'),
+                _buildProgressStat('Blockers', '$weeklyBlockers'),
+              ],
+            ),
+            if (_stats!.recentCheckIns.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text('Recent', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              ..._stats!.recentCheckIns.map((checkIn) {
+                final title = checkIn.hasStep
+                    ? checkIn.stepText!.trim()
+                    : 'Present in your check-in';
+                final blocker = checkIn.blockerText?.trim() ?? '';
+                final support = checkIn.supportText?.trim() ?? '';
+
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  leading: Icon(
+                    checkIn.hasStep
+                        ? Icons.task_alt_outlined
+                        : Icons.radio_button_checked,
+                    color: checkIn.hasStep ? Colors.green : Colors.grey,
+                  ),
+                  title: Text(title),
+                  subtitle: Text(
+                    [
+                      _formatDate(checkIn.createdAt),
+                      if (blocker.isNotEmpty) 'Blocked: $blocker',
+                      if (support.isNotEmpty) 'Might help: $support',
+                    ].join('\n'),
+                  ),
+                );
+              }),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressStat(String label, String value) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(value, style: Theme.of(context).textTheme.headlineSmall),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+          ),
+        ],
       ),
     );
   }

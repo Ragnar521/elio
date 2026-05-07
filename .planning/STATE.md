@@ -1,33 +1,33 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Demo Mode
-status: complete
-last_updated: "2026-02-28"
+milestone: direction-reflection-loop
+milestone_name: Multi-Goal Direction Reflection Loop
+status: in_progress
+last_updated: "2026-05-07"
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 1
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-28)
+See: .planning/PROJECT.md (updated 2026-05-07)
 
-**Core value:** Users can quickly check in with their mood and intentions, then understand what their data means through summaries, nudges, and visual patterns.
-**Current focus:** Planning next milestone
+**Core value:** Users can quickly check in with their mood and intentions, connect the day to the goals/directions that were present, and understand what the data means through summaries, nudges, visual patterns, small-step progress, blockers, and mood relationships.
+**Current focus:** Direction Reflection Loop branch
 
 ## Current Position
 
-Phase: 9 of 9 (Reset Mechanism)
-Plan: 1 of 1 in current phase
-Status: Milestone v2.1 Complete
-Last activity: 2026-02-28 — Milestone v2.1 archived
+Phase: Direction Reflection Loop branch
+Plan: Multi-goal check-in and insight update
+Status: In progress on `codex/multi-goal-direction-loop`
+Last activity: 2026-05-07 — multi-goal direction check-in implemented, docs being updated
 
-Progress: [██████████] 100% (9 of 9 phases complete)
+Progress: Feature branch implemented; verification and PR polish in progress
 
 ## Accumulated Context
 
@@ -37,17 +37,20 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-None.
+- Keep direction language gentle: present, small step, blocked, might help.
+- Preserve the distinction between presence and progress in product and marketing copy.
+- Goal-specific reflection prompts replace generic prompts only when selected.
+- Existing `DirectionConnection` remains the mood-correlation/history-filtering link; new `DirectionCheckIn` carries per-goal detail.
 
 ### Blockers/Concerns
 
-None.
+Prepare PR after code and documentation are verified.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Milestone v2.1 archived
+Last session: 2026-05-07
+Stopped at: Direction Reflection Loop branch docs update
 Resume file: None
 
 ---
-*v2.1 Demo Mode — milestone complete and archived*
+*Direction Reflection Loop — active branch context*
