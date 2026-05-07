@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/storage_service.dart';
 import '../theme/elio_colors.dart';
 import 'reflection_settings_screen.dart';
+
+const _supportEmail = 'support@elio.app';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -48,6 +51,118 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _showHelpAndFeedbackSheet() async {
+    HapticFeedback.selectionClick();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: ElioColors.darkSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'How can we help?',
+                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                    color: ElioColors.darkPrimaryText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Send a message about an issue, question, or idea. Your email app will open with a few details filled in.',
+                  style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                    color: ElioColors.darkPrimaryText.withOpacity(0.7),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      _openSupportEmail();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ElioColors.darkAccent,
+                      foregroundColor: ElioColors.darkBackground,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Open email'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: ElioColors.darkPrimaryText.withOpacity(0.8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openSupportEmail() async {
+    HapticFeedback.selectionClick();
+
+    final emailUri = Uri(
+      scheme: 'mailto',
+      path: _supportEmail,
+      queryParameters: const {
+        'subject': 'Elio feedback',
+        'body': '''
+What happened?
+
+What did you expect?
+
+Anything else that might help?
+
+App: Elio 1.0.0+1
+''',
+      },
+    );
+
+    bool didLaunch = false;
+    try {
+      didLaunch = await launchUrl(
+        emailUri,
+        mode: LaunchMode.externalApplication,
+      );
+    } on PlatformException {
+      didLaunch = false;
+    }
+
+    if (!mounted || didLaunch) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open your email app.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userName = StorageService.instance.userName;
@@ -71,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your profile',
+                  'Your name',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: ElioColors.darkPrimaryText.withOpacity(0.6),
                   ),
@@ -172,6 +287,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 24),
             const Divider(color: ElioColors.darkSurface),
+            const SizedBox(height: 24),
+
+            Text(
+              'Help & feedback',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: ElioColors.darkPrimaryText.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: _showHelpAndFeedbackSheet,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.help_outline,
+                      color: ElioColors.darkPrimaryText.withOpacity(0.7),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Send feedback or ask for help',
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: ElioColors.darkPrimaryText,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Report an issue, share an idea, or ask a question.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: ElioColors.darkPrimaryText.withOpacity(
+                                    0.6,
+                                  ),
+                                  height: 1.3,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.chevron_right,
+                      color: ElioColors.darkPrimaryText.withOpacity(0.45),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
