@@ -13,24 +13,20 @@ import 'reflection_service.dart';
 
 /// Service for loading demo data into Elio
 ///
-/// Creates ~90 days of realistic check-in data for "Alex" persona:
-/// - Young professional balancing career, health, and relationships
-/// - References Sarah (girlfriend), Tom (colleague), Mom
-/// - Strong day-of-week mood patterns (low Mondays, high weekends)
-/// - 4 active directions with uneven connection distribution
+/// Creates ~90 days of realistic check-in data for "Maya" persona:
+/// - Freelance designer balancing creative work, health, and relationships
+/// - References Luca (partner), Nadia (best friend), Dad
+/// - Day-of-week mood patterns (low Mon/Tue admin days, high Wed/Sat creative days)
+/// - 5 active directions with uneven connection distribution
 /// - ~70-80% of entries include reflections across all 9 categories
+/// - Direction check-ins with steps, blockers, and support notes
 class SampleDataService {
   SampleDataService._();
   static final SampleDataService instance = SampleDataService._();
 
   static const _uuid = Uuid();
 
-  /// Load all demo data into Hive boxes
-  ///
-  /// CRITICAL: This writes directly to Hive boxes with backdated timestamps.
-  /// Do NOT use service methods like saveEntry() or createDirection() as they use DateTime.now()
   Future<void> loadDemoData() async {
-    // Open all Hive boxes (already initialized by this point)
     final entriesBox = await Hive.openBox<Entry>('entries');
     final answersBox = await Hive.openBox<ReflectionAnswer>(
       'reflectionAnswers',
@@ -44,33 +40,33 @@ class SampleDataService {
     );
     final settingsBox = await Hive.openBox('settings');
 
-    // Clear existing data
+    final summaryBox = await Hive.openBox<WeeklySummary>('weekly_summaries');
+
     await entriesBox.clear();
     await answersBox.clear();
     await directionsBox.clear();
     await connectionsBox.clear();
     await directionCheckInsBox.clear();
+    await summaryBox.clear();
 
-    // 1. Write settings
-    await settingsBox.put('user_name', 'Alex');
+    await settingsBox.put('user_name', 'Maya');
     await settingsBox.put('onboarding_completed', true);
     await settingsBox.put('reflection_enabled', true);
 
-    // 2. Create directions (~85 days ago)
     final now = DateTime.now();
-    final directionsCreatedAt = now.subtract(const Duration(days: 85));
+    final directionsCreatedAt = now.subtract(const Duration(days: 88));
 
-    final careerDirection = Direction(
+    final creativityDirection = Direction(
       id: _uuid.v4(),
-      title: 'Work That Matters',
-      type: DirectionType.career,
+      title: 'Make Beautiful Things',
+      type: DirectionType.creativity,
       reflectionEnabled: true,
       createdAt: directionsCreatedAt,
     );
 
     final healthDirection = Direction(
       id: _uuid.v4(),
-      title: 'Stay Strong',
+      title: 'Move & Rest',
       type: DirectionType.health,
       reflectionEnabled: true,
       createdAt: directionsCreatedAt,
@@ -78,115 +74,143 @@ class SampleDataService {
 
     final relationshipsDirection = Direction(
       id: _uuid.v4(),
-      title: 'People I Love',
+      title: 'People Who Matter',
       type: DirectionType.relationships,
       reflectionEnabled: false,
       createdAt: directionsCreatedAt,
     );
 
-    final peaceDirection = Direction(
+    final growthDirection = Direction(
       id: _uuid.v4(),
-      title: 'Finding Calm',
-      type: DirectionType.peace,
+      title: 'Learn to Code',
+      type: DirectionType.growth,
       reflectionEnabled: true,
-      createdAt: directionsCreatedAt,
+      createdAt: directionsCreatedAt.add(const Duration(days: 12)),
     );
 
-    await directionsBox.put(careerDirection.id, careerDirection);
+    final peaceDirection = Direction(
+      id: _uuid.v4(),
+      title: 'Quiet Mind',
+      type: DirectionType.peace,
+      reflectionEnabled: true,
+      createdAt: directionsCreatedAt.add(const Duration(days: 5)),
+    );
+
+    await directionsBox.put(creativityDirection.id, creativityDirection);
     await directionsBox.put(healthDirection.id, healthDirection);
-    await directionsBox.put(relationshipsDirection.id, relationshipsDirection);
+    await directionsBox.put(
+      relationshipsDirection.id,
+      relationshipsDirection,
+    );
+    await directionsBox.put(growthDirection.id, growthDirection);
     await directionsBox.put(peaceDirection.id, peaceDirection);
 
-    // 3. Get seeded reflection questions for IDs
     final allQuestions = ReflectionService.instance.getAllQuestions();
 
-    // 4. Generate entries for ~90 days (ending yesterday)
-    final entries = await _generateEntries(now, allQuestions);
+    final entries = _generateEntries(now, allQuestions);
 
-    // Write entries to Hive
-    for (final entry in entries) {
-      await entriesBox.put(entry.id, entry);
-    }
-
-    // 5. Create reflection answers for ~70-80% of entries
     final answersData = _generateReflectionAnswers(entries, allQuestions);
     for (final answer in answersData) {
       await answersBox.put(answer.id, answer);
     }
 
-    // 6. Create direction connections with uneven distribution
+    // Link answer IDs back to entries
+    final answerIdsByEntry = <String, List<String>>{};
+    for (final answer in answersData) {
+      answerIdsByEntry.putIfAbsent(answer.entryId, () => []).add(answer.id);
+    }
+
+    for (final entry in entries) {
+      final answerIds = answerIdsByEntry[entry.id];
+      final linked = Entry(
+        id: entry.id,
+        moodValue: entry.moodValue,
+        moodWord: entry.moodWord,
+        intention: entry.intention,
+        createdAt: entry.createdAt,
+        reflectionAnswerIds: answerIds,
+      );
+      await entriesBox.put(linked.id, linked);
+    }
+
     final connections = _generateDirectionConnections(
       entries,
-      careerDirection.id,
+      creativityDirection.id,
       healthDirection.id,
       relationshipsDirection.id,
+      growthDirection.id,
       peaceDirection.id,
     );
     for (final connection in connections) {
       await connectionsBox.put(connection.id, connection);
     }
 
-    // 7. Calculate and set longest streak
+    final checkIns = _generateDirectionCheckIns(
+      entries,
+      connections,
+      creativityDirection.id,
+      healthDirection.id,
+      relationshipsDirection.id,
+      growthDirection.id,
+      peaceDirection.id,
+    );
+    for (final checkIn in checkIns) {
+      await directionCheckInsBox.put(checkIn.id, checkIn);
+    }
+
     final longestStreak = _calculateLongestStreak(entries);
     await settingsBox.put('longest_streak', longestStreak);
 
-    // 8. Generate weekly summaries for all completed weeks
     await _generateWeeklySummaries(
       now,
       entries,
       answersData,
-      careerDirection,
+      creativityDirection,
       healthDirection,
       relationshipsDirection,
+      growthDirection,
       peaceDirection,
     );
   }
 
-  /// Generate ~90 days of entries with day-of-week patterns and gaps
-  Future<List<Entry>> _generateEntries(
+  List<Entry> _generateEntries(
     DateTime now,
     List<dynamic> questions,
-  ) async {
+  ) {
     final entries = <Entry>[];
-    final random = Random(42); // Deterministic seed for consistency
+    final random = Random(77);
 
-    // Define gap days (10-15 random days with no entries)
     final gapDays = <int>{};
-    while (gapDays.length < 12) {
+    while (gapDays.length < 14) {
       gapDays.add(random.nextInt(90));
     }
 
-    // Define double-entry days (5-10 days with morning + evening entries)
     final doubleEntryDays = <int>{};
-    while (doubleEntryDays.length < 7) {
+    while (doubleEntryDays.length < 8) {
       final day = random.nextInt(90);
       if (!gapDays.contains(day)) {
         doubleEntryDays.add(day);
       }
     }
 
-    // Generate entries day by day
     for (int daysAgo = 90; daysAgo >= 1; daysAgo--) {
-      if (gapDays.contains(daysAgo)) continue; // Skip gap days
+      if (gapDays.contains(daysAgo)) continue;
 
       final date = DateTime(
         now.year,
         now.month,
         now.day,
       ).subtract(Duration(days: daysAgo));
-      final weekday = date.weekday; // 1=Monday, 7=Sunday
+      final weekday = date.weekday;
 
       if (doubleEntryDays.contains(daysAgo)) {
-        // Create morning entry
         entries.add(
           _createEntry(date, weekday, random, daysAgo, isMorning: true),
         );
-        // Create evening entry
         entries.add(
           _createEntry(date, weekday, random, daysAgo, isMorning: false),
         );
       } else {
-        // Create single entry at random time
         entries.add(_createEntry(date, weekday, random, daysAgo));
       }
     }
@@ -194,7 +218,6 @@ class SampleDataService {
     return entries;
   }
 
-  /// Create a single entry with mood pattern and intention
   Entry _createEntry(
     DateTime date,
     int weekday,
@@ -202,31 +225,27 @@ class SampleDataService {
     int daysAgo, {
     bool? isMorning,
   }) {
-    // Determine time
     final DateTime createdAt;
     if (isMorning != null) {
       if (isMorning) {
-        // Morning: 7-9 AM
         createdAt = DateTime(
           date.year,
           date.month,
           date.day,
-          7 + random.nextInt(2),
+          6 + random.nextInt(3),
           random.nextInt(60),
         );
       } else {
-        // Evening: 9-10 PM
         createdAt = DateTime(
           date.year,
           date.month,
           date.day,
-          21 + random.nextInt(1),
+          20 + random.nextInt(2),
           random.nextInt(60),
         );
       }
     } else {
-      // Random time: 7 AM - 10 PM
-      final hour = 7 + random.nextInt(15);
+      final hour = 7 + random.nextInt(14);
       createdAt = DateTime(
         date.year,
         date.month,
@@ -236,45 +255,40 @@ class SampleDataService {
       );
     }
 
-    // Calculate mood based on day of week + slight upward trend over time
-    final baseImprovement = daysAgo <= 30
-        ? 0.05
-        : 0.0; // Last 30 days slightly better
+    final baseImprovement = daysAgo <= 25 ? 0.06 : 0.0;
     double baseMood;
 
     switch (weekday) {
-      case 1: // Monday
-        baseMood = 0.30 + random.nextDouble() * 0.15; // 0.30-0.45
+      case 1: // Monday — admin, invoices, emails
+        baseMood = 0.28 + random.nextDouble() * 0.15;
         break;
-      case 2: // Tuesday
-        baseMood = 0.35 + random.nextDouble() * 0.15; // 0.35-0.50
+      case 2: // Tuesday — slow creative start
+        baseMood = 0.35 + random.nextDouble() * 0.15;
         break;
-      case 3: // Wednesday
-        baseMood = 0.40 + random.nextDouble() * 0.15; // 0.40-0.55
+      case 3: // Wednesday — deep design work
+        baseMood = 0.55 + random.nextDouble() * 0.20;
         break;
-      case 4: // Thursday
-        baseMood = 0.45 + random.nextDouble() * 0.15; // 0.45-0.60
+      case 4: // Thursday — client calls, mixed
+        baseMood = 0.40 + random.nextDouble() * 0.18;
         break;
-      case 5: // Friday
-        baseMood = 0.55 + random.nextDouble() * 0.15; // 0.55-0.70
+      case 5: // Friday — wrapping up, lighter
+        baseMood = 0.50 + random.nextDouble() * 0.18;
         break;
-      case 6: // Saturday
-        baseMood = 0.60 + random.nextDouble() * 0.20; // 0.60-0.80
+      case 6: // Saturday — personal projects, social
+        baseMood = 0.62 + random.nextDouble() * 0.20;
         break;
-      case 7: // Sunday
-        baseMood = 0.55 + random.nextDouble() * 0.20; // 0.55-0.75
+      case 7: // Sunday — rest, prep anxiety
+        baseMood = 0.48 + random.nextDouble() * 0.20;
         break;
       default:
         baseMood = 0.50;
     }
 
-    // Add random variation and improvement
     final moodValue =
-        (baseMood + baseImprovement + (random.nextDouble() * 0.10 - 0.05))
+        (baseMood + baseImprovement + (random.nextDouble() * 0.08 - 0.04))
             .clamp(0.0, 1.0);
     final moodWord = _getMoodWord(moodValue);
 
-    // Get intention for this entry
     final intention = _getIntention(random.nextInt(_intentions.length));
 
     return Entry(
@@ -283,11 +297,10 @@ class SampleDataService {
       moodWord: moodWord,
       intention: intention,
       createdAt: createdAt,
-      reflectionAnswerIds: null, // Will be updated when creating answers
+      reflectionAnswerIds: null,
     );
   }
 
-  /// Map mood value to mood word
   String _getMoodWord(double value) {
     if (value >= 0.85) return 'Thriving';
     if (value >= 0.75) return 'Joyful';
@@ -299,34 +312,26 @@ class SampleDataService {
     return 'Overwhelmed';
   }
 
-  /// Generate reflection answers for ~70-80% of entries
   List<ReflectionAnswer> _generateReflectionAnswers(
     List<Entry> entries,
     List<dynamic> questions,
   ) {
     final answers = <ReflectionAnswer>[];
-    final random = Random(43); // Different seed for variety
-    final updatedEntries =
-        <String, List<String>>{}; // Track answer IDs per entry
+    final random = Random(78);
 
     for (final entry in entries) {
-      // 75% chance of having reflections
       if (random.nextDouble() > 0.75) continue;
 
-      // Determine number of answers (1-3, weighted toward 1)
-      final numAnswers = random.nextDouble() < 0.7
+      final numAnswers = random.nextDouble() < 0.65
           ? 1
-          : (random.nextDouble() < 0.8 ? 2 : 3);
-      final answerIds = <String>[];
+          : (random.nextDouble() < 0.75 ? 2 : 3);
 
       for (int i = 0; i < numAnswers; i++) {
-        // Pick random question from different categories
         final question = questions[random.nextInt(questions.length)];
         final questionId = question.id as String;
         final questionText = question.text as String;
         final category = question.category as String;
 
-        // Generate answer based on category and Alex's persona
         final answerText = _getReflectionAnswer(category, random);
 
         final answer = ReflectionAnswer(
@@ -339,48 +344,38 @@ class SampleDataService {
         );
 
         answers.add(answer);
-        answerIds.add(answer.id);
-      }
-
-      if (answerIds.isNotEmpty) {
-        updatedEntries[entry.id] = answerIds;
       }
     }
-
-    // Update entries with reflection answer IDs
-    // Note: In real implementation, we'd need to re-write entries with updated reflectionAnswerIds
-    // For this demo, we're storing the mapping but entries are already written
-    // The app will need to handle this via the service layer
 
     return answers;
   }
 
-  /// Generate direction connections with uneven distribution
   List<DirectionConnection> _generateDirectionConnections(
     List<Entry> entries,
-    String careerId,
+    String creativityId,
     String healthId,
     String relationshipsId,
+    String growthId,
     String peaceId,
   ) {
     final connections = <DirectionConnection>[];
-    final random = Random(44);
+    final random = Random(79);
 
     for (final entry in entries) {
-      // Career: 45% chance (Alex thinks about work a lot)
-      if (random.nextDouble() < 0.45) {
+      // Creativity: 50% — Maya's main thing
+      if (random.nextDouble() < 0.50) {
         connections.add(
           DirectionConnection(
             id: _uuid.v4(),
-            directionId: careerId,
+            directionId: creativityId,
             entryId: entry.id,
             createdAt: entry.createdAt,
           ),
         );
       }
 
-      // Health: 28% chance (gym days, sleep mentions)
-      if (random.nextDouble() < 0.28) {
+      // Health: 30% — yoga, running, sleep
+      if (random.nextDouble() < 0.30) {
         connections.add(
           DirectionConnection(
             id: _uuid.v4(),
@@ -391,8 +386,8 @@ class SampleDataService {
         );
       }
 
-      // Relationships: 23% chance (Sarah/Tom/Mom entries)
-      if (random.nextDouble() < 0.23) {
+      // Relationships: 22% — Luca, Nadia, Dad
+      if (random.nextDouble() < 0.22) {
         connections.add(
           DirectionConnection(
             id: _uuid.v4(),
@@ -403,8 +398,20 @@ class SampleDataService {
         );
       }
 
-      // Peace: 12% chance (meditation, quiet weekends)
-      if (random.nextDouble() < 0.12) {
+      // Growth: 18% — coding side project
+      if (random.nextDouble() < 0.18) {
+        connections.add(
+          DirectionConnection(
+            id: _uuid.v4(),
+            directionId: growthId,
+            entryId: entry.id,
+            createdAt: entry.createdAt,
+          ),
+        );
+      }
+
+      // Peace: 15% — meditation, walks, stillness
+      if (random.nextDouble() < 0.15) {
         connections.add(
           DirectionConnection(
             id: _uuid.v4(),
@@ -419,11 +426,95 @@ class SampleDataService {
     return connections;
   }
 
-  /// Calculate longest streak from entries
+  List<DirectionCheckIn> _generateDirectionCheckIns(
+    List<Entry> entries,
+    List<DirectionConnection> connections,
+    String creativityId,
+    String healthId,
+    String relationshipsId,
+    String growthId,
+    String peaceId,
+  ) {
+    final checkIns = <DirectionCheckIn>[];
+    final random = Random(80);
+
+    final connectionsByEntry = <String, List<DirectionConnection>>{};
+    for (final conn in connections) {
+      connectionsByEntry.putIfAbsent(conn.entryId, () => []).add(conn);
+    }
+
+    for (final entry in entries) {
+      final entryConnections = connectionsByEntry[entry.id];
+      if (entryConnections == null) continue;
+
+      for (final conn in entryConnections) {
+        // ~40% of connections have a step/blocker/support
+        if (random.nextDouble() > 0.40) continue;
+
+        String? stepText;
+        String? blockerText;
+        String? supportText;
+
+        if (conn.directionId == creativityId) {
+          if (random.nextBool()) {
+            stepText = _creativitySteps[
+                random.nextInt(_creativitySteps.length)];
+          }
+          if (random.nextDouble() < 0.3) {
+            blockerText = _creativityBlockers[
+                random.nextInt(_creativityBlockers.length)];
+          }
+          if (random.nextDouble() < 0.25) {
+            supportText = _creativitySupport[
+                random.nextInt(_creativitySupport.length)];
+          }
+        } else if (conn.directionId == healthId) {
+          if (random.nextBool()) {
+            stepText =
+                _healthSteps[random.nextInt(_healthSteps.length)];
+          }
+          if (random.nextDouble() < 0.3) {
+            blockerText =
+                _healthBlockers[random.nextInt(_healthBlockers.length)];
+          }
+        } else if (conn.directionId == growthId) {
+          if (random.nextBool()) {
+            stepText =
+                _growthSteps[random.nextInt(_growthSteps.length)];
+          }
+          if (random.nextDouble() < 0.35) {
+            blockerText =
+                _growthBlockers[random.nextInt(_growthBlockers.length)];
+          }
+        } else if (conn.directionId == peaceId) {
+          if (random.nextBool()) {
+            stepText =
+                _peaceSteps[random.nextInt(_peaceSteps.length)];
+          }
+        }
+
+        if (stepText != null || blockerText != null || supportText != null) {
+          checkIns.add(
+            DirectionCheckIn(
+              id: _uuid.v4(),
+              directionId: conn.directionId,
+              entryId: entry.id,
+              stepText: stepText,
+              blockerText: blockerText,
+              supportText: supportText,
+              createdAt: entry.createdAt,
+            ),
+          );
+        }
+      }
+    }
+
+    return checkIns;
+  }
+
   int _calculateLongestStreak(List<Entry> entries) {
     if (entries.isEmpty) return 0;
 
-    // Sort entries by date
     final sorted = entries.toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
@@ -447,7 +538,6 @@ class SampleDataService {
       if (dayDiff == 1) {
         currentStreak++;
       } else if (dayDiff == 0) {
-        // Same day, don't break streak
         continue;
       } else {
         longestStreak = max(longestStreak, currentStreak);
@@ -459,245 +549,326 @@ class SampleDataService {
     return longestStreak;
   }
 
-  /// Get reflection answer based on category
   String _getReflectionAnswer(String category, Random random) {
     final answers = _reflectionAnswersByCategory[category] ?? ['Good day'];
     return answers[random.nextInt(answers.length)];
   }
 
-  /// Get intention by index
   String _getIntention(int index) {
     return _intentions[index % _intentions.length];
   }
 
-  // DATA: 100 unique intentions telling Alex's story
-  static final List<String> _intentions = [
-    "Get through the Monday standup without zoning out",
-    "Finally finish the migration script Tom asked about",
-    "Call Mom tonight, she's been texting a lot",
-    "Hit the gym before it gets too crowded",
-    "Date night with Sarah — no phones",
-    "Actually read that book chapter instead of scrolling",
-    "Take a real lunch break today, not desk lunch",
-    "Prep meals for the week so I stop ordering out",
-    "Deep work on the Q2 proposal — headphones on",
-    "Be patient in the team retro even if it drags",
-    "Morning run before work, even if it's cold",
-    "Finish that PR review I've been putting off",
-    "Text Tom about Friday drinks",
-    "Get 8 hours of sleep tonight for once",
-    "Stop checking Slack after 7pm",
-    "Sarah's birthday gift — actually think about it",
-    "Cook dinner instead of ordering in again",
-    "Clean the apartment, it's getting bad",
-    "Work on side project for 30 minutes",
-    "Meditate before the day gets crazy",
-    "Don't let the deadline stress me out",
-    "Be present in the 1-on-1 with my manager",
-    "Gym after work even if I'm tired",
-    "Call Mom back, I keep forgetting",
-    "Finish the feature before EOD Friday",
-    "Plan weekend trip with Sarah",
-    "Read instead of Netflix tonight",
-    "Meal prep Sunday — for real this time",
-    "Go to bed before midnight",
-    "Morning coffee without checking email",
-    "Stretch before the gym, don't skip it",
-    "Ask Tom for help instead of struggling alone",
-    "Set boundaries on weekend work",
-    "Actually use my PTO this quarter",
-    "Write in journal before bed",
-    "Drink more water, less coffee",
-    "Take the stairs instead of elevator",
-    "Respond to Sarah's texts faster",
-    "Stop doom-scrolling before bed",
-    "Finish the book I started two months ago",
-    "Make time for that hobby project",
-    "Get groceries so I stop eating out",
-    "Fix the bug that's been nagging me",
-    "Be honest in standup about blockers",
-    "Take a walk during lunch",
-    "Disconnect from work this weekend",
-    "Quality time with Sarah, not half-distracted",
-    "Morning yoga to start the day right",
-    "Reach out to old friends I miss",
-    "Stop comparing myself to others on LinkedIn",
-    "Batch my emails instead of constant checking",
-    "Leave work by 6pm today",
-    "Cook that recipe I bookmarked",
-    "Update my resume, just in case",
-    "Be more assertive in meetings",
-    "Stop saying yes to everything",
-    "Take Mom's call when she calls",
-    "Go to that concert Sarah wants to see",
-    "Fix my sleep schedule this week",
-    "Stop snoozing my alarm 5 times",
-    "Cardio even though I hate it",
-    "Be kind to myself when things don't go perfectly",
-    "Finish the course I started online",
-    "Declutter my workspace",
-    "Start the morning with gratitude",
-    "Don't skip breakfast again",
-    "Call it a day when I'm done, not keep working",
-    "Make plans with friends this weekend",
-    "Stop overthinking that conversation",
-    "Get outside for some fresh air",
-    "Write down wins from this week",
-    "Be fully present in meetings, not multitasking",
-    "Prep for the big presentation",
-    "Celebrate the small wins today",
-    "Let go of what I can't control",
-    "Trust the process",
-    "Just breathe",
-    "Focus on what matters",
-    "One thing at a time",
-    "Be the person Sarah deserves",
-    "Make Mom proud",
-    "Show up for Tom when he needs it",
-    "Invest in my health now, not later",
-    "Build something I'm proud of",
-    "Learn from today's mistakes",
-    "Tomorrow is a fresh start",
-    "Keep moving forward",
-    "Trust my gut",
-    "Be patient with the journey",
-    "Stop procrastinating on the hard stuff",
-    "Face the uncomfortable conversation",
-    "Ask for feedback instead of avoiding it",
-    "Celebrate finishing this sprint",
-    "Rest is productive too",
-    "Quality over quantity today",
-    "Protect my energy",
-    "Set better boundaries",
-    "Make time for what fills me up",
-    "Let go of perfectionism",
-    "Progress over perfection",
+  // --- Direction check-in content ---
+
+  static const _creativitySteps = [
+    'Finished the landing page hero section',
+    'Sketched three logo concepts for the cafe client',
+    'Picked a color palette for the rebrand',
+    'Prototyped the onboarding flow in Figma',
+    'Drew for 20 minutes, no client work, just for me',
+    'Wrote the copy for the portfolio update',
+    'Played with new brush textures in Procreate',
+    'Recorded a timelapse of the illustration process',
+    'Sent the first draft to the client',
+    'Reorganized my design file library',
   ];
 
-  // DATA: Reflection answers by category (casual, phone-typing style)
+  static const _creativityBlockers = [
+    'Client keeps changing direction, hard to commit',
+    'Perfectionism — spent an hour on one icon',
+    'Creative block, nothing felt right today',
+    'Too many admin tasks ate into studio time',
+    'Comparison spiral after scrolling Dribbble',
+  ];
+
+  static const _creativitySupport = [
+    'Step away from the screen for a walk',
+    'Look at old sketchbooks for inspiration',
+    'Ask Nadia for honest feedback',
+    'Set a timer and just start, even if it\'s bad',
+    'Remember why I went freelance in the first place',
+  ];
+
+  static const _healthSteps = [
+    'Morning yoga, 25 minutes',
+    'Ran 3k along the river',
+    'Cooked a proper meal instead of snacking',
+    'Slept 8 hours for the first time in a week',
+    'Drank water all day, no afternoon coffee',
+    'Stretched between client calls',
+    'Walked to the co-working space instead of biking',
+    'Made a smoothie with actual vegetables',
+    'Went to bed before midnight',
+    'Did a full body stretch before sleep',
+  ];
+
+  static const _healthBlockers = [
+    'Deadline crunch, skipped the run',
+    'Slept terribly, couldn\'t focus all day',
+    'Ate junk because I forgot to shop',
+    'Back pain from hunching over the tablet',
+    'Too tired after the client marathon',
+  ];
+
+  static const _growthSteps = [
+    'Finished the JavaScript arrays chapter',
+    'Built a tiny calculator app in Flutter',
+    'Watched a 30-min tutorial on state management',
+    'Wrote my first API call — it worked!',
+    'Refactored the to-do app with cleaner code',
+    'Read about design patterns for beginners',
+    'Asked in the Discord for help with a bug',
+    'Pushed code to GitHub for the first time',
+    'Styled a page with CSS Grid on my own',
+    'Completed 3 coding challenges on Exercism',
+  ];
+
+  static const _growthBlockers = [
+    'Got stuck on a bug for 2 hours, gave up',
+    'Felt stupid not understanding async/await',
+    'Too tired after design work to switch to code',
+    'The tutorial assumed I knew things I don\'t',
+    'Imposter syndrome hit hard today',
+  ];
+
+  static const _peaceSteps = [
+    '10 minutes of meditation in the morning',
+    'Sat in the park with no phone for 20 minutes',
+    'Journaled before bed instead of scrolling',
+    'Said no to a project that didn\'t feel right',
+    'Took a bath and read a novel',
+    'Morning coffee on the balcony, no notifications',
+    'Breathwork during the afternoon slump',
+    'Left the phone in another room for an hour',
+  ];
+
+  // --- 100 intentions for Maya's story ---
+
+  static final List<String> _intentions = [
+    "Finish the cafe logo concepts before lunch",
+    "Yoga before I open the laptop",
+    "Call Dad tonight, it's been too long",
+    "Deep work on the rebrand — no Slack until noon",
+    "Cook with Luca instead of ordering in",
+    "Draw something that isn't for a client",
+    "Take a real break between projects",
+    "Send the invoice I've been avoiding",
+    "Run along the river, clear my head",
+    "No screens after 9pm tonight",
+    "Portfolio update — pick the best 5 pieces",
+    "Text Nadia back, she's been waiting",
+    "Meditate before the client call",
+    "Try that new pasta recipe Luca found",
+    "Sketch freely for 30 minutes, no pressure",
+    "Set boundaries on weekend work requests",
+    "Morning pages before anything else",
+    "Clean the studio, it's a mess",
+    "Read the design book I bought months ago",
+    "Be honest with the client about the timeline",
+    "Stretch every hour, my back is killing me",
+    "Batch all the emails into one session",
+    "Luca's parents are visiting — be present",
+    "Start the coding tutorial I keep postponing",
+    "Go to the farmers market, buy real food",
+    "Say no to at least one thing today",
+    "Explore that new illustration style",
+    "Actually use the standing desk",
+    "Plan the weekend trip with Nadia",
+    "Stop comparing my work to strangers online",
+    "Write down 3 things I'm grateful for",
+    "Ship the first draft, it doesn't have to be perfect",
+    "Walk to the cafe and work from there",
+    "Do the hard design task first, not last",
+    "Respond to Dad's voicemail",
+    "Prep meals so I stop eating at my desk",
+    "30 minutes of coding practice after dinner",
+    "Put the phone in another room while designing",
+    "Date night with Luca — his pick this time",
+    "Wake up without an alarm, just this once",
+    "Finish one thing fully instead of starting three",
+    "Go to that exhibition Nadia mentioned",
+    "Drink more water, less coffee today",
+    "Trust the creative process, stop forcing it",
+    "Take the afternoon off, I've earned it",
+    "Journal about what's been bugging me",
+    "Reorganize my Figma files, they're chaos",
+    "Help Luca with his presentation",
+    "Try a new running route",
+    "Revisit that rejected logo — it might be good",
+    "Morning sunlight before screen light",
+    "Be kinder to myself about the slow days",
+    "Ask for feedback on the branding project",
+    "Learn one new CSS trick today",
+    "Unsubscribe from newsletters I never read",
+    "Quality time with Luca, no half-attention",
+    "Make the boring admin stuff less painful",
+    "Take photos on the walk, see things differently",
+    "Don't check analytics obsessively",
+    "Buy flowers for the studio, small joy",
+    "Breathe before reacting to the client feedback",
+    "Celebrate finishing this sprint properly",
+    "Rest without guilt",
+    "Focus on one direction, not all five",
+    "Do something creative that scares me a little",
+    "End the day by writing down what went well",
+    "Be patient with the coding learning curve",
+    "Protect the morning hours for deep work",
+    "Tell Luca what I actually need this week",
+    "Go outside at least once before dark",
+    "Stop saying yes reflexively",
+    "One small step on the portfolio site",
+    "Let the messy first draft exist",
+    "Sit with discomfort instead of distracting",
+    "Make space between tasks, not just tasks",
+    "Call Nadia, not just text",
+    "Sleep is more important than finishing this",
+    "Find the fun in the mundane client work",
+    "Practice the presentation out loud",
+    "Less perfection, more presence",
+    "Move my body even if just a walk",
+    "Listen to music while working, not podcasts",
+    "Write the proposal I've been drafting in my head",
+    "Take the scenic route today",
+    "Let go of the project that isn't working",
+    "Be proud of what I shipped this week",
+    "Floss. Seriously, just floss.",
+    "Luca needs space today — give it freely",
+    "Spend 15 minutes on something just for fun",
+    "Review my finances, stop avoiding it",
+    "Accept the revision feedback gracefully",
+    "Show up for the co-working session",
+    "Paint something small on real paper",
+    "Eat lunch away from the desk",
+    "Ask Dad about his garden, he loves that",
+    "One inbox-zero day, let's try",
+    "Acknowledge what I feel before rushing past it",
+    "Progress, not perfection",
+    "Just start",
+  ];
+
   static final Map<String, List<String>> _reflectionAnswersByCategory = {
     'gratitude': [
-      "Sarah made me coffee this morning",
-      "Tom covered for me in the meeting",
-      "Mom's text checking in on me",
-      "Good weather for a run",
-      "Actually got a full night's sleep",
-      "The project finally worked",
-      "Weekend with no obligations",
-      "Sarah's patience with my work stress",
-      "Finding a parking spot right away",
-      "Tom's terrible jokes at lunch",
-      "Warm apartment on a cold day",
-      "Good conversation over dinner",
+      "Luca made dinner while I was on a deadline",
+      "Nadia sent me a voice note that made me laugh",
+      "The morning light in the studio was perfect",
+      "Dad left a sweet voicemail",
+      "A client said my work made them tear up",
+      "Hot coffee on a cold morning, nothing else needed",
+      "Found an old sketchbook — loved seeing the progress",
+      "Luca didn't ask about work, just asked how I was",
+      "The farmer's market had those figs I love",
+      "Nadia drove an hour to have lunch with me",
+      "A stranger complimented my shoes, silly but nice",
+      "Rain on the window while I was sketching",
     ],
     'pride': [
-      "Shipped the feature before deadline",
-      "Helped Tom debug that nasty issue",
-      "Made it to the gym 3 times this week",
-      "Cooked dinner instead of ordering",
-      "Stood up for my idea in the meeting",
-      "Actually stuck to my morning routine",
-      "Finished the book I started",
-      "Meal prepped for the whole week",
-      "Fixed that bug nobody else could",
-      "Ran 5k without stopping",
-      "Called Mom when I said I would",
-      "Didn't check work email all weekend",
+      "Shipped the brand identity ahead of schedule",
+      "Ran 5k without walking once",
+      "Said no to a project that would've burned me out",
+      "The client picked my favorite concept",
+      "Built a working button in Flutter, felt like magic",
+      "Cooked a three-course dinner from scratch",
+      "Stood my ground on a design decision and was right",
+      "Got up early and meditated before the chaos",
+      "Finished all five invoices in one sitting",
+      "Wrote real code that actually did something",
+      "Went a whole week without doom-scrolling",
+      "Had a hard conversation with Luca and it went well",
     ],
     'learning': [
-      "New approach to testing from Tom's PR",
-      "Sarah taught me to cook that dish properly",
-      "Manager's feedback was actually helpful",
-      "Realized I need better boundaries",
-      "Learned a new keyboard shortcut lol",
-      "Reading about architecture patterns",
-      "Understanding the codebase better",
-      "How to say no without guilt",
-      "Better git workflow from Tom",
-      "Meal prep is easier than I thought",
+      "Figured out flexbox by building a real layout",
+      "Luca showed me how to sharpen kitchen knives",
+      "Client feedback taught me to present options differently",
+      "Learned that my best ideas come after walks",
+      "A YouTube video finally made async/await click",
+      "Realized I design better with constraints",
+      "Read about color theory I'd been ignoring",
+      "Nadia's advice: stop editing while creating",
+      "Discovered I work best in 90-minute blocks",
+      "Learned to ask for help before I'm stuck",
     ],
     'energy': [
-      "Morning run cleared my head",
-      "Good sleep last night",
-      "Coffee with Tom always lifts me up",
-      "Solving that bug felt amazing",
-      "Sarah's laugh",
-      "Finishing the feature early",
-      "Gym session, felt strong",
-      "Weekend hike with Sarah",
-      "Clean apartment = clear mind",
-      "Good playlist during deep work",
+      "Morning yoga and the whole day felt smoother",
+      "Deep focus session — 3 hours felt like 30 minutes",
+      "Cooking with Luca, music on, no rush",
+      "Running in the rain, weirdly energizing",
+      "The design clicked and everything flowed",
+      "Dancing in the kitchen while waiting for pasta",
+      "Long call with Nadia, laughed until my stomach hurt",
+      "Finishing a big project, the relief",
+      "Saturday morning with nowhere to be",
+      "Fresh notebook, fresh pen, ready to go",
     ],
     'tomorrow': [
-      "Finish the code review",
-      "Gym in the morning",
-      "Date night with Sarah",
-      "Finally tackle that refactor",
-      "Sleep before midnight",
-      "Call Mom",
-      "Finish the sprint strong",
-      "Weekend plans with friends",
-      "Start the new book",
-      "Meal prep for next week",
+      "Ship the landing page to the client",
+      "Morning run before anything else",
+      "Date night with Luca, no phones",
+      "Start the new illustration series",
+      "Bed before midnight, no excuses",
+      "Call Dad during lunch break",
+      "Tackle the hardest design task first",
+      "Co-working session with Nadia",
+      "Finish the coding chapter",
+      "Prep food for the busy week ahead",
     ],
     'connection': [
-      "Long talk with Sarah about everything",
-      "Tom and I grabbed lunch",
-      "Mom's voice on the phone",
-      "Team lunch was actually fun",
-      "Sarah and I just watched a movie together",
-      "Caught up with old college friend",
-      "Quality time with Sarah, no distractions",
-      "Tom helped me through a rough day",
-      "Mom sent a care package",
-      "Good conversation with manager",
+      "Long walk with Luca, talked about everything",
+      "Nadia and I worked side by side at the cafe",
+      "Video call with Dad, he showed me his tomatoes",
+      "Client meeting where I actually felt heard",
+      "Luca cooked while I sketched nearby, no words needed",
+      "Caught up with my old uni roommate",
+      "Nadia told me I looked happier lately, meant a lot",
+      "Dinner party at Luca's — I actually enjoyed it",
+      "Dad sent a photo of us from when I was ten",
+      "Good conversation at the co-working space with a stranger",
     ],
     'selfcare': [
-      "Took a real lunch break",
-      "Went to bed early",
-      "Said no to extra work",
-      "Morning run just for me",
-      "Ordered takeout guilt-free",
-      "Read instead of scrolling",
-      "Disconnected from work",
-      "Long shower after the gym",
-      "Nap on Sunday afternoon",
-      "Bought that thing I wanted",
+      "Took a long bath with a book, no guilt",
+      "Slept in on purpose and it was great",
+      "Said no to weekend work, went to the park",
+      "Bought myself flowers, just because",
+      "Ordered the expensive tea, treated myself",
+      "Left the studio early and walked home slowly",
+      "Deleted social media apps for the weekend",
+      "Nap on the couch with the cat noise playlist",
+      "Booked a massage for next week",
+      "Read fiction instead of business books",
     ],
     'reflection': [
-      "Should've asked for help sooner",
-      "Need to stop overcommitting",
-      "I was too hard on myself today",
-      "Shouldn't have skipped the gym",
-      "Need better work-life balance",
-      "Should've been more present with Sarah",
-      "Too much coffee, not enough water",
-      "Procrastinated on the hard task",
-      "Need to set better boundaries",
-      "Called Mom too late again",
+      "I take on too much because I'm scared to say no",
+      "Need to stop working when I'm tired, the work suffers",
+      "I was impatient with Luca and he didn't deserve it",
+      "Skipped the run again, it's becoming a pattern",
+      "Comparing my year 1 to someone's year 10",
+      "I procrastinate on admin because it feels beneath me",
+      "Should have asked for help sooner on that project",
+      "The perfectionism is the problem, not the skill",
+      "I forget to eat when I'm in the zone, that's not healthy",
+      "Need to separate my self-worth from client feedback",
     ],
     'presence': [
-      "Morning coffee before the chaos",
-      "Sarah laughing at my joke",
-      "Sunset on the drive home",
-      "Solving the bug after hours of trying",
-      "Quiet Sunday morning",
-      "That first sip of coffee",
-      "Finishing a good book",
-      "Walking home from the gym",
-      "Sarah falling asleep on my shoulder",
-      "Team celebrating the launch",
+      "Luca humming while making breakfast",
+      "Sunlight hitting the desk at golden hour",
+      "That first sip of espresso, eyes closed",
+      "Sketching with no plan, just shapes",
+      "Wind through the open window during a call",
+      "Nadia laughing so hard she snorted",
+      "The sound of rain while painting",
+      "Sitting in the park watching dogs play",
+      "Finishing a drawing and just… looking at it",
+      "Stars on the balcony with Luca, saying nothing",
     ],
   };
 
-  /// Generate weekly summaries for all completed weeks in the date range
   Future<void> _generateWeeklySummaries(
     DateTime now,
     List<Entry> entries,
     List<ReflectionAnswer> answers,
-    Direction careerDirection,
+    Direction creativityDirection,
     Direction healthDirection,
     Direction relationshipsDirection,
+    Direction growthDirection,
     Direction peaceDirection,
   ) async {
     final summaryBox = await Hive.openBox<WeeklySummary>('weekly_summaries');
@@ -705,13 +876,11 @@ class SampleDataService {
       'direction_connections',
     );
 
-    // Build a map of entryId -> list of answer objects for quick lookup
     final entryAnswersMap = <String, List<ReflectionAnswer>>{};
     for (final answer in answers) {
       entryAnswersMap.putIfAbsent(answer.entryId, () => []).add(answer);
     }
 
-    // Build a map of entryId -> list of directionIds for quick lookup
     final entryDirectionsMap = <String, Set<String>>{};
     for (final connection in connectionsBox.values) {
       entryDirectionsMap
@@ -719,13 +888,10 @@ class SampleDataService {
           .add(connection.directionId);
     }
 
-    // Calculate week boundaries
-    // Start from 90 days ago, generate summaries for each completed week up to last Monday
     final oldestDate = now.subtract(const Duration(days: 90));
     final firstMonday = _startOfWeek(oldestDate);
     final currentWeekStart = _startOfWeek(now);
 
-    // Iterate through each week
     DateTime weekStart = firstMonday;
     final summaries = <WeeklySummary>[];
     double? previousWeekAvgMood;
@@ -733,22 +899,18 @@ class SampleDataService {
     while (weekStart.isBefore(currentWeekStart)) {
       final weekEnd = weekStart.add(const Duration(days: 7));
 
-      // Get entries for this week
       final weekEntries = entries.where((entry) {
         return !entry.createdAt.isBefore(weekStart) &&
             entry.createdAt.isBefore(weekEnd);
       }).toList();
 
-      // Only create summary if week has entries
       if (weekEntries.isEmpty) {
         weekStart = weekEnd;
         continue;
       }
 
-      // Sort entries by date
       weekEntries.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-      // Calculate stats
       final checkInCount = weekEntries.length;
       final daysWithEntries = weekEntries
           .map(
@@ -761,7 +923,6 @@ class SampleDataService {
           weekEntries.map((e) => e.moodValue).reduce((a, b) => a + b) /
           weekEntries.length;
 
-      // Determine mood trend
       String moodTrend = 'stable';
       if (previousWeekAvgMood != null) {
         final difference = avgMood - previousWeekAvgMood;
@@ -772,7 +933,6 @@ class SampleDataService {
         }
       }
 
-      // Find most felt mood (most common moodWord)
       final moodCounts = <String, int>{};
       for (final entry in weekEntries) {
         moodCounts[entry.moodWord] = (moodCounts[entry.moodWord] ?? 0) + 1;
@@ -781,7 +941,6 @@ class SampleDataService {
           .reduce((a, b) => a.value > b.value ? a : b)
           .key;
 
-      // Find best mood day
       final bestEntry = weekEntries.reduce(
         (a, b) => a.moodValue > b.moodValue ? a : b,
       );
@@ -798,25 +957,23 @@ class SampleDataService {
       final bestMoodValue = bestEntry.moodValue;
       final bestMoodWord = bestEntry.moodWord;
 
-      // Build direction summaries
       final directionSummaries = <Map<String, dynamic>>[];
       String? topDirectionId;
       double highestMoodDifference = -999.0;
 
       final directions = [
-        (careerDirection, 'career'),
+        (creativityDirection, 'creativity'),
         (healthDirection, 'health'),
         (relationshipsDirection, 'relationships'),
+        (growthDirection, 'growth'),
         (peaceDirection, 'peace'),
       ];
 
       for (final (direction, _) in directions) {
-        // Count connections for this week
         final weeklyConnections = weekEntries.where((entry) {
           return entryDirectionsMap[entry.id]?.contains(direction.id) ?? false;
         }).length;
 
-        // Calculate avg mood when connected to this direction (across all entries, not just this week)
         final allConnectedEntries = entries.where((entry) {
           return entryDirectionsMap[entry.id]?.contains(direction.id) ?? false;
         }).toList();
@@ -830,7 +987,6 @@ class SampleDataService {
               allConnectedEntries.length;
         }
 
-        // Calculate overall avg mood (all entries)
         final overallAvgMood =
             entries.map((e) => e.moodValue).reduce((a, b) => a + b) /
             entries.length;
@@ -845,14 +1001,12 @@ class SampleDataService {
           'moodDifference': moodDifference,
         });
 
-        // Track top direction (highest positive correlation >= 0.1)
         if (moodDifference >= 0.1 && moodDifference > highestMoodDifference) {
           highestMoodDifference = moodDifference;
           topDirectionId = direction.id;
         }
       }
 
-      // Get standout reflections (1-2 longest answers)
       final weekAnswers = <ReflectionAnswer>[];
       for (final entry in weekEntries) {
         if (entryAnswersMap.containsKey(entry.id)) {
@@ -865,13 +1019,11 @@ class SampleDataService {
         weekAnswers.sort((a, b) => b.answer.length.compareTo(a.answer.length));
         standoutReflectionAnswers = [];
 
-        // Add longest answer
         standoutReflectionAnswers.add({
           'questionText': weekAnswers.first.questionText,
           'answer': weekAnswers.first.answer,
         });
 
-        // Add second longest if different question
         if (weekAnswers.length > 1) {
           for (var i = 1; i < weekAnswers.length; i++) {
             if (weekAnswers[i].questionText != weekAnswers.first.questionText) {
@@ -885,7 +1037,6 @@ class SampleDataService {
         }
       }
 
-      // Generate unique takeaway for this week
       final takeaway = _generateWeeklyTakeaway(
         weekStart,
         checkInCount,
@@ -897,7 +1048,6 @@ class SampleDataService {
         weekAnswers.isNotEmpty,
       );
 
-      // Create summary
       final summary = WeeklySummary(
         id: _uuid.v4(),
         weekStart: weekStart,
@@ -914,8 +1064,8 @@ class SampleDataService {
         topDirectionId: topDirectionId,
         standoutReflectionAnswers: standoutReflectionAnswers,
         takeaway: takeaway,
-        createdAt: weekEnd, // Summaries are created after the week ends
-        viewedAt: null, // Will be set below
+        createdAt: weekEnd,
+        viewedAt: null,
       );
 
       summaries.add(summary);
@@ -923,7 +1073,6 @@ class SampleDataService {
       weekStart = weekEnd;
     }
 
-    // Mark all summaries as viewed EXCEPT the most recent one
     for (int i = 0; i < summaries.length; i++) {
       final isLastSummary = i == summaries.length - 1;
       final summary = summaries[i];
@@ -947,23 +1096,19 @@ class SampleDataService {
         createdAt: summary.createdAt,
         viewedAt: isLastSummary
             ? null
-            : summary.createdAt.add(
-                const Duration(hours: 2),
-              ), // Viewed ~2 hours after creation, except last
+            : summary.createdAt.add(const Duration(hours: 2)),
       );
 
       await summaryBox.put(finalSummary.id, finalSummary);
     }
   }
 
-  /// Calculate the start of the week (Monday) for a given date
   DateTime _startOfWeek(DateTime date) {
     final weekday = date.weekday;
     final mondayDate = date.subtract(Duration(days: weekday - 1));
     return DateTime(mondayDate.year, mondayDate.month, mondayDate.day);
   }
 
-  /// Generate unique takeaway message for each week
   String _generateWeeklyTakeaway(
     DateTime weekStart,
     int checkInCount,
@@ -974,11 +1119,9 @@ class SampleDataService {
     List<Map<String, dynamic>> directionSummaries,
     bool hasReflections,
   ) {
-    // Use week number to select different messages (deterministic but varied)
     final weekOfYear = _weekOfYear(weekStart);
-    final seed = weekOfYear % 20; // 20 different message templates
+    final seed = weekOfYear % 20;
 
-    // Count direction connections
     int totalConnections = 0;
     String? topDirection;
     int topConnections = 0;
@@ -994,108 +1137,107 @@ class SampleDataService {
     switch (seed) {
       case 0:
         return checkInCount == 7
-            ? 'Seven for seven. You didn\'t miss a day. That\'s dedication.'
-            : 'You showed up $checkInCount days this week. Your consistency is building something.';
+            ? 'Seven for seven. You showed up every single day. That matters.'
+            : 'You checked in $checkInCount times this week. Each one is a moment of clarity.';
 
       case 1:
         return hasReflections
-            ? 'A quieter week, but the reflections you wrote were some of your most honest.'
-            : 'Even when life gets busy, you made time for yourself. That matters.';
+            ? 'Your reflections this week were honest and real. That\'s where growth lives.'
+            : 'Even without deep reflections, showing up is the practice.';
 
       case 2:
         return bestMoodDay != null
-            ? '$bestMoodDay\'s energy carried you. Notice what made that day different.'
-            : 'This week had its ups and downs, but you kept showing up.';
+            ? '$bestMoodDay brought the best energy. What made it different?'
+            : 'The week had its rhythm. You stayed with it.';
 
       case 3:
         return totalConnections > 0 && topDirection != null
-            ? '$topConnections check-ins connected to $topDirection. You\'re on track.'
-            : 'You checked in $checkInCount times. That\'s $checkInCount moments of self-awareness.';
+            ? '$topDirection showed up $topConnections times. That focus is telling you something.'
+            : 'You made $checkInCount check-ins. That\'s $checkInCount small acts of self-awareness.';
 
       case 4:
         return moodTrend == 'up'
-            ? 'Even with a rough start, you bounced back. That\'s resilience.'
-            : 'Stability is its own kind of strength. You held steady this week.';
+            ? 'Your mood climbed this week. Something shifted — notice what it was.'
+            : 'Steady weeks are underrated. You held your ground.';
 
       case 5:
         return avgMood >= 0.6
-            ? 'Your mood was up this week. Something\'s working — trust it.'
-            : 'Tough weeks happen. What matters is you kept checking in anyway.';
+            ? 'A lighter week. Something\'s clicking — trust it.'
+            : 'Heavy weeks teach you the most. You didn\'t look away.';
 
       case 6:
         return hasReflections
-            ? 'Your reflections this week show real self-awareness. That\'s powerful.'
-            : 'You showed up even when it was hard. That\'s courage.';
+            ? 'The questions you answered reveal someone paying attention. Keep going.'
+            : 'Showing up when it\'s hard is the whole point. You did that.';
 
       case 7:
         return checkInCount >= 6
-            ? 'Six check-ins and real progress. You\'re building momentum.'
-            : 'Every check-in is a choice to show up for yourself. You made that choice $checkInCount times.';
+            ? 'Nearly every day. You\'re building a real practice here.'
+            : 'Every check-in is a choice. You made that choice $checkInCount times.';
 
       case 8:
         return bestMoodWord != null
-            ? 'You felt $bestMoodWord on $bestMoodDay. What can you learn from that?'
-            : 'Another week, another set of data points about you. Keep going.';
+            ? 'You felt $bestMoodWord on $bestMoodDay. What can you carry from that?'
+            : 'Another week of data about who you are. Keep collecting.';
 
       case 9:
         return totalConnections > 0
-            ? 'You connected $totalConnections entries to your directions this week. That\'s intentional living.'
-            : 'Progress isn\'t always visible, but it\'s happening. Trust the process.';
+            ? '$totalConnections direction connections. You\'re linking feelings to meaning.'
+            : 'Progress is quieter than you think. It\'s happening.';
 
       case 10:
         return moodTrend == 'down'
-            ? 'Even when things felt harder, you kept showing up. That takes strength.'
-            : 'Consistent effort, consistent growth. You\'re doing the work.';
+            ? 'A harder week, but you kept checking in. That takes courage.'
+            : 'Consistent effort, quiet growth. You\'re doing the work.';
 
       case 11:
         return hasReflections && avgMood >= 0.5
-            ? 'Good week, thoughtful reflections. You\'re finding your rhythm.'
-            : 'One week at a time. You\'re exactly where you need to be.';
+            ? 'Good mood, thoughtful reflections. You\'re finding your rhythm.'
+            : 'One week at a time. You\'re right where you need to be.';
 
       case 12:
         return checkInCount >= 5
-            ? 'Five check-ins this week. You\'re making this a habit.'
-            : 'Even a few check-ins matter. You showed up when it counted.';
+            ? 'Five check-ins this week. This is becoming a habit worth keeping.'
+            : 'Even a few check-ins matter. Quality over quantity.';
 
       case 13:
         return topDirection != null && topConnections >= 3
-            ? '$topDirection got your attention this week. That focus is valuable.'
-            : 'You\'re learning what matters to you. That clarity takes time.';
+            ? '$topDirection got your attention. That focus is valuable.'
+            : 'You\'re learning what matters. That clarity takes time.';
 
       case 14:
         return avgMood < 0.35 && checkInCount >= 3
-            ? 'Tough weeks are worth reflecting on. You did that — and that matters.'
-            : 'Self-awareness is a practice, and you\'re practicing. Keep at it.';
+            ? 'Hard weeks deserve reflection. You gave yourself that.'
+            : 'Self-awareness is a practice. You\'re practicing.';
 
       case 15:
         return moodTrend == 'up' && hasReflections
-            ? 'Your mood improved AND you reflected deeply. That combination is powerful.'
-            : 'You\'re building a record of who you are. That\'s valuable work.';
+            ? 'Mood up and reflections deep. That combination is rare and powerful.'
+            : 'You\'re building a record of your inner life. That\'s meaningful work.';
 
       case 16:
         return bestMoodDay == 'Saturday' || bestMoodDay == 'Sunday'
-            ? 'Weekends recharge you. How can you bring that energy into the week?'
-            : 'Weekdays have their own challenges. You\'re learning to navigate them.';
+            ? 'Weekends recharge you. How can you bring that energy into Wednesday?'
+            : 'Midweek was your peak. You thrive when you\'re creating.';
 
       case 17:
         return checkInCount == 7
-            ? 'Perfect attendance this week. Your commitment is inspiring.'
-            : 'Not every week is perfect, but every check-in counts. You did $checkInCount.';
+            ? 'A full week of showing up. Your commitment is becoming part of who you are.'
+            : 'Not every week is perfect. You still showed up $checkInCount times.';
 
       case 18:
         return hasReflections
-            ? 'The questions you answered reveal growth. Keep looking inward.'
-            : 'Sometimes just tracking your mood is enough. You did that.';
+            ? 'Your answers this week had real depth. Don\'t underestimate that.'
+            : 'Sometimes just naming the mood is enough. You did that.';
 
       case 19:
       default:
         return totalConnections > 0
-            ? 'Direction connections: $totalConnections. You\'re aligning actions with values.'
-            : 'Another week of showing up for yourself. That\'s the foundation.';
+            ? '$totalConnections connections to your directions. You\'re living with intention.'
+            : 'Another week of choosing yourself. That\'s the foundation of everything.';
     }
   }
 
-  /// Calculate week number of the year (1-52)
   int _weekOfYear(DateTime date) {
     final firstDayOfYear = DateTime(date.year, 1, 1);
     final daysSinceStart = date.difference(firstDayOfYear).inDays;
